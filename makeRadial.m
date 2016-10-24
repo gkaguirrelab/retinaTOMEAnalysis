@@ -1,5 +1,4 @@
-function radPoints = makeRadial(X,Y)
-
+function [pol,ecc] = makeRadial(X,Y)
 
 XnumPoints = (2*X);
 YnumPoints = (2*Y);
@@ -11,12 +10,8 @@ Ypoints = linspace(-1*(Y),Y,YnumPoints);
 
 rad = X1.^2+Y1.^2;
 
-%% scale by max value
-  
-if Y<=X
-    radPoints = max([X Y]).*(rad./max(rad(:,Y)));
-else
-    radPoints = max([X Y]).*(rad./max(rad(X,:)));
-end
+[pol,ecc] = cart2pol(X1,Y1);
+
+pol = flipud(imrotate(rad2deg(pol)+180,180));
 
 end
