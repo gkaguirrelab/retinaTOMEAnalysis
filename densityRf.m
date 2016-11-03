@@ -1,24 +1,27 @@
 function Df = densityRf(r,theta)
 % Density of recetive feilds
+%
+% TO DO: add number of samples (per deg? or per 
+
 Rv0 = 0.011785;
 Ro0 = 0.008333;
 
 E20 = 20;
-
+a = 1;
 for i = 1:size(theta,1);
     for ii = 1:size(theta,2)
         if theta(i,ii) >= 0 & theta(i,ii) <= 90
             E2v(i,ii) = interp1([0,90],[2.19,1.98],theta(i,ii));
-
+           
         elseif theta(i,ii) > 90 & theta(i,ii) <= 180
             E2v(i,ii) = interp1([90,180],[1.98,2.26],theta(i,ii));
-
+           
         elseif theta(i,ii) > 180 & theta(i,ii) <= 270
             E2v(i,ii) = interp1([180,270],[2.26,1.5],theta(i,ii));
-
+             
         elseif theta(i,ii) > 270 & theta(i,ii) <=360
             E2v(i,ii) = interp1([270,360],[1.5,2.19],theta(i,ii));
-
+         
         end
     end
 end
