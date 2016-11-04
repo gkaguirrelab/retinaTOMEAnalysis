@@ -1,5 +1,5 @@
 
-radDeg = 30;
+radDeg = 20;
 smpPerDeg = 2;
 fname = '/Users/michael/Documents/MATLAB/octAnalysisForTOME/curcio_data.txt';
 
@@ -29,13 +29,13 @@ axis square
 
 [dfCount3,rgcCount3] = calcDisplacment(Df2,dRGC2,radDeg,smpPerDeg);
 
-[Df3,dRGC3] = rotAndCrop(Df,dRGC,180);
+[Df2,dRGC2] = rotAndCrop(Df,dRGC,180);
 
-[dfCount4,rgcCount4] = calcDisplacment(Df3,dRGC3,radDeg,smpPerDeg);
+[dfCount4,rgcCount4] = calcDisplacment(Df2,dRGC2,radDeg,smpPerDeg);
 
-[Df4,dRGC4] = rotAndCrop(Df,dRGC,270);
+[Df2,dRGC2] = rotAndCrop(Df,dRGC,270);
 
-[dfCount5,rgcCount5] = calcDisplacment(Df4,dRGC4,radDeg,smpPerDeg);
+[dfCount5,rgcCount5] = calcDisplacment(Df2,dRGC2,radDeg,smpPerDeg);
 
 %% plot cross scetional sclices in RGC
 
@@ -45,28 +45,14 @@ Yzero = round(size(Df,1)/2);
 figure
 plot([0 line(line>0)],Df(Yzero,Xzero:end),'r'); %temp
 hold on
-plot([0 line(line>0)],Df4(Yzero,Xzero:end),'b'); %sup
-plot([0 line(line>0)],Df3(Yzero,Xzero:end),'g'); %nasal
-plot([0 line(line>0)],Df2(Yzero,Xzero:end),'k'); %inf
+plot([0 line(line>0)],Df(1:Yzero,Xzero)','b'); %sup
+plot([0 line(line>0)],Df(Yzero,1:Xzero),'g'); %nasal
+plot([0 line(line>0)],Df(Yzero:end,Xzero)','k'); %inf
 xlabel('Eccentricity (deg)')
-ylabel('RGCf density') 
+ylabel('Cumulative RGC density') 
 legend('Temporal','Superior','Nasal','Inferior')
 grid on
-%% plot cross scetional sclices in RGC
 
-Xzero = round(size(Df,2)/2);
-Yzero = round(size(Df,1)/2);
-
-figure
-loglog([0 line(line>0)],dRGC(Yzero,Xzero:end),'r'); %temp
-hold on
-loglog([0 line(line>0)],dRGC4(Yzero,Xzero:end),'b'); %sup
-loglog([0 line(line>0)],dRGC3(Yzero,Xzero:end),'g'); %nasal
-loglog([0 line(line>0)],dRGC2(Yzero,Xzero:end),'k'); %inf
-xlabel('Eccentricity (deg)')
-ylabel('RGC density') 
-legend('Temporal','Superior','Nasal','Inferior')
-grid on
 
 %% Plot the cumulative RGC 
 figure

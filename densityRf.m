@@ -1,4 +1,4 @@
-function Df = densityRf(r,theta)
+function Df = densityRf(r,theta,radDeg,smpPerDeg)
 % Density of recetive feilds
 %
 % TO DO: add number of samples (per deg? or per 
@@ -21,7 +21,6 @@ for i = 1:size(theta,1);
              
         elseif theta(i,ii) > 270 & theta(i,ii) <=360
             E2v(i,ii) = interp1([270,360],[1.5,2.19],theta(i,ii));
-         
         end
     end
 end
@@ -31,5 +30,11 @@ Roe =Ro0.*(1+r./E20);
 k=1+(1.004 - 0.007209.*r + 0.001694.*r.^2 - 0.00003765.*r.^3).^-2;
 
 Df = ((1.12+0.0273.*r).*k)./(1.155.*(Rve.^2-Roe.^2));
+
+lin = linspace(-radDeg,radDeg,2.*radDeg*smpPerDeg);
+[x,y] = meshgrid(lin,lin);
+mask=((x.^2+y.^2).^.5<=radDeg);
+
+Df(mask~=1) = nan;
 
 end

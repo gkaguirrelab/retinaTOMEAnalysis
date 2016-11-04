@@ -9,8 +9,8 @@ R = 11.459;
 %[X Y] = pol2cart(deg2rad(C{4}),deg2rad(C{3}));
 [X,Y] = pol2cart(C{4},C{3});
 F = scatteredInterpolant([X Y],C{5});
-F.Method = 'natural';
-F.ExtrapolationMethod='none';
+F.Method = 'linear';
+F.ExtrapolationMethod='linear';
 
 
 %lin = -round(14):stepSize:round(14);
