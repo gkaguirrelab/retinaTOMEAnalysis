@@ -1,0 +1,33 @@
+radDeg = 20;
+smpPerDeg=2;
+sectorAngle = 6;
+
+%% Generate the RGCf Density
+retData = curcio_4meridian(radDeg,smpPerDeg);
+
+%% Generate the RGCf Density
+retData(:,:,4) = densityRf(retData(:,:,3),retData(:,:,2),radDeg,smpPerDeg);
+
+
+
+rotDeg = 0;
+displace0 = calcDisp(retData,radDeg,smpPerDeg,sectorAngle,rotDeg);
+
+figure 
+hold on 
+plot(displace0,'r')
+
+rotDeg = ;
+displace180 = calcDisp(retData,radDeg,smpPerDeg,sectorAngle,rotDeg);
+
+plot(displace180,'g')
+
+rotDeg = 180;
+displace180 = calcDisp(retData,radDeg,smpPerDeg,sectorAngle,rotDeg);
+
+plot(displace180,'g')
+
+rotDeg = 180;
+displace180 = calcDisp(retData,radDeg,smpPerDeg,sectorAngle,rotDeg);
+
+plot(displace180,'g')
