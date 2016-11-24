@@ -7,10 +7,10 @@ load('curcio_4meridian.mat')
 ecc_mm = data(:,1);
 ecc_deg = 3.556*ecc_mm+0.05992*ecc_mm.^2-0.007358*ecc_mm.^3+0.0003027*ecc_mm.^4;
 alpha= 0.0752+5.846e-5*ecc_mm-1.064e-5*ecc_mm.^2+4.116e-8*ecc_mm.^3;
-temp_deg2 = data(:,2).*alpha;
-sup_deg2 = data(:,4).*alpha;
-nasal_deg2 = data(:,6).*alpha;
-inferior_deg2 = data(:,8).*alpha;
+temp_deg2 = data(:,2).*(1./alpha);
+sup_deg2 = data(:,4).*(1./alpha);
+nasal_deg2 = data(:,6).*(1./alpha);
+inferior_deg2 = data(:,8).*(1./alpha);
 
 % Conversion of eccentricities in millimeters to degrees; Watson 2014
 

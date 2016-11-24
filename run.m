@@ -1,4 +1,4 @@
-radDeg = 20;
+radDeg = 10;
 smpPerDeg=2;
 sectorAngle = 6;
 
@@ -26,11 +26,11 @@ rotDeg = 270; % sup
 displace270 = calcDisp(retData,radDeg,smpPerDeg,sectorAngle,rotDeg);
 
 
-% 
-% figure 
-% hold on 
-% plot(0:1/smpPerDeg:radDeg,displace0,'g'); %nasal
-% plot(0:1/smpPerDeg:radDeg,displace90,'k'); %inf
-% plot(0:1/smpPerDeg:radDeg,displace180,'r')%temp
-% plot(0:1/smpPerDeg:radDeg,displace270,'b'); %sup
-% legend('nasal','inferior','temporal','superior');
+
+figure 
+hold on 
+plot(0:1/smpPerDeg:radDeg,displace0,'g'); %nasal
+plot(0:1/smpPerDeg:radDeg,displace90,'k'); %inf
+plot(0:1/smpPerDeg:radDeg,displace180,'r')%temp
+plot(0:1/smpPerDeg:radDeg,displace270,'b'); %sup
+legend('nasal','inferior','temporal','superior');
