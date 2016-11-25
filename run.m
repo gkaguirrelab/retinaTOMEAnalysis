@@ -1,5 +1,5 @@
 radMM = 5;
-smpPerMM=4;
+smpPerMM=10;
 sectorAngle = 6;
 
 %% Generate the RGCf Density
