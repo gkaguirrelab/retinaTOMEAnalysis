@@ -1,8 +1,8 @@
 function areaPerSeg= calcSegSize(radMM,smpPerMM,sectorAngle)
-% % 
+% 
 binWidthMM =1/smpPerMM;
-r_inner = binWidthMM:binWidthMM:radMM+binWidthMM;
-r_outer = binWidthMM+binWidthMM:binWidthMM:radMM+2*binWidthMM;
+r_inner = binWidthMM:binWidthMM:radMM-binWidthMM;
+r_outer = binWidthMM+binWidthMM:binWidthMM:radMM+binWidthMM;
 
 areaPerSeg =  ((pi.*r_outer.^2)-(pi.*r_inner.^2))./(360/sectorAngle);
 

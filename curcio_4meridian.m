@@ -24,23 +24,6 @@ inferior_deg2 = data(:,8).*(1./alpha);
 
 [curve_inferior] = fit(ecc_deg,inferior_deg2,'smoothingspline', 'Exclude',find(isnan(inferior_deg2)),'SmoothingParam', 1);
 
-%%Check the Spline
-% figure
-% subplot(2,1,1)
-% hold on 
-% plot(ecc_deg,curve_temp(ecc_deg),'r')%temp
-% scatter(ecc_deg,temp_deg2,'r')
-% plot(ecc_deg,curve_sup(ecc_deg),'b'); %sup
-% scatter(ecc_deg,sup_deg2,'b')
-% plot(ecc_deg,curve_nasal(ecc_deg),'g'); %nasal
-% scatter(ecc_deg,nasal_deg2,'g')
-% plot(ecc_deg,curve_inferior(ecc_deg),'k'); %inf
-% scatter(ecc_deg,inferior_deg2,'k')
-% set(gca,'xscale','log')
-% set(gca,'yscale','log')
-%%
-
-
 meridian = zeros(2*(radDeg*smpPerDeg)+1,2*(radDeg*smpPerDeg)+1);
 temp_hm = curve_temp(0:1/smpPerDeg:radDeg);
 sup_vm = curve_sup(radDeg:-1/smpPerDeg:0)';
@@ -86,23 +69,6 @@ end
 mask=(meridian(:,:,3)<=radDeg);
 double(mask(mask == 0)) = nan;
 meridian(:,:,1) =meridian(:,:,1).*mask;
-
-%% validation of interpolation 
-% midPt = round((2*(radDeg*smpPerDeg))/2)+1;
-% subplot(2,1,2)
-% hold on 
-% xRange = 0:1/smpPerDeg:radDeg;
-% xRangeBck = radDeg:-1/smpPerDeg:0;
-% plot(xRangeBck,meridian(midPt,1:midPt,1),'r')%temp
-% scatter(ecc_deg,temp_deg2,'r')
-% plot(xRangeBck,meridian(1:midPt,midPt,1),'b'); %sup
-% scatter(ecc_deg,sup_deg2,'b')
-% plot(xRange,meridian(midPt,midPt:end,1),'g'); %nasal
-% scatter(ecc_deg,nasal_deg2,'g')
-% plot(xRange,meridian(midPt:end,midPt,1),'k'); %inf
-% scatter(ecc_deg,inferior_deg2,'k')
-% set(gca,'xscale','log')
-% set(gca,'yscale','log')
 
 end
 
