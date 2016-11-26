@@ -2,7 +2,7 @@ function displace = calcDisp(retData,radDeg,smpPerDeg,sectorAngle,rotDeg)
 
 %%% get the displacement map working
 
-[rotDf,rotRGC] = rotAndCrop(retData(:,:,4),retData(:,:,4),rotDeg);
+[rotDf,rotRGC] = rotAndCrop(retData(:,:,4),retData(:,:,1),rotDeg);
 areaPerSeg= calcSegSize(radDeg,smpPerDeg,sectorAngle);
 degVec = 1/smpPerDeg:1/smpPerDeg:radDeg+1/smpPerDeg;
 [countDf,countRGC] = density2count(rotDf,rotRGC,areaPerSeg);
@@ -18,4 +18,4 @@ displace = abs(degVec'-eccDf);
 
 
 
-end
+end 

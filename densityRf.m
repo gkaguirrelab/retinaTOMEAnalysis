@@ -39,7 +39,7 @@ Df = ((1.12+0.0273.*r).*k)./(1.155.*(Rve.^2-Roe.^2));
 mask = (r <= radDeg);
 mask = double(mask);
 mask(mask ==0) = nan;
-Df = Df.*mask;
+Df = flipud(Df.*mask);
 
 %% Validate the Output
 
