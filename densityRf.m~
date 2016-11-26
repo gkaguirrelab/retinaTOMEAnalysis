@@ -47,16 +47,15 @@ if strcmp(verbose,'full')
     % 0-Nasal 90-Inferior 180-Temporal 270-Superior
     mdPt = round(size(Df,1)/2);
     xSmpDegPos = 0:1/smpPerDeg:radDeg;
-    xSmpDegNeg = radDeg:-1/smpPerDeg:0;
+    xSmpDegNeg = radDeg:-1/smpPerDeg:radDeg;
     figure;hold on;
-    plot(xSmpDegNeg,Df(mdPt,1:mdPt),'r')%Temporal
-    plot(xSmpDegPos,Df(mdPt:end,mdPt)','b')%Superior
-    plot(xSmpDegPos,Df(mdPt,mdPt:end),'g')%Nasal
-    plot(xSmpDegNeg,Df(1:mdPt,mdPt)','k')%Inferior
+    plot(xSmpDeg,Df(mdPt,1:mdPt),'r')%Temporal
+    plot(xSmpDeg,Df(mdPt:end,mdPt),'b')%Superior
+    plot(xSmpDeg,Df(mdPt,mdPt:end),'g')%Nasal
+    plot(xSmpDeg,Df(1:mdPt,mdPt),'k')%Inferior
     legend('Temporal','Superior','Nasal','Inferior')
-    xlabel('Eccentricity (deg)'); set(gca,'XScale','log');
-    ylabel('Denstiy (deg^{-2}');  set(gca,'YScale','log');
-
+    xlabel('Eccentricity (deg)')
+    ylabel('Denstiy (deg^{-2}')
 end 
     
 end
