@@ -64,7 +64,7 @@ end
 
 mask=(meridian(:,:,3)<=radDeg);
 double(mask(mask == 0)) = nan;
-meridian(:,:,1) =meridian(:,:,1).*mask;
+meridian =meridian(:,:,1).*mask;
 
 %% Validate the Output
 
