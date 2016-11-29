@@ -89,13 +89,9 @@ countRGC = sup_RGCdensity_mm_fit(radii).*areaPerSeg';  % multiply RGCs/mm^2 *mm^
 countRFsum = cumsum(countRF); % Cumulative sum of the recetive fields 
 countRGCsum = cumsum(countRGC); % Cumulative sum of the recetive fields 
 
-%% Make plot from Turpin/McKencdrick fig. 1
+%% Make plot 
 figure
 hold on 
 plot(radii,countRFsum,'r')
 plot(radii,countRGCsum,'b')
-legend('Receptive Fields','Retinal Ganglion Cell')
-xlabel('Eccentricity (mm)')
-ylabel('Cumulative RGC/RF Count')
-
-%validatePlots(RGCdensity,RFdensity,countRF,countRGC,radDeg,smpPerDeg); ##Needs to be modified to work on this format##
+%validatePlots(RGCdensity,RFdensity,countRF,countRGC,radDeg,smpPerDeg);

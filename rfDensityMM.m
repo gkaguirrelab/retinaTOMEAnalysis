@@ -7,7 +7,7 @@ function rfDensity = rfDensityMM(radMM,smpPerMM,plots)
 
 degPerMM = 3.556*1+0.05992*1.^2-0.007358*1.^3+0.0003027*1.^4;
 radDeg = radMM*degPerMM;
-smpPerDeg = round(s
+
 [~,theta,r] = createGrid(radDeg,smpPerDeg);
 
 Rv0 = 0.011785;
