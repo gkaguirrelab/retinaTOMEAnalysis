@@ -4,6 +4,19 @@ function Df = densityRf(radDeg,smpPerDeg,verbose)
 % From Eq. 7 in Drasdo et al. 2007 Vision Research.
 % Formula is in Degrees 
 % 
+% The Drasdo equations are cast in terms of position in the visual field in
+% degrees eccentricity and counts per square degree.
+%
+% The output of this routine will be in units of square degrees at an
+% eccentricity given in degrees. The values, however, will be for that
+% position in the retinal coordinate space, not the visual.
+%
+% The values returned here can be compared with Table 5 of Drasdo 2007,
+% with the caveat that (e.g.) the superior meridian in the retina returned
+% by this routine should be compared to the inferior meridian in the visual
+% field presented in that table of Drasdo.
+
+
 [~,theta,r] = createGrid(radDeg,smpPerDeg);
 
 Rv0 = 0.011785;
@@ -40,6 +53,16 @@ mask = (r <= radDeg);
 mask = double(mask);
 mask(mask ==0) = nan;
 Df = Df.*mask;
+
+% This final "flip" of the image results in these relationships in the
+% image:
+%
+%            midPoint = center pixel of Df
+%            Temporal retina = left of midPoint of Df
+%            Nasal Retina    = right of midPoint of Df
+%            Supior Retina   = above midPoint of Df
+%            Inferior Retina = below midPoint of Df
+Df=fliplr(Df);
 
 %% Validate the Output
 
