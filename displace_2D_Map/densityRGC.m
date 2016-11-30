@@ -7,10 +7,10 @@ load('curcio_4meridian.mat')
 ecc_mm = data(:,1);
 ecc_deg = 3.556*ecc_mm+0.05992*ecc_mm.^2-0.007358*ecc_mm.^3+0.0003027*ecc_mm.^4;
 alpha= 0.0752+5.846e-5*ecc_mm-1.064e-5*ecc_mm.^2+4.116e-8*ecc_mm.^3;
-temp_deg2 = data(:,2).*(1./alpha);
-sup_deg2 = data(:,4).*(1./alpha);
-nasal_deg2 = data(:,6).*(1./alpha);
-inferior_deg2 = data(:,8).*(1./alpha);
+temp_deg2 = data(:,2).*(alpha);
+sup_deg2 = data(:,4).*(alpha);
+nasal_deg2 = data(:,6).*(alpha);
+inferior_deg2 = data(:,8).*(alpha);
 
 % Conversion of eccentricities in millimeters to degrees; Watson 2014
 
@@ -64,22 +64,22 @@ end
 
 mask=(meridian(:,:,3)<=radDeg);
 double(mask(mask == 0)) = nan;
-meridian(:,:,1) =meridian(:,:,1).*mask;
+meridian =meridian(:,:,1).*mask;
 
 %% Validate the Output
 
 if strcmp(verbose,'full')
-    % 0-Nasal 90-Inferior 180-Temporal 270-Superior
+    % 0-Nasal 90-Surperior 180-Temporal 270-Inferior
     rgc = meridian(:,:,1);
     mdPt = round(size(rgc,1)/2);
     xSmpDegPos = 0:1/smpPerDeg:radDeg;
     xSmpDegNeg = radDeg:-1/smpPerDeg:0;
     figure;hold on;
     plot(xSmpDegNeg,rgc(mdPt,1:mdPt),'r')%Temporal
-    plot(xSmpDegPos,rgc(mdPt:end,mdPt)','b')%Superior
+    plot(xSmpDegPos,rgc(mdPt:end,mdPt)','b')%Inferior
     plot(xSmpDegPos,rgc(mdPt,mdPt:end),'g')%Nasal
-    plot(xSmpDegNeg,rgc(1:mdPt,mdPt)','k')%Inferior
-    legend('Temporal','Superior','Nasal','Inferior')
+    plot(xSmpDegNeg,rgc(1:mdPt,mdPt)','k')%Superior 
+    legend('Temporal','Inferior','Nasal','Superior')
     xlabel('Eccentricity (deg)'); set(gca,'XScale','log');
     ylabel('Denstiy (deg^{-2}');  set(gca,'YScale','log');
 
