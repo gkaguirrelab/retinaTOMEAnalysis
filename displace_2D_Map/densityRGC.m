@@ -1,32 +1,36 @@
-function [meridian]= densityRGC(radDeg,smpPerDeg,verbose)
+function [RGCdensity,sampleBase_RGC_mm]= densityRGC(radMM,smpPerMM,verbose)
 
 %this processes the curcio RGCd 4 meridian data
 
+
+
+%% Load the RGC Density Data from Curcio and Allen 1990:
+% The meridian assignments are in the retinal coordinate frame. This can be
+% verified by observing that there is an interruption in the count data for
+% the nasal meridian corresponding to the blind spot.
 load('curcio_4meridian.mat')
 
 ecc_mm = data(:,1);
-ecc_deg = 3.556*ecc_mm+0.05992*ecc_mm.^2-0.007358*ecc_mm.^3+0.0003027*ecc_mm.^4;
-alpha= 0.0752+5.846e-5*ecc_mm-1.064e-5*ecc_mm.^2+4.116e-8*ecc_mm.^3;
-temp_deg2 = data(:,2).*(alpha);
-sup_deg2 = data(:,4).*(alpha);
-nasal_deg2 = data(:,6).*(alpha);
-inferior_deg2 = data(:,8).*(alpha);
+temp_mmSq = data(:,2);
+sup_mmSq = data(:,4);
+nasal_mmSq = data(:,6);
+inferior_mmSq = data(:,8);
 
 % Conversion of eccentricities in millimeters to degrees; Watson 2014
 
 %%
 
-[curve_nasal] = fit(ecc_deg,nasal_deg2 ,'smoothingspline','Exclude', find(isnan(nasal_deg2)),'SmoothingParam', 1);
+[curve_nasal] = fit(ecc_mm,nasal_mmSq,'smoothingspline','Exclude', find(isnan(nasal_mmSq)),'SmoothingParam', 1);
 
-[curve_sup] = fit(ecc_deg,sup_deg2,'smoothingspline', 'Exclude',find(isnan(sup_deg2)),'SmoothingParam', 1);
+[curve_sup] = fit(ecc_mm,sup_mmSq,'smoothingspline', 'Exclude',find(isnan(sup_mmSq)),'SmoothingParam', 1);
 
-[curve_temp] = fit(ecc_deg,temp_deg2,'smoothingspline', 'Exclude',find(isnan(temp_deg2)),'SmoothingParam', 1);
+[curve_temp] = fit(ecc_mm,temp_mmSq,'smoothingspline', 'Exclude',find(isnan(temp_mmSq)),'SmoothingParam', 1);
 
-[curve_inferior] = fit(ecc_deg,inferior_deg2,'smoothingspline', 'Exclude',find(isnan(inferior_deg2)),'SmoothingParam', 1);
+[curve_inferior] = fit(ecc_mm,inferior_mmSq,'smoothingspline', 'Exclude',find(isnan(inferior_mmSq)),'SmoothingParam', 1);
 
-meridian = zeros(2*(radDeg*smpPerDeg)+1,2*(radDeg*smpPerDeg)+1);
+meridian = zeros(2*(radMM*smpPerMM)+1,2*(radMM*smpPerMM)+1);
 
-[line,meridian(:,:,2),meridian(:,:,3)] = createGrid(radDeg,smpPerDeg);
+[~,meridian(:,:,2),meridian(:,:,3)] = createGrid(radMM,smpPerMM);
 
 
 %%interpolate 
@@ -59,12 +63,12 @@ for i = 1:size(meridian,1);
             
         end
     end
-end
+end 
 
-
-mask=(meridian(:,:,3)<=radDeg);
+mask=(meridian(:,:,3)<=radMM);
 double(mask(mask == 0)) = nan;
-meridian =meridian(:,:,1).*mask;
+RGCdensity =meridian(:,:,1).*mask;
+sampleBase_RGC_mm = 0:1/smpPerMM:radMM;
 
 %% Validate the Output
 
@@ -72,8 +76,8 @@ if strcmp(verbose,'full')
     % 0-Nasal 90-Surperior 180-Temporal 270-Inferior
     rgc = meridian(:,:,1);
     mdPt = round(size(rgc,1)/2);
-    xSmpDegPos = 0:1/smpPerDeg:radDeg;
-    xSmpDegNeg = radDeg:-1/smpPerDeg:0;
+    xSmpDegPos = 0:1/smpPerMM:radMM;
+    xSmpDegNeg = radMM:-1/smpPerMM:0;
     figure;hold on;
     plot(xSmpDegNeg,rgc(mdPt,1:mdPt),'r')%Temporal
     plot(xSmpDegPos,rgc(mdPt:end,mdPt)','b')%Inferior
