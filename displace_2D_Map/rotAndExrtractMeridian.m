@@ -1,8 +1,10 @@
-function [RGCdenisty_mmSq RFdensity_sqDeg]= rotAndExrtractMeridian(Df,dRGC,rotDeg)
-
+function [RGCdenisty_mmSq RFdensity_sqDeg]= rotAndExrtractMeridian(RFdensity,RGCdensity,rotDeg)
 
 %rotate and crop
-rotDf_crop   = imrotate(Df,rotDeg,'crop','bilinear');
-rotRGC_crop  = imrotate(dRGC,rotDeg,'crop','bilinear');
+RF_crop   = imrotate(RFdensity,rotDeg,'crop','bilinear');
+rotRGC_crop  = imrotate(RGCdensity,rotDeg,'crop','bilinear');
+
+%% Get meridian fro RFdensity
+RF_midPoint = round(
 
 end

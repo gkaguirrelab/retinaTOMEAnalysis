@@ -38,7 +38,7 @@
 load('curcio_4meridian.mat') % Load the data 
 sampleBase_RGC_mm  = data(:,1); % Assign the eccentrciy (mm) to a var
 RGCdenisty_mmSq_temporal = data(:,2); % Assign the temporal RGC denstiy (cells/mm^2) to a var
-RGCdenisty_mmSq_superior  = data(:,4); % Assign the superior RGC denstiy (cells/mm^2) to a var
+RGCdenisty_mmSq = data(:,4); % Assign the superior RGC denstiy (cells/mm^2) to a var
 RGCdenisty_mmSq_nasal  = data(:,6); % Assign the nasal RGC denstiy (cells/mm^2) to a var
 RGCdenisty_mmSq_inferior  = data(:,8); % Assign the inferior RGC denstiy (cells/mm^2) to a var
 
@@ -46,12 +46,22 @@ RGCdenisty_mmSq_inferior  = data(:,8); % Assign the inferior RGC denstiy (cells/
 % Set Parameters 
 radDeg      = 20; % Radius in Degrees
 smpPerDeg   = 2; % Samples per Degree
+radMM = 5;
+smpPerMM = 6;
+sectorAngle = 6;
 
 % Obtain the Receptive field density per square degree within the sampling
 % area specified (also in degrees of visual angle)
-RFdensity = densityRf(radDeg,smpPerDeg,'full'); % Generates a 2D Receptive Field Density plot 
+RFdensity_sqDeg = densityRf(radDeg,smpPerDeg,'full'); % Generates a 2D Receptive Field Density plot 
 
-[RGCdenisty_mmSq RFdensity_sqDeg]= rotAndExrtractMeridian(RFdensity,dRGC,rotDeg)
+% Get data from Superior Merdian as a first pass check to validate the
+% pipeline of Turpin/McKendrick 
+
+midPoint = round(size(RFdensity_sqDeg,1)/2); % find middle of RF density image
+
+% Grab a vector that corresponds to the superior retinal meridian
+sup_RFdensity_sqDeg = RFdensity_sqDeg(1:midPoint,midPoint); % extract the superior meridian from 2D Receptive Field Desity plot 
+sup_RFdensity_sqDeg = flipud(sup_RFdensity_sqDeg); % flip column vector so 0 deg is at top
 
 % Calculate a sample base
 sampleBase_RF_deg = (0:1/smpPerDeg:radDeg)'; % the eccentricy of each sample of sup_RFdensity in degrees 
