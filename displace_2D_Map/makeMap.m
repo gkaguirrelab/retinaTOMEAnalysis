@@ -38,19 +38,17 @@ smpPerDeg   = 2; % Samples per Degree
 radMM = 5;
 smpPerMM = 6;
 sectorAngle = 6;
-rotDeg = 15;
+rotDeg = -45;
 % Obtain the Receptive field density per square degree within the sampling
 % area specified (also in degrees of visual angle)
 [RGCdensity,sampleBase_RGC_mm]= densityRGC(radMM,smpPerMM,'OFF');
 
-RFdensity = densityRf(radDeg,smpPerDeg,'OFF'); % Generates a 2D Receptive Field Density plot 
+[RFdensity,sampleBase_RF_deg] = densityRf(radDeg,smpPerDeg,'OFF'); % Generates a 2D Receptive Field Density plot 
 
 % Get data from Superior Merdian as a first pass check to validate the
 % pipeline of Turpin/McKendrick 
 [RGCdenisty_mmSq,RFdensity_sqDeg]= rotAndExrtractMeridian(RFdensity,RGCdensity,rotDeg);
 
-% Calculate a sample base
-sampleBase_RF_deg = (0:1/smpPerDeg:radDeg)'; % the eccentricy of each sample of sup_RFdensity in degrees 
 
 % Convert the RF counts (and sample base) from degress / deg^2 to mm and cells/mm^2
 RFdensity_mm = convert_degSq_to_mmSq(sampleBase_RF_deg, RFdensity_sqDeg);

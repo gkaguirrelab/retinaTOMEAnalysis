@@ -4,8 +4,8 @@ function Displacement = calcDisplacement(RFdensity_mm,sampleBase_RF_mm,RGCdenist
 
 
 %% Fit splines to the data RF and RGC data
-[sup_RFdensity_mm_fit] = fit(sampleBase_RF_mm,RFdensity_mm,'smoothingspline','Exclude', find(isnan(RFdensity_mm)),'SmoothingParam', 1);
-[sup_RGCdensity_mm_fit] = fit(sampleBase_RGC_mm,RGCdenisty_mmSq,'smoothingspline','Exclude', find(isnan(RGCdenisty_mmSq)),'SmoothingParam', 1);
+[sup_RFdensity_mm_fit] = fit(sampleBase_RF_mm',RFdensity_mm','smoothingspline','Exclude', find(isnan(RFdensity_mm)),'SmoothingParam', 1);
+[sup_RGCdensity_mm_fit] = fit(sampleBase_RGC_mm',RGCdenisty_mmSq','smoothingspline','Exclude', find(isnan(RGCdenisty_mmSq)),'SmoothingParam', 1);
 
 
 %% Calculate sector size to extract cell count from cells/mm^2
