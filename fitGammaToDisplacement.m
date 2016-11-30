@@ -1,23 +1,9 @@
 function [fitParams] = fitGammaToDisplacement(radii_mm, Displacement, weights)
 
+% parameters of a gamma function (shape and scale)
 
-%
-
-
-
-%% define default parameters
-
-% Initial guess for the parameters to define the Watson fit
-%   lag
-%   amplitude -- overall amplitude
-%   gamma1 -- positive gamma parameter (roughly, time-to-peak in seconds)
-%   gamma2 -- negative gamma parameter (roughly, time-to-peak in seconds)
-%   Scale  -- scaling factor between the positive and negative gamma componenets
-
-% parameters of the double-gamma hemodynamic filter (HRF)
-
-initialParams(1) = 1;
-initialParams(2) = 3;
+initialParams(1) = 3; % shape
+initialParams(2) = 1; % scale
 
 % Run the optimization. We will return these params.
 fitParams = fminsearch( (@(p) gammaModelFit(p, radii_mm, Displacement, weights)), initialParams);
@@ -25,7 +11,7 @@ fitParams = fminsearch( (@(p) gammaModelFit(p, radii_mm, Displacement, weights))
 % Obtain the Gamma model fit at the passed eccentricities. This might
 % be used for plotting.
 
-gammaFitToData = gammaModel(radii_mm, fitParams);
+gammaFitToData = gampdf(radii_mm,fitParams(1),fitParams(2));
 
 % If the user requested a plot, give it to them
 
@@ -46,19 +32,9 @@ end
 function E = gammaModelFit(params, t, y, weights)
 
 % Error function, calculating the sum-of-squares for the data vs. the fit.
-yhat = gammaModel(t, params);
+yhat = gampdf(t,params(1),params(2));
 
 % Calculate the sums-of-square error
 errorPreSum =((y - yhat).^2);
-errorPreSum = errorPreSum * weights;
-E = sum(weights);
-
-function H = gammaModel(t, params)
-
-% Un-pack the passed parameters
-params_amplitude = params(1);
-params_gammaShape = params(2); 
-
-% Generate the model. We return H.
-H =  gampdf(t, params_gammaShape, params_amplitude);
-
+errorPreSum = errorPreSum .* weights;
+E = sum(errorPreSum);
