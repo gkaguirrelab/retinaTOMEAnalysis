@@ -71,8 +71,6 @@ sampleBase_RF_mm=convert_deg_to_mm(sampleBase_RF_deg);
 [sup_RFdensity_mm_fit] = fit(sampleBase_RF_mm,sup_RFdensity_mm,'smoothingspline','Exclude', find(isnan(sup_RFdensity_mm)),'SmoothingParam', 1);
 [sup_RGCdensity_mm_fit] = fit(sampleBase_RGC_mm,RGCdenisty_mmSq_superior,'smoothingspline','Exclude', find(isnan(RGCdenisty_mmSq_superior)),'SmoothingParam', 1);
 
-%% Change X Sample Base to match the positions of the Turpin/McKendrick paper:
-
 
 %% Calculate sector size to extract cell count from cells/mm^2
 sectorAngle = 6; % Angle of the sector ### turpin code does not use sector angle or pi
@@ -81,7 +79,6 @@ annulus_radius_mm = 0.005; % parameter from Turpin code
 
 % center of the segment in mm eccentricity
 radii_mm = 0:annulus_radius_mm:5; % vector of radii to match Turpin code
-%areaPerSeg_mmSq= radii_mm.^2 - (radii_mm - annulus_radius_mm).^2; % area calculation to match Turpin code
 
 areaPerSeg_mmSq = ( (pi*(radii_mm + annulus_radius_mm/2).^2) - ...
                     (pi*(radii_mm - annulus_radius_mm/2).^2) ) * ...
@@ -103,7 +100,7 @@ legend('Receptive Fields','Retinal Ganglion Cell')
 xlabel('Eccentricity (mm)')
 ylabel('Cumulative RGC/RF Count')
 
-%
-interp1(countRFsum,radii_mm,
-
-%validatePlots(RGCdensity,RFdensity,countRF,countRGC,radDeg,smpPerDeg); ##Needs to be modified to work on this format##
+% Calculate the displacement by finding the mm difference at equivalent
+% count points
+mmPerRGCcountAtRFcountPositions=interp1(countRFsum,radii_mm,countRGCsum,'spline');
+Displacement=abs(radii_mm'-mmPerRGCcountAtRFcountPositions);
