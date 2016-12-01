@@ -6,10 +6,10 @@ function [fitParams, fitDisplacement] = fitGammaToDisplacement(radii_mm, displac
 %  data and the prior use of this function in Watson 2014 JoV, Eq 5.
 %
 %  Inputs:
-%    radii_mm: row vector with the eccentricity base of the data
-%    displacement: row vector with the RGC displacement from the fovea
-%    weights: row vector that provides a weighting function for the error
-%      term as a function of eccentricity. The use of a weighting function 
+%    radii_mm: vector with the eccentricity base of the data
+%    displacement: vector with the RGC displacement from the fovea
+%    weights: vector that provides a weighting function for the error
+%      term as a function of eccentricity. The use of a weighting function
 %      is motivated by the observation that the Turpin...McKendrick
 %      solution that we implement for the calculation of displacement does
 %      not always yield a measured displacement function that reaches zero.
@@ -27,6 +27,16 @@ function [fitParams, fitDisplacement] = fitGammaToDisplacement(radii_mm, displac
 %    fitParams: the parameters of the best fit gamma pdf (shape, scale)
 %    fitDisplacement: the gamma function itself
 %
+%
+%  Demo - create a gamma pdf (plus noise), a uniform weighting
+%    function, and then fit it
+%
+%    radii_mm=0:0.005:5;
+%    displacement=gampdf(radii_mm,3,.2)+(rand(1,1001)-0.5)/5;
+%    weights=radii_mm.*0+1;
+%
+%    [fitParams, fitDisplacement] = fitGammaToDisplacement(radii_mm, ...
+%      displacement, weights, 'displayPlot', 'full');
 
 %% Parse vargin for options passed here
 p = inputParser;
@@ -35,13 +45,19 @@ p.addRequired('displacement',@isnumeric);
 p.addRequired('weights',@isnumeric);
 p.addParameter('initialParams',[3,1],@isnumeric);
 p.addParameter('displayPlot','none',@ischar);
-p.parse(thePacket,varargin{:});
+p.parse(radii_mm, displacement, weights, varargin{:});
 
 % Unpack the arguments
-initialParams=p.Result.initialParams;
-displayPlot=p.Result.displayPlot;
+initialParams=p.Results.initialParams;
+displayPlot=p.Results.displayPlot;
 
-% Run the optimization
+% Check that all passed vectors are either row or column vectors and the
+% same length
+if ~all(size(radii_mm)==size(displacement)) || ~all(size(radii_mm)==size(weights))
+    error('The passed vectors must be the same length and same row/column order');
+end
+
+% Run the search
 fitParams = fminsearch( (@(p) gammaModelFit(p, radii_mm, displacement, weights)), initialParams);
 
 % Obtain the Gamma model fit at the passed eccentricities.
@@ -51,8 +67,8 @@ fitDisplacement = gampdf(radii_mm,fitParams(1),fitParams(2));
 if strcmp(displayPlot,'full');
     figure;
     % Plot the data
-    r1 = plot(radii_mm, displacement, 'sr', 'MarkerFaceColor', 'r'); hold on;
-    r2 = plot(radii_mm, gammaFitToData);
+    r1 = plot(radii_mm, displacement, '.r'); hold on;
+    r2 = plot(radii_mm, fitDisplacement);
     % Make the plot pretty
     xlabel('Eccentricity (mm)');
     ylabel('Displaement (mm)');
