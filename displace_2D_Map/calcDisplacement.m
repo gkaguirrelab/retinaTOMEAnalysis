@@ -41,4 +41,10 @@ ylabel('Cumulative RGC/RF Count')
 mmPerRGCcountAtRFcountPositions=interp1(countRFsum,radii_mm,countRGCsum,'spline');
 Displacement=abs(radii_mm'-mmPerRGCcountAtRFcountPositions);
 
+weights = radii_mm;
+weights(weights <= 1.5) = 1;
+weights(weights >1.5 ) = 0;
+
+fitParams = fitGammaToDisplacement(radii_mm, Displacement', weights)
+
 end

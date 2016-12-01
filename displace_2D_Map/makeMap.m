@@ -38,7 +38,7 @@ smpPerDeg   = 2; % Samples per Degree
 radMM = 5;
 smpPerMM = 6;
 sectorAngle = 6;
-rotDeg = -45;
+rotDeg = 0;
 % Obtain the Receptive field density per square degree within the sampling
 % area specified (also in degrees of visual angle)
 [RGCdensity,sampleBase_RGC_mm]= densityRGC(radMM,smpPerMM,'OFF');
@@ -55,3 +55,4 @@ RFdensity_mm = convert_degSq_to_mmSq(sampleBase_RF_deg, RFdensity_sqDeg);
 sampleBase_RF_mm=convert_deg_to_mm(sampleBase_RF_deg);
 
 Displacement = calcDisplacement(RFdensity_mm,sampleBase_RF_mm,RGCdenisty_mmSq,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle);
+
