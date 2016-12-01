@@ -1,4 +1,4 @@
-function Displacement = calcDisplacement(RFdensity_mm,sampleBase_RF_mm,RGCdenisty_mmSq,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle)
+function fitDisplacement = calcDisplacement(RFdensity_mm,sampleBase_RF_mm,RGCdenisty_mmSq,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle,plot)
 % Angle of the sector ### turpin code does not use sector angle or pi
 
 
@@ -28,23 +28,26 @@ countRFsum = cumsum(countRF); % Cumulative sum of the recetive fields
 countRGCsum = cumsum(countRGC); % Cumulative sum of the recetive fields 
 
 %% Make plot from Turpin/McKencdrick fig. 1
-figure
-hold on 
-plot(radii_mm,countRFsum,'r')
-plot(radii_mm,countRGCsum,'b')
-legend('Receptive Fields','Retinal Ganglion Cell')
-xlabel('Eccentricity (mm)')
-ylabel('Cumulative RGC/RF Count')
-
+if strcmp(plot,'full')
+    figure
+    hold on
+    plot(radii_mm,countRFsum,'r')
+    plot(radii_mm,countRGCsum,'b')
+    legend('Receptive Fields','Retinal Ganglion Cell')
+    xlabel('Eccentricity (mm)')
+    ylabel('Cumulative RGC/RF Count')
+end
 % Calculate the displacement by finding the mm difference at equivalent
 % count points
 mmPerRGCcountAtRFcountPositions=interp1(countRFsum,radii_mm,countRGCsum,'spline');
 Displacement=abs(radii_mm'-mmPerRGCcountAtRFcountPositions);
 
-weights = radii_mm;
-weights(weights <= 1.5) = 1;
-weights(weights >1.5 ) = 0;
+%% Generate weights for the fit
+weights = radii_mm.*0;
+idx=find(diff(Displacement)<0);
+weights(1:idx(1))=1;
+weights(idx(1)+1:end)=0;
 
-fitParams = fitGammaToDisplacement(radii_mm, Displacement', weights)
+[fitParams, fitDisplacement]  = fitGammaToDisplacement(radii_mm, Displacement', weights);
 
 end
