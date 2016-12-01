@@ -63,5 +63,7 @@ nanDispMap = nanmean(mapFull,3);
 %% fill in the nans
 dispMap = fillNansInMap(nanDispMap,radMM,smpPerMM);
 
-%figure;plot(-radMM:1/smpPerMM:radMM,dispMap(31,:),'r');xlabel('eccentricity (mm)'),ylabel('displacement (mm)')
+figure;plot(-radMM:1/smpPerMM:radMM,dispMap(31,:),'r');xlabel('eccentricity (mm)'),ylabel('displacement (mm)')
+
+figure;plot(convert_mm_to_deg(-radMM:1/smpPerMM:radMM),convert_mm_to_deg(dispMap(31,:)),'r');xlabel('eccentricity (deg)'),ylabel('displacement (deg)')
 end
