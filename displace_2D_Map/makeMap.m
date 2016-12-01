@@ -38,25 +38,35 @@ smpPerDeg   = 2; % Samples per Degree
 radMM = 5;
 smpPerMM = 6;
 sectorAngle = 6;
-rotDegs =0:sectorAngle:360;
+rotDegs =0:sectorAngle:360-sectorAngle;
+
+%% Presize output matrix
+out_smps = 1/smpPerMM; % parameter from Turpin code
+out_radii = 0:out_smps:radMM; % vector of radii to match Turpin code
+mapFull = nan(2*length(out_radii)-1,2*length(out_radii)-1,length(rotDegs));
+mapFullMidPt = round(length(mapFull)/2);
+
 % Obtain the Receptive field density per square degree within the sampling
 % area specified (also in degrees of visual angle)
 [RGCdensity,sampleBase_RGC_mm]= densityRGC(radMM,smpPerMM,'OFF');
 
 [RFdensity,sampleBase_RF_deg] = densityRf(radDeg,smpPerDeg,'OFF'); % Generates a 2D Receptive Field Density plot 
 
-% Get data from Superior Merdian as a first pass check to validate the
-% pipeline of Turpin/McKendrick 
 
+for i = 1:length(rotDegs)
+    
+    [RGCdenisty_mmSq,RFdensity_sqDeg]= rotAndExrtractMeridian(RFdensity,RGCdensity,rotDegs(i));
+    
+    % Convert the RF counts (and sample base) from degress / deg^2 to mm and cells/mm^2
+    RFdensity_mm = convert_degSq_to_mmSq(sampleBase_RF_deg, RFdensity_sqDeg);
+    sampleBase_RF_mm=convert_deg_to_mm(sampleBase_RF_deg);
+    
+    
+    mapFull(mapFullMidPt,mapFullMidPt:end,i) = calcDisplacement(RFdensity_mm,sampleBase_RF_mm,RGCdenisty_mmSq,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle,'OFF');
+    
+    mapFull(:,:,i) = imrotate(mapFull(:,:,i),-1.*rotDegs(i),'crop','nearest');
+    
+end
 
-
-[RGCdenisty_mmSq,RFdensity_sqDeg]= rotAndExrtractMeridian(RFdensity,RGCdensity,rotDeg);
-
-
-% Convert the RF counts (and sample base) from degress / deg^2 to mm and cells/mm^2
-RFdensity_mm = convert_degSq_to_mmSq(sampleBase_RF_deg, RFdensity_sqDeg);
-sampleBase_RF_mm=convert_deg_to_mm(sampleBase_RF_deg);
-
-
-Displacement = calcDisplacement(RFdensity_mm,sampleBase_RF_mm,RGCdenisty_mmSq,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle,'OFF');
-
+dispMap = nanmean(mapFull,3);
+%figure;plot(-radMM:1/smpPerMM:radMM,dispMap(31,:),'r');xlabel('eccentricity (mm)'),ylabel('displacement (mm)')
