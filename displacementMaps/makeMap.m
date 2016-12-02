@@ -30,5 +30,5 @@ function dispMap = makeMap(radDeg,smpPerDeg,radMM,smpPerMM,sectorAngle)
 % area specified (also in degrees of visual angle)
 [RFdensity,sampleBase_RF_deg] = densityRf(radDeg,smpPerDeg,'OFF'); % Generates a 2D Receptive Field Density plot 
 
-dispMap = generate2dDisp(RFdensity,RGCdensity,sampleBase_RF_deg,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle,'off');
+dispMap = generate2dDisp(RFdensity,RGCdensity,sampleBase_RF_deg,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle,'full');
 end

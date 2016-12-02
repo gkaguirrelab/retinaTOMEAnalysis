@@ -1,4 +1,4 @@
-function dispMap = generate2dDisp(RFdensity,RGCdensity,sampleBase_RF_deg,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle,plot)
+function dispMap = generate2dDisp(RFdensity,RGCdensity,sampleBase_RF_deg,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle,plotOpt)
 
 rotDegs =0:sectorAngle:360-sectorAngle;
 
@@ -34,10 +34,10 @@ nanDispMap = nanmean(mapFull,3);
 %% fill in the nans
 dispMap = fillNansInMap(nanDispMap,radMM,smpPerMM);
 
-if strcmp(plot,'full')
-    figure;plot(-radMM:1/smpPerMM:radMM,dispMap(31,:),'r');xlabel('eccentricity (mm)'),ylabel('displacement (mm)')
+if strcmp(plotOpt,'full')
+    figure;plot(-radMM:1/smpPerMM:radMM,dispMap(mapFullMidPt,:),'r');xlabel('eccentricity (mm)'),ylabel('displacement (mm)')
 
-    figure;plot(convert_mm_to_deg(-radMM:1/smpPerMM:radMM),convert_mm_to_deg(dispMap(31,:)),'r');xlabel('eccentricity (deg)'),ylabel('displacement (deg)')
+    figure;plot(convert_mm_to_deg(-radMM:1/smpPerMM:radMM),convert_mm_to_deg(dispMap(mapFullMidPt,:)),'r');xlabel('eccentricity (deg)'),ylabel('displacement (deg)')
 end
 
 end
