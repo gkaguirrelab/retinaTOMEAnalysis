@@ -11,10 +11,6 @@ function bdPtsMm = bdPtsToMm(bd_pts,header)
 %
 % MAB OCT 2016
 
-if isempty(patchSizeMm)
-    patchSizeMm = 6;
-end
-
 pxlSize = header.ScaleX;
 bdPtsMm = bd_pts.*pxlSize;
 
