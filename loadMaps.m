@@ -4,7 +4,8 @@ function [rgcPlus,dispMap] = loadMaps(octSegFile,sectorAngle)
 
 %% preset sample data if no data input defined
 if isempty(octSegFile)
-    octSegFile = 'octProcessing/sample_data/11015_OD_Horizontal/11015_1_21682_result.mat';
+    base_dir = path2oct;
+    octSegFile = [base_dir '/octProcessing/sample_data/11015_OD_Horizontal/11015_1_21682_result.mat'];
 end
 if isempty(sectorAngle) 
     sectorAngle=6;
@@ -16,7 +17,7 @@ load(octSegFile)
 [rgcPlus,sampleBaseRadius] = rgcThickness(bd_pts,header);
 % Turn sambleBase into intputs for makeMap
 radMM = max(sampleBaseRadius);
-smpPerMM = radMM/(length(sampleBaseRadius)-1);
+smpPerMM = (length(sampleBaseRadius)-1)./radMM;
 % generate displacement map
 dispMap = makeMap(radMM,smpPerMM,sectorAngle);
 

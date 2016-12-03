@@ -28,7 +28,7 @@ inferior_mmSq = data(:,8);
 
 [curve_inferior] = fit(ecc_mm,inferior_mmSq,'smoothingspline', 'Exclude',find(isnan(inferior_mmSq)),'SmoothingParam', 1);
 
-meridian = zeros(2*(radMM*smpPerMM)+1,2*(radMM*smpPerMM)+1);
+meridian = zeros(2*(round(radMM)*round(smpPerMM))+1,2*(round(radMM)*round(smpPerMM))+1);
 
 [~,meridian(:,:,2),meridian(:,:,3)] = createGrid(radMM,smpPerMM);
 
