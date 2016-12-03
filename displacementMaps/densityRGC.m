@@ -8,7 +8,7 @@ function [RGCdensity,sampleBase_RGC_mm]= densityRGC(radMM,smpPerMM,verbose)
 % The meridian assignments are in the retinal coordinate frame. This can be
 % verified by observing that there is an interruption in the count data for
 % the nasal meridian corresponding to the blind spot.
-load('curcio_4meridian.mat')
+load('source_data/curcio_4meridian.mat')
 
 ecc_mm = data(:,1);
 temp_mmSq = data(:,2);
