@@ -1,4 +1,4 @@
-function [rgcPlus,dispMap] = loadMaps(octSegFile,sectorAngle)
+function [rgcPlus,dispMap, sampleBaseX, sampleBaseY] = loadMaps(octSegFile,sectorAngle)
 % load the output of Arua Tools and get the dimensions generates a matching
 % sized dispalcemnt map.
 
@@ -13,13 +13,18 @@ end
 
 % load OTC segmentation
 load(octSegFile)
-% vreate RGC+ thickness and sampleBase
+% reate RGC+ thickness and sampleBase
 [rgcPlus,sampleBaseRadius] = rgcThickness(bd_pts,header);
 % Turn sambleBase into intputs for makeMap
 radMM = max(sampleBaseRadius);
 smpPerMM = (length(sampleBaseRadius)-1)./radMM;
 % generate displacement map
 dispMap = makeMap(radMM,smpPerMM,sectorAngle);
+% generate a sampleBase in mm. The origin (0,0) is at the center
+xAxis=[fliplr(sampleBaseRadius)*-1,sampleBaseRadius(2:end)];
+yAxis=[fliplr(sampleBaseRadius)*-1,sampleBaseRadius(2:end)]';
+sampleBaseX=repmat(xAxis,length(yAxis),1);
+sampleBaseY=repmat(yAxis,1,length(yAxis));
 
 end
 
