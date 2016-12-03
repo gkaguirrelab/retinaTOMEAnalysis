@@ -1,4 +1,4 @@
-function dispMap = makeMap(radDeg,smpPerDeg,radMM,smpPerMM,sectorAngle)
+function dispMap = makeMap(radMM,smpPerMM,sectorAngle)
 
 % #############################################################
 % Script produces a 2D displacement image.
@@ -28,7 +28,7 @@ function dispMap = makeMap(radDeg,smpPerDeg,radMM,smpPerMM,sectorAngle)
 
 % Obtain the Receptive field density per square degree within the sampling
 % area specified (also in degrees of visual angle)
-[RFdensity,sampleBase_RF_deg] = densityRf(radDeg,smpPerDeg,'OFF'); % Generates a 2D Receptive Field Density plot 
+[RFdensity,sampleBase_RF_deg] = densityRf(convert_mm_to_deg(radMM),((radMM*smpPerMM)/convert_mm_to_deg(radMM)),'OFF'); % Generates a 2D Receptive Field Density plot 
 
 dispMap = generate2dDisp(RFdensity,RGCdensity,sampleBase_RF_deg,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle,'full');
 end
