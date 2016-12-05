@@ -10,13 +10,18 @@ for s = 1:length(subjects)
     
         inFile = fullfile(baseDir,subjects{s},'HeidelbergSpectralisOCT',eye,[subjects{s} '_' eye scans{sc}],[subjects{s} '_result.mat']);
         load(inFile);
+        
         if strcmp(scans{sc},'H')
-            [rgcPlus(:,:,s+sc-1),sampleBaseRadius] = rgcThickness(bd_pts,header);
+            [rgcPlusH(:,:,s),sampleBaseRadius] = rgcThickness(bd_pts,header);
         elseif strcmp(scans{sc},'V')
-            [rgcPlus(:,:,s+sc-1),sampleBaseRadius] = rgcThickness(bd_pts,header);
-             rgcPlus(:,:,s+sc-1) = imrotate(rgcPlus(:,:,s+sc-1),90);
+            [rgcPlusV(:,:,s),sampleBaseRadius] = rgcThickness(bd_pts,header);
+             rgcPlusV(:,:,s) = imrotate(rgcPlusV(:,:,s),90);
         end
+        
+       
     end
 end
+
+ %rgcPlus = [rgcPlusH:rgcPlusV];
 
         
