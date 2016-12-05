@@ -6,7 +6,7 @@ rotDegs =0:sectorAngle:360-sectorAngle;
 out_smps = 1/smpPerMM; % parameter from Turpin code
 out_radii = 0:out_smps:radMM; % vector of radii to match Turpin code
 mapFull = nan(2*length(out_radii)-1,2*length(out_radii)-1,length(rotDegs));
-mapFullMidPt = round(length(mapFull)/2);
+mapFullMidPt = round(size(mapFull,2)/2);
 
 
 
