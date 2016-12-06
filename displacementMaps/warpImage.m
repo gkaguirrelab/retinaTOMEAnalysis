@@ -100,11 +100,11 @@ idx = sub2ind([nr nc], ibin, jbin);
 outputImage = accumarray(idx, hiresOutputImage(:), [nr*nc 1], @nanmean);
 outputImage = reshape(outputImage, nr, nc);
 
-% Plot the results
-figure
-imagesc(sourceImage)
-figure
-imagesc(outputImage)
+% % Plot the results
+% figure
+% imagesc(sourceImage)
+% figure
+% imagesc(outputImage)
 
 % Create x,y,z vectors of the outputImage to allow spline fitting
 % valIdx=find(~isnan(outputImage));

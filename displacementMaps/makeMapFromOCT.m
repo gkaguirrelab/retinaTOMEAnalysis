@@ -1,4 +1,4 @@
-function dispMap = makeMap(radMM,smpPerMM,sectorAngle)
+function dispMap = makeMapFromOCT(inFile,sectorAngle)
 
 % #############################################################
 % Script produces a 2D displacement image.
@@ -24,11 +24,22 @@ function dispMap = makeMap(radMM,smpPerMM,sectorAngle)
 % #############################################################
 
 
+% Load OCT data from Aura Tools
+load(inFile);
+% Get sampleBaseRadius from header
+[~,sampleBaseRadius] = rgcThickness(bd_pts,header);
+% Turn sambleBase into intputs for densityRGC, densityRf, and generate2dDisp
+radMM = max(sampleBaseRadius);
+smpPerMM = (length(sampleBaseRadius)-1)./radMM;
+
+%% Generate Retinal Ganglion Cell Density Map 
 [RGCdensity,sampleBase_RGC_mm]= densityRGC(radMM,smpPerMM,'OFF');
 
+%% Generate Receptive Field Density Map 
 % Obtain the Receptive field density per square degree within the sampling
 % area specified (also in degrees of visual angle)
 [RFdensity,sampleBase_RF_deg] = densityRf(convert_mm_to_deg(radMM),((radMM*smpPerMM)/convert_mm_to_deg(radMM)),'OFF'); % Generates a 2D Receptive Field Density plot 
 
+%% Generate Displacement Map
 dispMap = generate2dDisp(RFdensity,RGCdensity,sampleBase_RF_deg,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle,'OFF');
 end
