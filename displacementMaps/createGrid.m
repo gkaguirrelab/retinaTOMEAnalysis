@@ -1,6 +1,6 @@
-function [line,pol,ecc] = createGrid(radDeg,smpPerDeg)
+function [line,pol,ecc] = createGrid(radMM,smpPerMM)
 
-line = linspace(-radDeg,radDeg,2.*radDeg*smpPerDeg+1);
+line = linspace(-radMM,radMM,2.*radMM*smpPerMM+1);
 
 
 Xpoints = line;
