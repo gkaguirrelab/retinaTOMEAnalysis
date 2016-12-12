@@ -39,27 +39,35 @@ for i = 1:size(meridian,1);
         
         if meridian(i,ii,2) >= 0 & meridian(i,ii,2) <= 90
             VMd = curve_sup(meridian(i,ii,3));
+            VMd(VMd<0) = 0;
             HMd = curve_nasal(meridian(i,ii,3));
+            HMd(HMd<0) = 0;
             theta1 = meridian(i,ii,2);
-            meridian(i,ii,1) = interp1([0,90],[HMd,VMd],theta1);
+            meridian(i,ii,1) = interp1([0,90],[HMd,VMd],theta1,'pchip');
             
         elseif meridian(i,ii,2) > 90 & meridian(i,ii,2) <= 180
             VMd = curve_sup(meridian(i,ii,3));
+            VMd(VMd<0) = 0;
             HMd = curve_temp(meridian(i,ii,3));
+            HMd(HMd<0) = 0;
             theta1 = meridian(i,ii,2);
-            meridian(i,ii,1) = interp1([90,180],[VMd,HMd],theta1);
+            meridian(i,ii,1) = interp1([90,180],[VMd,HMd],theta1,'pchip');
             
         elseif meridian(i,ii,2) >= 180 & meridian(i,ii,2) <= 270
             VMd = curve_inferior(meridian(i,ii,3));
+            VMd(VMd<0) = 0;
             HMd = curve_temp(meridian(i,ii,3));
+            HMd(HMd<0) = 0;
             theta1 = meridian(i,ii,2);
-            meridian(i,ii,1) = interp1([180,270],[HMd,VMd],theta1);
+            meridian(i,ii,1) = interp1([180,270],[HMd,VMd],theta1,'pchip');
             
         elseif meridian(i,ii,2) >= 270 & meridian(i,ii,2) <=360
             VMd = curve_inferior(meridian(i,ii,3));
+            VMd(VMd<0) = 0;
             HMd = curve_nasal(meridian(i,ii,3));
+            HMd(HMd<0) = 0;
             theta1 = meridian(i,ii,2);
-            meridian(i,ii,1) = interp1([270,360],[VMd,HMd],theta1);
+            meridian(i,ii,1) = interp1([270,360],[VMd,HMd],theta1,'pchip');
             
         end
     end

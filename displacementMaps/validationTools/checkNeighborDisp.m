@@ -12,7 +12,7 @@ rotDegs =0:sectorAngle:360-sectorAngle;
 sampleBase = 0:1/smpPerMM:radMM;
 for i = 1:length(rotDegs)
     %% rotate and crop
-    disp_crop   = imrotate(dispMap,-1.*rotDegs(i),'crop','bilinear');
+    disp_crop   = imrotate(dispMap,-1.*rotDegs(i),'crop','nearest');
     %% Get meridian from RF density rotated input image
     disp_midPoint = round(size(disp_crop,1)/2);
     dispVec(i,:) = disp_crop(disp_midPoint,disp_midPoint:end);
