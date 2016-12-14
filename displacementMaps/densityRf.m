@@ -1,4 +1,4 @@
-function [RFdensity,sampleBase_RF_deg] = densityRf(radDeg,smpPerDeg,verbose)
+function [RFdensity,sampleBase_RF_deg] = densityRf(radDeg,smpPerDeg,interp,verbose)
 % Genrates a map of recetive feild dentity 
 %
 % From Eq. 7 in Drasdo et al. 2007 Vision Research.
@@ -27,16 +27,16 @@ E2v = zeros(size(theta));
 for i = 1:size(theta,1);
     for ii = 1:size(theta,2)
         if theta(i,ii) >= 0 & theta(i,ii) <= 90 
-            E2v(i,ii) = interp1([0,90],[2.19,1.98],theta(i,ii));
+            E2v(i,ii) = interp1([0,90],[2.19,1.98],theta(i,ii),interp);
          
         elseif theta(i,ii) > 90 & theta(i,ii) <= 180 
-            E2v(i,ii) = interp1([90,180],[1.98,2.26],theta(i,ii));
+            E2v(i,ii) = interp1([90,180],[1.98,2.26],theta(i,ii),interp);
           
         elseif theta(i,ii) > 180 & theta(i,ii) <= 270
-            E2v(i,ii) = interp1([180,270],[2.26,1.5],theta(i,ii));
+            E2v(i,ii) = interp1([180,270],[2.26,1.5],theta(i,ii),interp);
            
         elseif theta(i,ii) > 270 & theta(i,ii) <=360
-            E2v(i,ii) = interp1([270,360],[1.5,2.19],theta(i,ii));
+            E2v(i,ii) = interp1([270,360],[1.5,2.19],theta(i,ii),interp);
           
         end
     end

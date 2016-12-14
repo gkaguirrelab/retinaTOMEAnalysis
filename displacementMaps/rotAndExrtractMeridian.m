@@ -1,8 +1,8 @@
 function [RGCdenisty_mmSq,RFdensity_sqDeg]= rotAndExrtractMeridian(RFdensity,RGCdensity,rotDeg)
 
 %% rotate and crop
-RF_crop   = imrotate(RFdensity,-1.*rotDeg,'crop','nearest');
-RGC_crop  = imrotate(RGCdensity,-1.*rotDeg,'crop','nearest');
+RF_crop   = imrotate(RFdensity,-1.*rotDeg,'crop','bilinear');
+RGC_crop  = imrotate(RGCdensity,-1.*rotDeg,'crop','bilinear');
 
 %% Get meridian from RF density rotated input image
 RF_midPoint = round(size(RF_crop,1)/2);

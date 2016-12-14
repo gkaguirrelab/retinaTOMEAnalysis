@@ -1,4 +1,4 @@
-function [RGCdensity,sampleBase_RGC_mm]= densityRGC(radMM,smpPerMM,verbose)
+function [RGCdensity,sampleBase_RGC_mm]= densityRGC(radMM,smpPerMM,interp,verbose)
 
 %this processes the curcio RGCd 4 meridian data
 
@@ -43,7 +43,7 @@ for i = 1:size(meridian,1);
             HMd = curve_nasal(meridian(i,ii,3));
             HMd(HMd<0) = 0;
             theta1 = meridian(i,ii,2);
-            meridian(i,ii,1) = interp1([0,90],[HMd,VMd],theta1,'pchip');
+            meridian(i,ii,1) = interp1([0,90],[HMd,VMd],theta1,interp);
             
         elseif meridian(i,ii,2) > 90 & meridian(i,ii,2) <= 180
             VMd = curve_sup(meridian(i,ii,3));
@@ -51,7 +51,7 @@ for i = 1:size(meridian,1);
             HMd = curve_temp(meridian(i,ii,3));
             HMd(HMd<0) = 0;
             theta1 = meridian(i,ii,2);
-            meridian(i,ii,1) = interp1([90,180],[VMd,HMd],theta1,'pchip');
+            meridian(i,ii,1) = interp1([90,180],[VMd,HMd],theta1,interp);
             
         elseif meridian(i,ii,2) >= 180 & meridian(i,ii,2) <= 270
             VMd = curve_inferior(meridian(i,ii,3));
@@ -59,7 +59,7 @@ for i = 1:size(meridian,1);
             HMd = curve_temp(meridian(i,ii,3));
             HMd(HMd<0) = 0;
             theta1 = meridian(i,ii,2);
-            meridian(i,ii,1) = interp1([180,270],[HMd,VMd],theta1,'pchip');
+            meridian(i,ii,1) = interp1([180,270],[HMd,VMd],theta1,interp);
             
         elseif meridian(i,ii,2) >= 270 & meridian(i,ii,2) <=360
             VMd = curve_inferior(meridian(i,ii,3));
@@ -67,7 +67,7 @@ for i = 1:size(meridian,1);
             HMd = curve_nasal(meridian(i,ii,3));
             HMd(HMd<0) = 0;
             theta1 = meridian(i,ii,2);
-            meridian(i,ii,1) = interp1([270,360],[VMd,HMd],theta1,'pchip');
+            meridian(i,ii,1) = interp1([270,360],[VMd,HMd],theta1,interp);
             
         end
     end
