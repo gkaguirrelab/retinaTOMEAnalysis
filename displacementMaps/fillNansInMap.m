@@ -1,4 +1,11 @@
-function dispMap = fillNansInMap(nanDispMap,radMM,smpPerMM)
+function dispMap = fillNansInMap(nanDispMap,radMM,smpPerMM,interp)
+% This function fills in the nans in for a map
+% 'nearest'	= Triangulation-based nearest neighbor interpolation supporting 2-D and 3-D interpolation.	Discontinuous
+% 'linear'	= Triangulation-based linear interpolation (default) supporting 2-D and 3-D interpolation	C0
+% 'natural'	= Triangulation-based natural neighbor interpolation supporting 2-D and 3-D interpolation. This method is an efficient tradeoff between linear and cubic.	C1 except at sample points
+% 'cubic'	= Triangulation-based cubic interpolation supporting 2-D interpolation only	C2
+% 'v4'      =  Biharmonic spline interpolation (MATLAB® 4 griddata method) supporting 2-D interpolation only. Unlike the other methods, this interpolation is not based on a triangulation. C2
+
 
 [X,Y] = meshgrid(1:size(nanDispMap,1),1:size(nanDispMap,2));
 
@@ -6,7 +13,7 @@ function dispMap = fillNansInMap(nanDispMap,radMM,smpPerMM)
 idxgood=~(isnan(X) | isnan(Y) | isnan(nanDispMap)); 
 
 %// re-interpolate scattered data (only valid indices) over the "uniform" grid
-dispMap = griddata( X(idxgood),Y(idxgood),nanDispMap(idxgood), X, Y ,'cubic') ;
+dispMap = griddata( X(idxgood),Y(idxgood),nanDispMap(idxgood), X, Y ,interp) ;
 
 %  [id1,id2]= find(nanDispMap == nan);
 %  dispMap = nanDispMap;

@@ -1,29 +1,20 @@
-function checkSingleRadial(radialRotDeg,sizeMM,smpPerMM,sectorAngle)
+function checkDispMatrix(radialRotDeg,sizeMM,smpPerMM,sectorAngle)
 
 
-map = makeMapRadial(sizeMM,smpPerMM,sectorAngle)
+map = makeMap(sizeMM,smpPerMM,sectorAngle)
 
 %Create sample base in MM based on map size and sample rate
 sampleBase=0:1/smpPerMM:sizeMM;
+sampleBaseSurf = repmat(sampleBase,size(map,1),1);
 
-rotMap   = imrotate(map,-1.*radialRotDeg,'crop','nearest');
+newPos = sampleBaseSurf - map;
 
-center = round(size(rotMap,1)/2);
-
-radial = rotMap(center,center:end);
-
-dispDiff = diff(radial);
-
-newPos = sampleBase - radial;
-
-diffRadial = diff(newPos);
+diffRadial = diff(newPos,1,2);
 
 figure;
-subplot(2,2,2)
-plot(dispDiff);
-ylabel('Diff (mm)')
-title('Diff of Displacement Along Radial')
 subplot(2,2,1)
+imagesc(map)
+subplot(2,2,2)
 plot(sampleBase,radial)
 xlabel('Eccentricity (mm)')
 ylabel('Displacement (mm)')
@@ -41,7 +32,7 @@ axis square
 subplot(2,2,4)
 plot(diffRadial);
 ylabel('Diff (mm)')
-title('Diff of New Position Along Radial')
+title('Diff of Displacement Along Radial')
 axis square
 
 

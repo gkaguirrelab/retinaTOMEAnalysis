@@ -32,7 +32,7 @@ end
 nanDispMap = nanmean(mapFull,3);
 
 %% fill in the nans
-dispMap = fillNansInMap(nanDispMap,radMM,smpPerMM);
+dispMap = fillNansInMap(nanDispMap,radMM,smpPerMM,'natural');
 
 if strcmp(plotOpt,'full')
     figure;plot(-radMM:1/smpPerMM:radMM,dispMap(mapFullMidPt,:),'r');xlabel('eccentricity (mm)'),ylabel('displacement (mm)')
