@@ -85,17 +85,17 @@ yhat = gampdf(radii_mm,params(1),params(2));
 % Calculate the sums-of-square error
 errorPreSum =((displacement - yhat).^2);
 errorPreSum = errorPreSum .* weights;
-
 E = sum(errorPreSum);
 
 % Determine if the derivative of the gamma function contains points with a
-% slope greater than unity. If so, inflate the error term to realmax. 
-% This is to avoid a non-physiologic displacement of a retinal ganglion
-% cell back past a more central, neighboring RGC.
+% slope greater than unity. If so, inflate the error term by 10.
+% This is to avoid a non-physiologic displacement of an RGC back
+% past a more central, neighboring RGC.
 
-firstDeriv=diff(yhat);
-if(max(firstDeriv) > 1)
-    E=realmax;
+firstDeriv=diff(yhat)./diff(radii_mm);
+if max(firstDeriv) >=1
+    E=E*1;
 end
+
 
 end % error calculation for gamma pdf model

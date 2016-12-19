@@ -1,4 +1,4 @@
-function fitDisplacement = calcDisplacement(RFdensity_mm,sampleBase_RF_mm,RGCdenisty_mmSq,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle,plot)
+function fitDisplacement = calcDisplacement(RFdensity_mm,sampleBase_RF_mm,RGCdenisty_mmSq,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle,PLOT)
 % Angle of the sector ### turpin code does not use sector angle or pi
 
 
@@ -28,11 +28,11 @@ countRFsum = cumsum(countRF); % Cumulative sum of the recetive fields
 countRGCsum = cumsum(countRGC); % Cumulative sum of the recetive fields 
 
 %% Make plot from Turpin/McKencdrick fig. 1
-if strcmp(plot,'full')
+if strcmp(PLOT,'full')
     figure
     hold on
-    plot(radii_mm,countRFsum,'r')
-    plot(radii_mm,countRGCsum,'b')
+    PLOT(radii_mm,countRFsum,'r')
+    PLOT(radii_mm,countRGCsum,'b')
     legend('Receptive Fields','Retinal Ganglion Cell')
     xlabel('Eccentricity (mm)')
     ylabel('Cumulative RGC/RF Count')
