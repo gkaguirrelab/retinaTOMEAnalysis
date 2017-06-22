@@ -1,4 +1,4 @@
-function dispMap = makeMap(radMM,smpPerMM,sectorAngle)
+function [dispMap]  = makeMap(radMM,smpPerMM,sectorAngle)
 
 % #############################################################
 % Script produces a 2D displacement image.

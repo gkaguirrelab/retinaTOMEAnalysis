@@ -1,9 +1,8 @@
 function [fitParams, fitDisplacement] = fitExpExpToDisplacement(radii_mm, displacement, weights, varargin)
 % function [fitParams, fitDisplacement] = fitExpExpToDisplacement(radii_mm, displacement, weights, varargin)
 %
-%  Fits an exponentiated exponential to the retinal ganglion cell displacement function.
-%
-%  http://home.iitk.ac.in/~kundu/paper101.pdf
+%  Fits an Chi Square Probabilty Density Function to the retinal ganglion cell displacement function.
+% 
 %
 %  Inputs:
 %    radii_mm: vector with the eccentricity base of the data
@@ -43,7 +42,7 @@ p = inputParser;
 p.addRequired('radii_mm',@isnumeric);
 p.addRequired('displacement',@isnumeric);
 p.addRequired('weights',@isnumeric);
-p.addParameter('initialParams',[1,2],@isnumeric);
+p.addParameter('initialParams',[4],@isnumeric);
 p.addParameter('displayPlot','none',@ischar);
 p.parse(radii_mm, displacement, weights, varargin{:});
 
@@ -58,11 +57,10 @@ if ~all(size(radii_mm)==size(displacement)) || ~all(size(radii_mm)==size(weights
 end
 
 % Run the search
-fitParams = fminsearch( (@(p) expExpModelFit(p, radii_mm, displacement, weights)), initialParams);
+fitParams = fminsearch( (@(p) expChiSqModelFit(p, radii_mm, displacement, weights)), initialParams);
 
 % Obtain the Gamma model fit at the passed eccentricities.
-fitDisplacement = gampdf(radii_mm,fitParams(1),fitParams(2));
-
+fitDisplacement = ((radii_mm.^((fitParams(1)./2)-1)).*exp(-1.*radii_mm./2))./(2.^(fitParams(1)./2).*gamma(fitParams(1)./2));
 % If the user requested a plot, give it to them
 if strcmp(displayPlot,'full')
     figure;
@@ -77,11 +75,10 @@ end
 end % main function
 
 
-function E = expExpModelFit(params, radii_mm, displacement, weights)
+function E = expChiSqModelFit(params, radii_mm, displacement, weights)
 
 % Error function, calculating the sum-of-squares for the data vs. the fit.
-yhat = (1-exp(-1.*params(1).*radii_mm)).^params(2);
-
+yhat= ((radii_mm.^((params(1)./2)-1)).*exp(-1.*radii_mm./2))./(2.^(params(1)./2).*gamma(params(1)./2));
 % Calculate the sums-of-square error
 errorPreSum =((displacement - yhat).^2);
 errorPreSum = errorPreSum .* weights;

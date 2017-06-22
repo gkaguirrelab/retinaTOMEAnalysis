@@ -48,6 +48,6 @@ idx=find(diff(Displacement)<0);
 weights(1:idx(1)+round(0.1*idx(1)))=1;
 weights(idx(1)+1+round(0.1*idx(1)):end)=0;
 
-[fitParams, fitDisplacement]  = fitGammaToDisplacement(radii_mm, Displacement', weights);
+[fitParams, fitDisplacement]  = fitChiSqToDisplacement(radii_mm, Displacement', weights);
 
 end
