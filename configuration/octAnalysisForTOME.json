@@ -1,15 +1,13 @@
-[
-	{
-		"flavor": "",
-		"hook": "",
-		"importance": "",
-		"localHookTemplate": "configuration/octAnalysisForTOMELocalHookTemplate.m",
-		"name": "octAnalysisForTOME",
-		"pathPlacement": "append",
-		"subfolder": "code",
-		"toolboxRoot": "",
-		"type": "git",
-		"update": "",
-		"url": "https:\/\/github.com\/gkaguirrelab\/octAnalysisForTOME.git‚Äù
-	}
-]
+{
+	"flavor": "",
+	"hook": "",
+	"importance": "",
+	"localHookTemplate": "configuration/octAnalysisForTOMELocalHookTemplate.m",
+	"name": "octAnalysisForTOME",
+	"pathPlacement": "append",
+	"subfolder": "code",
+	"toolboxRoot": "",
+	"type": "git",
+	"update": "",
+	"url": "https:\/\/github.com\/gkaguirrelab\/octAnalysisForTOME.git"Äù
+}
