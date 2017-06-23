@@ -13,10 +13,20 @@ function OLFlickerSensitivityLocalHook
 % You will need to edit the project location and i/o directory locations
 % to match what is true on your computer.
 
+ 
+%% Define project
+projectName = 'octAnalysisForTOME';
+ 
 %% Say hello
-fprintf('Running OLFlickerSensitivitylocal hook\n');
-
-%% Set preferences
+fprintf('Running % local hook\n',projectName);
+ 
+%% Clear out old preferences
+if (ispref(projectName))
+    rmpref(projectName);
+end
+ 
+%% Specify project location
+projectBaseDir = tbLocateProject(projectName);
 
 % Obtain the Dropbox path
 [~, userID] = system('whoami');
@@ -28,55 +38,15 @@ switch userID
     case {'dhb'}
         dropboxBaseDir = ['/Users1'  '/Dropbox (Aguirre-Brainard Lab)/'];
         dataPath = ['/Users1/' '/Dropbox (Aguirre-Brainard Lab)/MELA_data/'];        
-    case 'connectome'
-        dropboxBaseDir = ['/Users/' userID '/Dropbox (Aguirre-Brainard Lab)'];
-        dataPath = ['/Users/' userID '/Dropbox (Aguirre-Brainard Lab)/TOME_data/'];
     otherwise
         dropboxBaseDir = ['/Users/' userID '/Dropbox (Aguirre-Brainard Lab)'];
-        dataPath = ['/Users/' userID '/Dropbox (Aguirre-Brainard Lab)/MELA_data/'];
+        dataPath = [dropboxBaseDir '/retData/'];
 end
-
-% Set the Dropox path
-setpref('octAnalysisForTOME', 'dropboxPath', dropboxBaseDir);
-
-% Set the data path
-setpref('OneLight', 'dataPath', dataPath);
-
-% Set the modulation path
-setpref('OneLight', 'modulationPath', fullfile(dropboxBaseDir, 'MELA_materials', 'modulations/'));
-
-% Set the materials path
-setpref('OneLight', 'materialsPath', fullfile(dropboxBaseDir, 'MELA_materials/'));
-
-% Set the cache path
-setpref('OneLight', 'cachePath', fullfile(dropboxBaseDir, 'MELA_materials', 'cache/'));
-
-% Set the cache path
-setpref('OneLight', 'OneLightCalData', fullfile(dropboxBaseDir, 'MELA_materials', 'OneLightCalData/'));
-
-% Set the default speak rate
-setpref('OneLight', 'SpeakRateDefault', 230);
-
-% Add OmniDriver.jar to java path
-OneLightDriverPath = tbLocateToolbox('OneLightDriver');
-JavaAddToPath(fullfile(OneLightDriverPath,'xOceanOpticsJava/OmniDriver.jar'),'OmniDriver.jar');
-
-% Point at the code
-olFlickerProjectDir = tbLocateProject('OLFlickerSensitivity');
-setpref('OneLight', 'OLFlickerSensitivityBaseDir', fullfile(olFlickerProjectDir,'code'));
-
-% Add OLFlickerSensitivity to the path
-addpath(genpath(olFlickerProjectDir));
-
-%% Experiment specific prefs
+ 
+%% Set preferences for project output
 %
-% MaxPulsePsychophysics
-%
-% set the nominal primaries path
-setpref('MaxPulsePsychophysics','ModulationNominalPrimariesDir',fullfile(getpref('OneLight', 'materialsPath'),'Experiments','MaxPulsePsychophysics','ModulationNominalPrimaries'));
-% set the spectrum sought primaries path
-setpref('MaxPulsePsychophysics','ModulationCorrectedPrimariesDir',fullfile(getpref('OneLight', 'materialsPath'),'Experiments','MaxPulsePsychophysics','ModulationCorrectedPrimaries'));
-% set the starts/stops path
-setpref('MaxPulsePsychophysics','ModulationStartsStopsDir',fullfile(getpref('OneLight', 'materialsPath'),'Experiments','MaxPulsePsychophysics','ModulationStartsStops'));
-% set the configuration files path
-setpref('MaxPulsePsychophysics','ModulationConfigFilesDir',fullfile(getpref('OneLight', 'materialsPath'),'Experiments','MaxPulsePsychophysics','ModulationConfigFiles'));
+% This will need to be locally configured.
+setpref(projectName,'mainDir',projectBaseDir);
+
+setpref(projectName,'dataPath',dataPath);
+end
