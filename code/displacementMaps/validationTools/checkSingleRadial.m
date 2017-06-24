@@ -1,7 +1,7 @@
 function checkSingleRadial(radialRotDeg,sizeMM,smpPerMM,sectorAngle)
 
 
-map = makeMapRadial(sizeMM,smpPerMM,sectorAngle)
+map = makeMapRadial(sizeMM,smpPerMM,sectorAngle);
 
 %Create sample base in MM based on map size and sample rate
 sampleBase=0:1/smpPerMM:sizeMM;

@@ -1,14 +1,18 @@
 function dispMap = generate2dDispMatrix(RFdensity,RGCdensity,sampleBase_RF_deg,sampleBase_RGC_mm,radMM,smpPerMM,sectorAngle)
 
+% generate2dDispMatrix -- 
+%
+% Description: 
+%   This function 
+%
+
+%% calulate al
 rotDegs =0:sectorAngle:360-sectorAngle;
 
 %% Presize output matrix
 out_smps = 1/smpPerMM; % parameter from Turpin code
 out_radii = 0:out_smps:radMM; % vector of radii to match Turpin code
 dispMap = nan(length(rotDegs),length(out_radii));
-
-
-
 
 %% Generate a displacemnt vector for each sector in the retinal feild (nummber of sectors to 360/sectorAngle)
  % This will be stored in a 3D martix with (:,:,i) slice containing a single displacemnt vector 
