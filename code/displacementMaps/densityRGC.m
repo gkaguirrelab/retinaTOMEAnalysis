@@ -1,8 +1,25 @@
 function [RGCdensity,sampleBase_RGC_mm]= densityRGC(radMM,smpPerMM,interp,verbose)
-
-%this processes the curcio RGCd 4 meridian data
-
-
+% densityRGC -- Retinal Ganglion Cell 2D density map.
+% 
+% Description:
+%   This function produces a two dimensional map of retinal ganglion cell
+%   density.This uses the Curcio and Allen (1990) retinal ganglion cell 
+%   denstiy data which has RGC density measurses (per mm^2) along the four 
+%   meridians and radially interpolates betwwen the arms of the meridians.  
+%   meridians data
+%
+% Inputs: 
+%   radMM    = desired radius of the map in mm.
+%   smpPerMM = how many samples per mm.
+%   interp   = interpoation method for interp1 ('spline', 'linear',... see
+%              help interp1 for more intput options).            
+%   verbose  = option to plot density map (1 = plot, 0 = no plot). 
+%
+% Outputs:
+%   RGCdensity        = Map of retinal ganglion cell density.
+%   sampleBase_RGC_mm = Sample point positions from 0 to radMM in mm. 
+%
+% MAB 2016
 
 %% Load the RGC Density Data from Curcio and Allen 1990:
 % The meridian assignments are in the retinal coordinate frame. This can be
@@ -42,32 +59,32 @@ for i = 1:size(meridian,1);
             VMd(VMd<0) = 0;
             HMd = curve_nasal(meridian(i,ii,3));
             HMd(HMd<0) = 0;
-            theta1 = meridian(i,ii,2);
-            meridian(i,ii,1) = interp1([0,90],[HMd,VMd],theta1,interp);
+            theta = meridian(i,ii,2);
+            meridian(i,ii,1) = interp1([0,90],[HMd,VMd],theta,interp);
             
         elseif meridian(i,ii,2) > 90 & meridian(i,ii,2) <= 180
             VMd = curve_sup(meridian(i,ii,3));
             VMd(VMd<0) = 0;
             HMd = curve_temp(meridian(i,ii,3));
             HMd(HMd<0) = 0;
-            theta1 = meridian(i,ii,2);
-            meridian(i,ii,1) = interp1([90,180],[VMd,HMd],theta1,interp);
+            theta = meridian(i,ii,2);
+            meridian(i,ii,1) = interp1([90,180],[VMd,HMd],theta,interp);
             
         elseif meridian(i,ii,2) >= 180 & meridian(i,ii,2) <= 270
             VMd = curve_inferior(meridian(i,ii,3));
             VMd(VMd<0) = 0;
             HMd = curve_temp(meridian(i,ii,3));
             HMd(HMd<0) = 0;
-            theta1 = meridian(i,ii,2);
-            meridian(i,ii,1) = interp1([180,270],[HMd,VMd],theta1,interp);
+            theta = meridian(i,ii,2);
+            meridian(i,ii,1) = interp1([180,270],[HMd,VMd],theta,interp);
             
         elseif meridian(i,ii,2) >= 270 & meridian(i,ii,2) <=360
             VMd = curve_inferior(meridian(i,ii,3));
             VMd(VMd<0) = 0;
             HMd = curve_nasal(meridian(i,ii,3));
             HMd(HMd<0) = 0;
-            theta1 = meridian(i,ii,2);
-            meridian(i,ii,1) = interp1([270,360],[VMd,HMd],theta1,interp);
+            theta = meridian(i,ii,2);
+            meridian(i,ii,1) = interp1([270,360],[VMd,HMd],theta,interp);
             
         end
     end
