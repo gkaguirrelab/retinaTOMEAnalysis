@@ -40,13 +40,13 @@ switch userID
         dataPath = ['/Users1/' '/Dropbox (Aguirre-Brainard Lab)/MELA_data/'];        
     otherwise
         dropboxBaseDir = ['/Users/' userID '/Dropbox (Aguirre-Brainard Lab)'];
-        dataPath = [dropboxBaseDir '/retData/'];
+        DropBoxDataPath = [dropboxBaseDir '/retData/'];
+        LocalDataPath = [projectBaseDir '/data'];
 end
  
 %% Set preferences for project output
-%
-% This will need to be locally configured.
-setpref(projectName,'mainDir',projectBaseDir);
 
-setpref(projectName,'dataPath',dataPath);
+setpref(projectName,'mainDir',projectBaseDir); % main directory path 
+setpref(projectName,'DropBoxDataPath',DropBoxDataPath); % path to data stroed on dropbox
+setpref(projectName,'LocalDataPath',LocalDataPath); % path to small file within the git repo 
 end
