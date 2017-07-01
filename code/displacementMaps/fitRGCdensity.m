@@ -1,4 +1,4 @@
-function [RGCdensity,sampleBase_RGC_mm]= fitRGCdensity(radMM,smpPerMM,interp,verbose)
+function [ecc_mm,polyFitOut] = fitRGCdensity(angle,polyOrder)
 % densityRGC -- Retinal Ganglion Cell 2D density map.
 %
 % Description:
@@ -54,31 +54,43 @@ rgcDenisty_SD_inferior = data(:,9);
 % the sampled RGC densities. The result is a set of function handles that
 % relate continuous distance (in mm) from the fovea to RGC density (in
 % counts / mm^2).
-polyFunctionNasal = fit(log(ecc_mm(2:end)),log(rgcDenisty_mmSq_nasal(2:end)),'poly8','Exclude', find(isnan(rgcDenisty_mmSq_nasal(2:end))));
-p = polyfit(log(ecc_mm(2:end)),log(rgcDenisty_mmSq_nasal(2:end)),14)
+
+polyFunctionNasal = fit(log(ecc_mm),log(rgcDenisty_mmSq_nasal),['poly' num2str(polyOrder)],'Exclude', [find(isnan(rgcDenisty_mmSq_nasal)) find(isinf(log(rgcDenisty_mmSq_nasal)))']);
+polyFunctionSuperior = fit(log(ecc_mm),log(rgcDensity_mmSq_superior),['poly' num2str(polyOrder)],'Exclude', [find(isnan(rgcDensity_mmSq_superior)) find(isinf(log(rgcDensity_mmSq_superior)))']);
+polyFunctionTemporal = fit(log(ecc_mm),log(rgcDensity_mmSq_temporal),['poly' num2str(polyOrder)],'Exclude', [find(isnan(rgcDensity_mmSq_temporal))' find(isinf(log(rgcDensity_mmSq_temporal)))']);
+polyFunctionInferior = fit(log(ecc_mm),log(rgcDenisty_mmSq_inferior),['poly' num2str(polyOrder)],'Exclude', [find(isnan(rgcDenisty_mmSq_inferior))' find(isinf(log(rgcDenisty_mmSq_inferior)))']);
+
+polyFitOut = polyFunctionNasal;
+
+if angle >= 0 && angle < 90;
+    nasalFrac = angle/90;
+    superiorFrac = 1 - nasalFrac;
+    for i = 1:polyOrder
+        eval(sprintf('polyFitOut.p%s = nasalFrac.*polyFunctionNasal.p%s + superiorFrac.*polyFunctionSuperior.p%s;',num2str(i),num2str(i),num2str(i)))
+    end
+elseif angle >= 90 && angle < 180;
+    superiorFrac = (angle-90)/90;
+    temporalFrac = 1 - superiorFrac;
+    for i = 1:polyOrder
+        eval(sprintf('polyFitOut.p%s = superiorFrac.*polyFunctionSuperior.p%s + temporalFrac.*polyFunctionTemporal.p%s;',num2str(i),num2str(i),num2str(i)))
+    end
+elseif angle >= 180 && angle < 270;
+    temporalFrac = (angle-180)/90;
+    inferiorFrac = 1 - temporalFrac;
+    for i = 1:polyOrder
+        eval(sprintf('polyFitOut.p%s = temporalFrac.*polyFunctionTemporal.p%s + inferiorFrac.*polyFunctionInferior.p%s;',num2str(i),num2str(i),num2str(i)))
+    end
+elseif angle >= 270 && angle < 360;
+    inferiorFrac = (angle-270)/90;
+    nasalFrac = 1 - inferiorFrac;
+    for i = 1:polyOrder
+        eval(sprintf('polyFitOut.p%s = inferiorFrac.*polyFunctionInferior.p%s + nasalFrac.*polyFunctionNasal.p%s;',num2str(i),num2str(i),num2str(i)))
+    end
+end
 
 
-polyFunctionSuperior = fit(ecc_mm,rgcDensity_mmSq_superior,'smoothingspline', 'Exclude',find(isnan(rgcDensity_mmSq_superior)),'SmoothingParam', 1);
-polyFunctionTemporal = fit(ecc_mm,rgcDensity_mmSq_temporal,'smoothingspline', 'Exclude',find(isnan(rgcDensity_mmSq_temporal)),'SmoothingParam', 1);
-polyFunctionInferior = fit(ecc_mm,rgcDenisty_mmSq_inferior,'smoothingspline', 'Exclude',find(isnan(rgcDenisty_mmSq_inferior)),'SmoothingParam', 1);
 
-figure;
-subplot(2,1,1)
-hold on
-plot(log(ecc_mm(2:end)),log(rgcDenisty_mmSq_nasal(2:end)));
-plot(log(ecc_mm(2:end)),polyFunctionNasal(log(ecc_mm(2:end))))
-errorbar(x,y,err,'-s','MarkerSize',10,...
-    'MarkerEdgeColor','red','MarkerFaceColor','red')
-
-
-subplot(2,1,2)
-figure
-hold on
-%plot(ecc_mm(2:end),rgcDenisty_mmSq_nasal(2:end));
-plot(ecc_mm(2:end),exp(polyFunctionNasal(log(ecc_mm(2:end)))),'r')
-errorbar(ecc_mm(2:end),rgcDenisty_mmSq_nasal(2:end),rgcDenisty_SD_nasal(2:end),'-s','MarkerSize',3,...
-    'MarkerEdgeColor','blue','MarkerFaceColor','blue')
-
+end
 
 
 
