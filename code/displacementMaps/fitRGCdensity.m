@@ -1,25 +1,22 @@
 function [ecc_mm,polyFitOut] = fitRGCdensity(angle,polyOrder)
-% densityRGC -- Retinal Ganglion Cell 2D density map.
+% fitRGCdensity -- Estimates a RGC cell body density function at a given angle on the retina.
 %
 % Description:
-%   This function produces a two dimensional map of retinal ganglion cell
-%   density.This uses the Curcio and Allen (1990) retinal ganglion cell
-%   denstiy data which has RGC density measurses (per mm^2) along the four
-%   meridians and radially interpolates betwwen the arms of the meridians.
-%   meridians data
+%   This function returns a function that esimates the retinal ganglion cell
+%   cell body density as a function of eccentricity in mm .This uses the 
+%   Curcio and Allen (1990) data that measured cell density along the 4 meridians.
+%   This returns a function that estimates this density at the desired
+%   input angle by taking a weighted average of the fit parameters.
 %
 % Inputs:
-%   radMM    = desired radius of the map in mm.
-%   smpPerMM = how many samples per mm.
-%   interp   = interpoation method for interp1 ('spline', 'linear',... see
-%              help interp1 for more intput options).
-%   verbose  = option to plot density map (1 = plot, 0 = no plot).
-%
+%   angle      = The dedsired angle of the density function on the retinal field.
+%                (0=nasal;90=superior;180=temporal;270=inferior)
+%   polyOrder  = The order of the polynomial used for fitting.
 % Outputs:
-%   RGCdensity        = Map of retinal ganglion cell density.
-%   sampleBase_RGC_mm = Sample point positions from 0 to radMM in mm.
+%   expFitOut = Function that estimates the RGC cell body denstity at 
+%               the input anlge as a funciton of eccentricity (mm).
 %
-% MAB 2016
+% MAB 2017
 
 %% Load the RGC Density Data from Curcio and Allen 1990:
 % Curcio and Allen obtained measurements of the denisty of all RGC classes
@@ -62,6 +59,9 @@ polyFunctionInferior = fit(log(ecc_mm),log(rgcDenisty_mmSq_inferior),['poly' num
 
 polyFitOut = polyFunctionNasal;
 
+% Take a weighed average of the parameters of the fit polynomial. the
+% weights are the fraction of the input angle for both meridians that flank the
+% angle of interest. 
 if angle >= 0 && angle < 90;
     nasalFrac = angle/90;
     superiorFrac = 1 - nasalFrac;
