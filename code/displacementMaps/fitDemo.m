@@ -2,7 +2,7 @@
 
 %% Fit Functions
 %input angle
-angle = 45;
+angle = 0;
 % fit the RGC density
 [ecc_mm,RGCfit] = fitRGCdensity(angle,6);
 % fit the RF density -- need to convert mm to deg
