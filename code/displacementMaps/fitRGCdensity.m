@@ -52,14 +52,9 @@ rgcDenisty_SD_inferior = data(:,9);
 % relate continuous distance (in mm) from the fovea to RGC density (in
 % counts / mm^2).
 
-fitEqn = '(1./b)*exp(-1.*((x-m)/b + exp(-1.*(x-m)/b)))'
-fitEqn = '(x.^a).*exp(-b.*x)'
-fitEqn = '(1/(x*a*sqrt(2*pi)).*exp(-1.*(log(x - b).^2)/(2*a.^2)))'
 
 
-[fitParams, fitDisplacement] = fitExpExpToDisplacement(ecc_mm, rgcDenisty_mmSq_nasal, ones(size(ecc_mm)))
-
-polyFunctionNasal = fit(ecc_mm,rgcDenisty_mmSq_nasal,fitEqn,'Exclude',find(isnan(rgcDenisty_mmSq_nasal)));
+polyFunctionNasal    = fit(log(ecc_mm),log(rgcDenisty_mmSq_nasal),['poly' num2str(polyOrder)],'Exclude', [find(isnan(rgcDenisty_mmSq_nasal)) find(isinf(log(rgcDenisty_mmSq_nasal)))']);
 polyFunctionSuperior = fit(log(ecc_mm),log(rgcDensity_mmSq_superior),['poly' num2str(polyOrder)],'Exclude', [find(isnan(rgcDensity_mmSq_superior)) find(isinf(log(rgcDensity_mmSq_superior)))']);
 polyFunctionTemporal = fit(log(ecc_mm),log(rgcDensity_mmSq_temporal),['poly' num2str(polyOrder)],'Exclude', [find(isnan(rgcDensity_mmSq_temporal))' find(isinf(log(rgcDensity_mmSq_temporal)))']);
 polyFunctionInferior = fit(log(ecc_mm),log(rgcDenisty_mmSq_inferior),['poly' num2str(polyOrder)],'Exclude', [find(isnan(rgcDenisty_mmSq_inferior))' find(isinf(log(rgcDenisty_mmSq_inferior)))']);
