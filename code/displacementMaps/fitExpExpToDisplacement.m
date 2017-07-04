@@ -43,7 +43,7 @@ p = inputParser;
 p.addRequired('radii_mm',@isnumeric);
 p.addRequired('displacement',@isnumeric);
 p.addRequired('weights',@isnumeric);
-p.addParameter('initialParams',[1,2],@isnumeric);
+p.addParameter('initialParams',[100,2],@isnumeric);
 p.addParameter('displayPlot','none',@ischar);
 p.parse(radii_mm, displacement, weights, varargin{:});
 
@@ -59,7 +59,6 @@ end
 
 % Run the search
 fitParams = fminsearch( (@(p) expExpModelFit(p, radii_mm, displacement, weights)), initialParams);
-
 % Obtain the Gamma model fit at the passed eccentricities.
 fitDisplacement = (fitParams(1).*fitParams(2)).*((1-exp(-1.*fitParams(1).*radii_mm)).^fitParams(2)).*exp(-1.*fitParams(1).*radii_mm);
 

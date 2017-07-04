@@ -57,8 +57,7 @@ fitEqn = '(x.^a).*exp(-b.*x)'
 fitEqn = '(1/(x*a*sqrt(2*pi)).*exp(-1.*(log(x - b).^2)/(2*a.^2)))'
 
 
-s
-
+[fitParams, fitDisplacement] = fitExpExpToDisplacement(ecc_mm, rgcDenisty_mmSq_nasal, ones(size(ecc_mm)))
 
 polyFunctionNasal = fit(ecc_mm,rgcDenisty_mmSq_nasal,fitEqn,'Exclude',find(isnan(rgcDenisty_mmSq_nasal)));
 polyFunctionSuperior = fit(log(ecc_mm),log(rgcDensity_mmSq_superior),['poly' num2str(polyOrder)],'Exclude', [find(isnan(rgcDensity_mmSq_superior)) find(isinf(log(rgcDensity_mmSq_superior)))']);
