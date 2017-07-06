@@ -1,4 +1,4 @@
-function [fitParams, fitDisplacement] = fitFrechnetToRGCDensity(radii_mm, rgcDensity, weights, varargin)
+function [fitParams, fitRGCdensity] = fitFrechnetToRGCDensity(radii_mm, rgcDensity, weights, varargin)
 % function [fitParams, fitDisplacement] = fitGammaToDisplacement(radii_mm, displacement, weights, varargin)
 %
 %  Fits a gamma pdf to the retinal ganglion cell displacement function. The
