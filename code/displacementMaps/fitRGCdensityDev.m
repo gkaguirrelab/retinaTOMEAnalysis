@@ -1,4 +1,4 @@
-function [ecc_mm,outParams,RGCdensityFit, scaleData] = fitRGCdensity(angle)
+function [ecc_mm,outParams,RGCdensityFit, scaleData] = fitRGCdensityDev(angle)
 % fitRGCdensity -- Estimates a RGC cell body density function at a given angle on the retina.
 %
 % Description:
@@ -64,16 +64,6 @@ norm_rgcDensity_inferior = rgcDensity_mmSq_inferior./scaleData;
 % relate continuous distance (in mm) from the fovea to RGC density (in
 % counts / mm^2).
 
-[fitParams_temporal, ~] = fitFrechetToRGCDensity(ecc_mm, norm_rgcDensity_temporal, ones(size(ecc_mm)));
-
-
-[fitParams_superior, ~] = fitFrechetToRGCDensity(ecc_mm, norm_rgcDensity_superior, ones(size(ecc_mm)));
-
-
-[fitParams_nasal, ~] = fitFrechetToRGCDensity(ecc_mm, norm_rgcDensity_nasal, ones(size(ecc_mm)));
-
-
-[fitParams_inferior, ~] = fitFrechetToRGCDensity(ecc_mm, norm_rgcDensity_inferior, ones(size(ecc_mm)));
 
 % Take a weighed average of the parameters of the fit polynomial. the
 % weights are the fraction of the input angle for both meridians that flank the
@@ -81,32 +71,22 @@ norm_rgcDensity_inferior = rgcDensity_mmSq_inferior./scaleData;
 if angle >= 0 && angle < 90;
     nasalFrac = angle/90;
     superiorFrac = 1 - nasalFrac;
-    outParams = nasalFrac.* fitParams_nasal + superiorFrac.*fitParams_superior;
+    weightedAvgData = nasalFrac.* norm_rgcDensity_nasal + superiorFrac.*norm_rgcDensity_superior;
 elseif angle >= 90 && angle < 180;
     superiorFrac = (angle-90)/90;
     temporalFrac = 1 - superiorFrac;
-    outParams = superiorFrac.*fitParams_superior + temporalFrac.*fitParams_temporal;
+    weightedAvgData = superiorFrac.*norm_rgcDensity_superior + temporalFrac.*norm_rgcDensity_temporal;
 elseif angle >= 180 && angle < 270;
     temporalFrac = (angle-180)/90;
     inferiorFrac = 1 - temporalFrac;
-    outParams = temporalFrac.*fitParams_temporal + inferiorFrac.*fitParams_inferior;
+    weightedAvgData = temporalFrac.*norm_rgcDensity_temporal + inferiorFrac.*norm_rgcDensity_inferior;
 elseif angle >= 270 && angle < 360;
     inferiorFrac = (angle-270)/90;
     nasalFrac = 1 - inferiorFrac;
-    outParams = inferiorFrac.*fitParams_inferior + nasalFrac.*fitParams_nasal;
+    weightedAvgData = inferiorFrac.*norm_rgcDensity_inferior + nasalFrac.*norm_rgcDensity_nasal;
 end
 
-RGCdensityFit = frechnetPDF(ecc_mm, outParams(1), outParams(2), outParams(3));
-
-end
-
-[fitParams_temporal, ~] = fitFrechetToRGCDensity(ecc_mm, norm_rgcDensity_temporal, ones(size(ecc_mm)));
-
-
-function y = frechnetPDF( x, shape, scale, location )
-
-y = (shape./scale)*((x-location)./scale).^(-1-shape).* exp( -((x-location)./scale).^(-shape));
-
+[outParams, RGCdensityFit] = fitFrechetToRGCDensity(ecc_mm, weightedAvgData, ones(size(ecc_mm)));
 
 end
 

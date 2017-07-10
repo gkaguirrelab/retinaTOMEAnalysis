@@ -1,4 +1,4 @@
-function Xc = displacementFunction(Xr,params) 
+function Xc = displacementFunction(X_RF,params) 
 a = params.a;
 b = params.b;
 c = params.c;
@@ -9,12 +9,23 @@ m = params.m;
 alpha = params.alpha;
 g = params.g;
 
-Kr = params.Kr;
-Kc = params.Kc;
+K_RF = params.Kr;
+K_RGC = params.Kc;
+
+y = a.*exp(-b.*X_RF)+c.*exp(-d.*X_RF);
+
+density_Term1 = (a.*exp(-1*b.*X_RF))./b;
+density_Term2 = (c.*exp(-1*d.*X_RF))./d;
+Density_RF = -1.*density_Term1 - density_Term1 + K_RF;
+
+y = g*((alpha./s)*((X_RF-m)./s).^(-1-alpha).* exp( -((X_RF-m)./s).^(-alpha)));
+
+A = log((Density_RF - K_RGC)./g).^-1;
+
+-S.*nthroot(A,alpha)-m
+
+Xrgc = 
 
 
-Func = log((a.*exp(-b.*Xr)./(g.*b))+(c.*exp(-d.*Xr)./(g.*d))+((Kr+Kc)/g)).^-1;
-
-Xc = -s.*nthroot(Func,alpha)-m;
 
 end

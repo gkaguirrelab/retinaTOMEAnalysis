@@ -1,4 +1,4 @@
-function [fitParams, fitRGCdensity] = fitFrechnetToRGCDensity(radii_mm, rgcDensity, weights, varargin)
+function [fitParams, RGCdensityFit] = fitFrechetToRGCDensity(radii_mm, rgcDensity, weights, varargin)
 % function [fitParams, fitDisplacement] = fitGammaToDisplacement(radii_mm, displacement, weights, varargin)
 %
 %  Fits a gamma pdf to the retinal ganglion cell displacement function. The
@@ -43,7 +43,7 @@ p = inputParser;
 p.addRequired('radii_mm',@isnumeric);
 p.addRequired('displacement',@isnumeric);
 p.addRequired('weights',@isnumeric);
-p.addParameter('initialParams',[1,1,0,20000],@isnumeric);
+p.addParameter('initialParams',[1,1,0],@isnumeric);
 p.addParameter('displayPlot','none',@ischar);
 p.parse(radii_mm, rgcDensity, weights, varargin{:});
 
@@ -64,14 +64,14 @@ options=optimset(options,'Display','none');
 fitParams = fminsearch( (@(p) modelFitError(p, radii_mm, rgcDensity, weights)), initialParams, options);
 
 % Obtain the Frechnet model fit at the passed eccentricities.
-fitRGCdensity = frechnetPDF(radii_mm,fitParams(1),fitParams(2),fitParams(3),fitParams(4));
+RGCdensityFit = frechnetPDF(radii_mm,fitParams(1),fitParams(2),fitParams(3));
 
 % If the user requested a plot, give it to them
 if strcmp(displayPlot,'full')
     figure;
     % Plot the data
     r1 = plot(radii_mm, rgcDensity, '.r'); hold on;
-    r2 = plot(radii_mm, fitRGCdensity);
+    r2 = plot(radii_mm, RGCdensityFit);
     % Make the plot pretty
     xlabel('Eccentricity (mm)');
     ylabel('Density (counts/mm2)');
@@ -80,10 +80,10 @@ end
 end % main function
 
 
-function y = frechnetPDF( x, shape, scale, location, overallScale )
+function y = frechnetPDF( x, shape, scale, location )
 
 y = (shape./scale)*((x-location)./scale).^(-1-shape).* exp( -((x-location)./scale).^(-shape));
-y = y * overallScale;
+
 
 end
 
@@ -91,7 +91,7 @@ end
 function E = modelFitError(params, radii_mm, rgcDensity, weights)
 
 % Error function, calculating the sum-of-squares for the data vs. the fit.
-yhat = frechnetPDF(radii_mm,params(1),params(2),params(3),params(4));
+yhat = frechnetPDF(radii_mm,params(1),params(2),params(3));
 
 % Calculate the sums-of-square error
 errorPreSum =((rgcDensity - yhat).^2);
