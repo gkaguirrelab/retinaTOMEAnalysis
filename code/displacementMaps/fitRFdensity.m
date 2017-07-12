@@ -41,18 +41,22 @@ inferior       = (inferior .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
 curve_inferior = fit(ecc_deg,inferior,'exp2','Exclude', find(isnan(inferior)));
 
 expFitOut = curve_nasal;
+
+%% THIS NEEDS TO BE FIXED. THE ANGLES AND MIXING IS WRONG
+
+
 % Take a weighed average of the parameters of the fit exp2. The
 % weights are thet fraction of the input angle for both meridians that flank the
 % angle of interest.
 if angle >= 0 && angle < 90;
-    nasalFrac = angle/90;
-    superiorFrac = 1 - nasalFrac;
+    superiorFrac = angle/90;
+    nasalFrac  = 1 - superiorFrac;
     for i = ['a','b','c','d']
         eval(sprintf('expFitOut.%s = nasalFrac.*curve_nasal.%s + superiorFrac.*curve_superior.%s;',i,i,i))
     end
 elseif angle >= 90 && angle < 180;
-    superiorFrac = (angle-90)/90;
-    temporalFrac = 1 - superiorFrac;
+    temporalFrac = (angle-90)/90;
+    superiorFrac  = 1 - temporalFrac;
     for i = ['a','b','c','d']
         eval(sprintf('expFitOut.%s = superiorFrac.*curve_superior.%s + temporalFrac.*curve_temporal.%s;',i,i,i))
     end

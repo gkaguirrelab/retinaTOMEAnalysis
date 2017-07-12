@@ -2,17 +2,17 @@
 clear all
 %% Fit Functions
 %input angle
-angle = 0; 
+angle = 90;
 % fit the RGC density
 [ecc_mm,outParams_RGC,RGCdensityFit, scaleData] = fitRGCdensityDev(angle);
 % fit the RF density -- need to convert mm to deg
 RFfit = fitRFdensity(convert_mm_to_deg(ecc_mm),angle,scaleData);
 
 % %% Plot 
-% figure;
-% plot(ecc_mm,RGCdensityFit)
-% hold on
-% plot(ecc_mm,RFfit(convert_mm_to_deg(ecc_mm)))
+figure;
+plot(ecc_mm,RGCdensityFit)
+hold on
+plot(ecc_mm,RFfit(convert_mm_to_deg(ecc_mm)))
 
 %% Find K offset for RGC fit integral 
 % create function 
@@ -39,11 +39,11 @@ K_RF = (2*(14804.6)/scaleData) - RF_Function(0);
 
 
 % %% plot
-% figure
-% plot(ecc_mm,(RF_Function(convert_mm_to_deg(ecc_mm)))+K_RF,'r');
-% hold on 
-% plot(ecc_mm,(RGC_function(ecc_mm)+K_RGC),'b')
-% 
+figure
+plot(ecc_mm,(RF_Function(convert_mm_to_deg(ecc_mm)))+K_RF,'r');
+hold on 
+plot(ecc_mm,(RGC_function(ecc_mm)+K_RGC),'b')
+
 
 %% Calculate Displacement 
 

@@ -48,13 +48,17 @@ rgcDensity_SD_superior = data(:,5);
 rgcDensity_SD_nasal = data(:,7);
 rgcDensity_SD_inferior = data(:,9);
 
+% Adjust the RGC counts to reflect the fraction that is midget cells
+midgetFraction = midgetFractionByEccen(convert_mm_to_deg(ecc_mm));
+midget_rgcDensity_mmSq_superior = rgcDensity_mmSq_superior.* midgetFraction;
+
 % set the scale to normalize the data so that the  Frechet PDF fits well.
 % ## THIS MUST ALSO BE APPLIED TO THE RF DENSITY DATA ##
-scaleData = 2*max([rgcDensity_mmSq_temporal;rgcDensity_mmSq_superior;rgcDensity_mmSq_nasal;rgcDensity_mmSq_inferior]);
-
+%scaleData = 2*max([rgcDensity_mmSq_temporal;midget_rgcDensity_mmSq_superior;rgcDensity_mmSq_nasal;rgcDensity_mmSq_inferior]);
+scaleData = 2*max([midget_rgcDensity_mmSq_superior]);
 % Normalize the data
 norm_rgcDensity_temporal = rgcDensity_mmSq_temporal./scaleData;
-norm_rgcDensity_superior = rgcDensity_mmSq_superior./scaleData;
+norm_rgcDensity_superior = midget_rgcDensity_mmSq_superior./scaleData;
 norm_rgcDensity_nasal = rgcDensity_mmSq_nasal./scaleData;
 norm_rgcDensity_inferior = rgcDensity_mmSq_inferior./scaleData;
 
@@ -64,34 +68,47 @@ norm_rgcDensity_inferior = rgcDensity_mmSq_inferior./scaleData;
 % relate continuous distance (in mm) from the fovea to RGC density (in
 % counts / mm^2).
 
+%% THERE IS A BUG IN HOW THE ANGLE IS BEING RELATED TO THE MIXING OF THE MERIDIA
+
+%% REPLACE WITH SWITCH/CASE cause it's prettier
 
 % Take a weighed average of the parameters of the fit polynomial. the
 % weights are the fraction of the input angle for both meridians that flank the
 % angle of interest. 
-if angle >= 0 && angle < 90;
+if angle >= 0 && angle < 90
     nasalFrac = angle/90;
     superiorFrac = 1 - nasalFrac;
     weightedAvgData = nasalFrac.* norm_rgcDensity_nasal + superiorFrac.*norm_rgcDensity_superior;
-elseif angle >= 90 && angle < 180;
+elseif angle >= 90 && angle < 180
     superiorFrac = (angle-90)/90;
     temporalFrac = 1 - superiorFrac;
     weightedAvgData = superiorFrac.*norm_rgcDensity_superior + temporalFrac.*norm_rgcDensity_temporal;
-elseif angle >= 180 && angle < 270;
+elseif angle >= 180 && angle < 270
     temporalFrac = (angle-180)/90;
     inferiorFrac = 1 - temporalFrac;
     weightedAvgData = temporalFrac.*norm_rgcDensity_temporal + inferiorFrac.*norm_rgcDensity_inferior;
-elseif angle >= 270 && angle < 360;
+elseif angle >= 270 && angle < 360
     inferiorFrac = (angle-270)/90;
     nasalFrac = 1 - inferiorFrac;
     weightedAvgData = inferiorFrac.*norm_rgcDensity_inferior + nasalFrac.*norm_rgcDensity_nasal;
 end
 
-[outParams, RGCdensityFit] = fitFrechetToRGCDensity(ecc_mm, weightedAvgData, ones(size(ecc_mm)));
+%% SHORT-CIRCUITED TO ONLY RETURN THE SUPERIOR MERIDIAN FIT
+%[outParams, RGCdensityFit] = fitFrechetToRGCDensity(ecc_mm, weightedAvgData, ones(size(ecc_mm)));
+[outParams, RGCdensityFit] = fitFrechetToRGCDensity(ecc_mm, norm_rgcDensity_superior, ones(size(ecc_mm)));
 
 end
 
 
+function midgetFraction = midgetFractionByEccen(ecc_mm)
+% function midgetFraction = midgetFractionByEccen(ecc_mm)
+%
+% This function returns the fraction of midget retinal ganglion cells in
+% relation to the entire count of RGCs at a given distance (in mm) from the
+% fovea. The equation is taken from Watson JoV 2016, 
 
-
-
+f0 = 0.8928;
+rm = 41.03;
+midgetFraction = f0.*(1+(ecc_mm/rm)).^-1;
+end % function
 
