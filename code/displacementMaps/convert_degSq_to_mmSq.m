@@ -1,6 +1,6 @@
 function [ data_mmSq ] = convert_degSq_to_mmSq( sampleBaseDeg, data_degSq )
-
-
+% convert_degSq_to_mmSq 
+%
 % conversion from mm^2 to deg^2 (mm^2/deg^2)
 % equation from end of Watson 2014 fit from Drasdo 1974
 

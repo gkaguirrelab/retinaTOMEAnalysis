@@ -1,5 +1,5 @@
 function expFitOut = fitRFdensity(ecc_deg,angle,scaleData)
-% fitRFdensity -- Estimates a RGC receptive field density function at a given angle on the retina.
+%fitRFdensity -- Estimates a RGC receptive field density function at a given angle on the retina.
 %
 % Description:
 %   This function produces a function that esimates the retinal ganglion cell
@@ -24,21 +24,24 @@ function expFitOut = fitRFdensity(ecc_deg,angle,scaleData)
 % field density as a function of eccentricity in degrees.
 % This estimate is then fit with a two term expontial og the form f(x) = a*exp(b*x) + c*exp(d*x)
 
+
 nasal          = 2*(14804.6) .* (0.9729*((1+ecc_deg./1.084)).^-2)+(1-0.9729).*exp(-1.*ecc_deg./7.633);
 nasal          = (nasal .* (0.8928*((1+ecc_deg./41.03).^-1)))./scaleData;
-curve_nasal    = fit(ecc_deg,nasal,'exp2','Exclude', find(isnan(nasal)));
 
 superior       = 2*(14804.6) * ( 0.9935*(1+ecc_deg/(1.035)).^-2+(1-0.9935)*exp(-1*ecc_deg/16.35));
 superior       = (superior .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
-curve_superior = fit(ecc_deg,superior,'exp2','Exclude', find(isnan(superior)));
 
 temporal       = 2*(14804.6) * ( 0.9851*(1+ecc_deg/(1.058)).^-2+(1-0.9851)*exp(-1*ecc_deg/22.14));
 temporal       = (temporal .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
-curve_temporal = fit(ecc_deg,temporal,'exp2','Exclude', find(isnan(temporal)));
 
 inferior       = 2*(14804.6) * ( 0.996*(1+ecc_deg/(0.9932)).^-2+(1-0.996)*exp(-1*ecc_deg/12.13));
 inferior       = (inferior .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
+
+curve_nasal    = fit(ecc_deg,nasal,'exp2','Exclude', find(isnan(nasal)));
+curve_superior = fit(ecc_deg,superior,'exp2','Exclude', find(isnan(superior)));
+curve_temporal = fit(ecc_deg,temporal,'exp2','Exclude', find(isnan(temporal)));
 curve_inferior = fit(ecc_deg,inferior,'exp2','Exclude', find(isnan(inferior)));
+
 
 expFitOut = curve_nasal;
 
@@ -61,14 +64,14 @@ elseif angle >= 90 && angle < 180;
         eval(sprintf('expFitOut.%s = superiorFrac.*curve_superior.%s + temporalFrac.*curve_temporal.%s;',i,i,i))
     end
 elseif angle >= 180 && angle < 270;
-    temporalFrac = (angle-180)/90;
-    inferiorFrac = 1 - temporalFrac;
+    inferiorFrac = (angle-180)/90;
+    temporalFrac= 1 - inferiorFrac;
     for i = ['a','b','c','d']
         eval(sprintf('expFitOut.%s = temporalFrac.*curve_temporal.%s + inferiorFrac.*curve_inferior.%s;',i,i,i))
     end
 elseif angle >= 270 && angle < 360;
-    inferiorFrac = (angle-270)/90;
-    nasalFrac = 1 - inferiorFrac;
+    nasalFrac = (angle-270)/90;
+    inferiorFrac= 1 - nasalFrac;
     for i = ['a','b','c','d']
          eval(sprintf('expFitOut.%s = inferiorFrac.*curve_inferior.%s + nasalFrac.*curve_nasal.%s;',i,i,i))
 
