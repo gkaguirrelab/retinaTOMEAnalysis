@@ -26,16 +26,18 @@ function expFitOut = fitRFdensity(ecc_deg,angle,scaleData)
 
 
 nasal          = 2*(14804.6) .* (0.9729*((1+ecc_deg./1.084)).^-2)+(1-0.9729).*exp(-1.*ecc_deg./7.633);
-nasal          = (nasal .* (0.8928*((1+ecc_deg./41.03).^-1)))./scaleData;
-
+%nasal          = (nasal .* (0.8928*((1+ecc_deg./41.03).^-1)))./scaleData;
+nasal          = (nasal .* (0.8928*((1+ecc_deg./41.03).^-1)));
 superior       = 2*(14804.6) * ( 0.9935*(1+ecc_deg/(1.035)).^-2+(1-0.9935)*exp(-1*ecc_deg/16.35));
-superior       = (superior .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
-
+%superior       = (superior .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
+superior       = (superior .* (0.8928*(1+ecc_deg./41.03).^-1));
 temporal       = 2*(14804.6) * ( 0.9851*(1+ecc_deg/(1.058)).^-2+(1-0.9851)*exp(-1*ecc_deg/22.14));
-temporal       = (temporal .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
+%temporal       = (temporal .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
+temporal       = (temporal .* (0.8928*(1+ecc_deg./41.03).^-1));
 
 inferior       = 2*(14804.6) * ( 0.996*(1+ecc_deg/(0.9932)).^-2+(1-0.996)*exp(-1*ecc_deg/12.13));
-inferior       = (inferior .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
+%inferior       = (inferior .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
+inferior       = (inferior .* (0.8928*(1+ecc_deg./41.03).^-1));
 
 curve_nasal    = fit(ecc_deg,nasal,'exp2','Exclude', find(isnan(nasal)));
 curve_superior = fit(ecc_deg,superior,'exp2','Exclude', find(isnan(superior)));
