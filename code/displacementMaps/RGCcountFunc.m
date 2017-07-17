@@ -31,7 +31,7 @@ norm_rgcDensity_superior = midget_rgcDensity_mmSq_superior./scaleData;
 % norm_rgcDensity_inferior = midget_rgcDensity_mmSq_inferior./scaleData;
 
 
-[outParams, RGCdensityFit] = fitFrechetToRGCDensity(ecc_deg, norm_rgcDensity_superior, ones(size(ecc_deg)));
+[outParams_RGC, RGCdensityFit] = fitFrechetToRGCDensity(ecc_deg, norm_rgcDensity_superior, ones(size(ecc_deg)));
 
 
 
@@ -47,12 +47,12 @@ M = @(x)(2.*pi.*((x.*exp(-(((x+1)-m)/s).^-a) - (a.^-1).*(((x+1)-m).*(((x-m)/s).^
 
 figure
 subplot(1,2,1)
-plot(1:0.2:20,M(1:0.2:20).*scaleData)
+plot(1:20,M(1:20).*scaleData)
 title('RGC Cell Count')
 xlabel('eccentricity (deg)')
 ylabel('RGC Count (cells)')
 subplot(1,2,2)
-plot(1:0.2:20,cumsum(M(1:0.2:20).*scaleData))
+plot(1:20,cumsum(M(1:20).*scaleData))
 title('Cumulative RGC Cell Count')
 xlabel('eccentricity (deg)')
 ylabel('Cumulative RGC Count (cells)')

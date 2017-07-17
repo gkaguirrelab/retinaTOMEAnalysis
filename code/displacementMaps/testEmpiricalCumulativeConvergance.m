@@ -73,24 +73,33 @@ xlabel('eccentricity [deg]');
 ylabel('density [RF / deg2]');
 hold off
 
-
 % Watson 2*pi*r correction
-areaCorrection = [0,diff(ecc_deg.^2 * pi)];
+ringArea = [0,diff(ecc_deg.^2 * pi)];
 
 
-RFvalues = cumsum(superiorRFDensity.*areaCorrection);
-RGCvalues = cumsum(splineFunctionSuperior(ecc_deg).*areaCorrection');
+% Plot the RGC counts per ring
+figure
+plot(ecc_deg,splineFunctionSuperior(ecc_deg).*ringArea','.r')
+hold on
+plot(ecc_deg,splineFunctionSuperior(ecc_deg).*ringArea','-k')
+xlabel('eccentricity [deg]');
+ylabel('RGC counts per ring');
+hold off
+
+
+countPerRingRF = cumsum(superiorRFDensity.*ringArea);
+countPerRingRGC = cumsum(splineFunctionSuperior(ecc_deg).*ringArea');
 
 % Plot the RGC and RF density data, within growing areas
 figure
-plot(ecc_deg,RGCvalues,'.r')
+plot(ecc_deg,countPerRingRGC,'.r')
 hold on
-plot(ecc_deg,RGCvalues,'-k')
+plot(ecc_deg,countPerRingRGC,'-k')
 xlabel('eccentricity [deg]');
 ylabel('counts [cells per sector]');
-plot(ecc_deg,RFvalues,'.r')
+plot(ecc_deg,countPerRingRF,'.r')
 hold on
-plot(ecc_deg,RFvalues,'-b')
+plot(ecc_deg,countPerRingRF,'-b')
 hold off
 
 
