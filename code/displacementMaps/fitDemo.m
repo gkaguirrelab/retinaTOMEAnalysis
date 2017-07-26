@@ -10,9 +10,9 @@ RFfit = fitRFdensity(ecc_deg,angle,scaleData);
 
 %% Plot 
 figure;
-plot(ecc_deg,RGCdensityFit)
+plot(ecc_deg,RGCdensityFit,'g')
 hold on
-plot(ecc_deg,RFfit(ecc_deg))
+plot(ecc_deg,RFfit(ecc_deg),'r')
 
 %% Find K offset for RGC fit integral 
 % create function 
