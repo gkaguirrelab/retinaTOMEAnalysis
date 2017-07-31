@@ -1,8 +1,21 @@
-function [ sampleBase_deg ] = convert_mm_to_deg( sampleBase_mm )
+function sampleBaseDeg = convert_mm_to_deg(sampleBaseMm)
+%convert_mm_to_deg -- Converts milimeters to degrees on the retina based on
+% the equation from the appendix of Watson 2014.
+%
+% Input: 
+%   sampleBaseMm   = Retinal postion(s) in milimeters. Either scalar value or
+%                     vector input accepted.
+%
+% Output: 
+%   sampleBaseDeg  = Retinal postion(s) in degrees
+%
+% Sample Call:
+%   sampleBaseMm   = 0:2:20;
+%   sampleBaseMDeg = convert_deg_to_mm(sampleBaseDeg);
+%
+% MAB 2016
 
-% the eccentricy of each sample in MM
-% equation from end of Watson 2014
-sampleBase_deg = 3.556.*sampleBase_mm + 0.05593.*(sampleBase_mm.^2) - 0.007358.*(sampleBase_mm.^3) +0.0003027.*(sampleBase_mm.^4);
+sampleBaseDeg = 3.556.*sampleBaseMm + 0.05593.*(sampleBaseMm.^2) - 0.007358.*(sampleBaseMm.^3) +0.0003027.*(sampleBaseMm.^4);
 
 end
 
