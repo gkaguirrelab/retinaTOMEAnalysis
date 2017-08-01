@@ -1,7 +1,35 @@
-% Examine the point of equivalence in the cumulative sums of the empirical
-% RGC density and RF density
-
-% Housekeeping
+% #############################################################
+% Script to "reproduce" (get close) Figure 1 from Turpin/Mckendrick 2015.
+% 
+% The goal is to produce a plot of the cumulative retinal
+% ganglion cell and receptive field counts as a function of
+% eccentricity (mm). 
+% 
+% Everthing should be in units of mm, mm^2, or cell count
+% Conversion between units found at the end of Watson 2014
+% and fit from Drasdo 1974.
+% 
+% MAB 2016
+%
+% Notes:
+% Curcio and Allen 1990 reference frames is the retinal feild
+%       Data loaded from .xml is in the retinal coordinate frame
+%       No extra steps neded to reference the data.
+% Drasdo 2007 usues the visual field refrerence frame
+%       Indexing the output of densityRF():
+%       ex. RFdensity = densityRf(radDeg,smpPerDeg,'OFF');
+%            midPoint = center pixel of output image
+%            Temporal retina = left of midPoint
+%            Nasal Retina    = right of midPoint
+%            Supior Retina   = above midPoint
+%            Inferior Retina = below midPoint
+% Turpin McKendrick 2015 reference frame is the visual field
+%
+% Watson 2014 reference frame is the visual field
+%
+% THIS CODE SETS THE REFERENCE FRAME TO THE RETINAL FIELD
+%
+% #############################################################
 
 clc
 close all
@@ -73,7 +101,7 @@ xlabel('eccentricity [deg]');
 ylabel('density [RF / deg2]');
 hold off
 
-% Watson 2*pi*r correction
+% Watson 2*pi*r correction I AM NOT SURE 
 ringArea = [0,diff(ecc_deg.^2 * pi)];
 
 
@@ -104,16 +132,4 @@ hold off
 
 
 
-
-function midgetFraction = midgetFractionByEccen(ecc_deg)
-% function midgetFraction = midgetFractionByEccen(ecc_deg)
-%
-% This function returns the fraction of midget retinal ganglion cells in
-% relation to the entire count of RGCs at a given distance (in deg) from the
-% fovea. The equation is taken from Watson JoV 2016, 
-
-f0 = 0.8928;
-rm = 41.03;
-midgetFraction = f0.*(1+(ecc_deg/rm)).^-1;
-end % function
 

@@ -1,11 +1,11 @@
-function samplesDegSq = convert_mmSq_to_degSq(sampleBaseDeg, samplesMmSq )
+function samplesDegSq = convert_mmSq_to_degSq(ecc_deg, samplesMmSq )
 %convert_mmSq_to_degSq --  Converts square milimeters to square degrees on 
 % the retina based on the equation from the appendix of Watson 2014 which 
 % is a fit to a plot in Drasdo and Fowler 1974.
 %
 % Inputs:
-%   sampleBaseDeg = sample position in degrees 
-%   samplesMmSq   = Counts per square mm at locations corresponding to the sampleBaseDeg 
+%   ecc_deg      = sample position in degrees 
+%   samplesMmSq  = Counts per square mm at locations corresponding to the sampleBaseDeg 
 %
 % OutPuts:
 %   samplesDegSq  = Counts per square deg at locations corresponding to the sampleBaseDeg 
@@ -19,7 +19,7 @@ function samplesDegSq = convert_mmSq_to_degSq(sampleBaseDeg, samplesMmSq )
 
 % Calculate the alpha conversion factor. It varies by eccentricity position
 % Units of alpha = mm^2/deg^2
-alpha= 0.0752+5.846e-5*sampleBaseDeg-1.064e-5*sampleBaseDeg.^2+4.116e-8*sampleBaseDeg.^3;
+alpha= 0.0752+5.846e-5*ecc_deg-1.064e-5*ecc_deg.^2+4.116e-8*ecc_deg.^3;
 
 % Apply alpha to convert mm^2 to deg^2  (Cells/mm^2 * mm^2/deg^2 = Cells/deg^2)
 samplesDegSq = samplesMmSq.*alpha;

@@ -1,8 +1,6 @@
-function H = watsonDispFunc(meridian,sampleBaseDeg, verbose)
-% watsonDispFunc
-%
-% Returns the displacment estimates for either the nasal or temporal
-% meridian form the Watson 2014 paper.
+function H = watsonDispFunc(meridian, sampleBaseDeg, verbose)
+%watsonDispFunc -- Returns the displacment estimates for either the nasal or 
+% temporal meridian form the Watson 2014 paper.
 %
 % Inputs:
 %   meridian      = a string indicating the meridian
@@ -18,7 +16,7 @@ function H = watsonDispFunc(meridian,sampleBaseDeg, verbose)
 
 switch meridian
     case 'nasal'
-        % params set by watson
+        % Parameters set by Watson 2014
         x = sampleBaseDeg;
         d = 15.111;
         g = 0.77754;
@@ -26,11 +24,11 @@ switch meridian
         b = 1.7463;
         a = 2.4607 ;
         
-        % watson equation 
+        % Watson Equation for Dispalcement 
         TOP = g .* exp(-((x-u)./b).^g) .* ((x-u)./b).^((a.*g) - 1);
         H = d.*( TOP /(b.*gamma(a)));
     case 'temporal'
-        % params set by watson
+        % Parameters set by Watson 2014
         x = sampleBaseDeg;
         d = 14.904;
         g = 0.91565;
@@ -38,13 +36,14 @@ switch meridian
         b = 2.4598;
         a = 1.8938;
         
-        % watson equation 
+        % Watson Equation for Dispalcement  
         TOP = g .* exp(-((x-u)./b).^g) .* ((x-u)./b).^((a.*g) - 1);
         H = d.*( TOP /(b.*gamma(a)));
     otherwise
         warning('Option for meridian unkown: choices "nasal" or "temporal".')
 end
         
+% Plot Option 
 if strcmp(verbose,'full')
     figure
     plot(x,H)

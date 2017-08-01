@@ -3,7 +3,7 @@ function expFitOut = fitRFdensity(ecc_deg,angle,scaleData)
 %
 % Description:
 %   This function produces a function that esimates the retinal ganglion cell
-%   receptive field density as a function of eccentricity in degrees .This 
+%   receptive field density as a function of eccentricity in degrees .This
 %   uses the Watson (2014) fits. This returns a function that estimates
 %   this density at the desired input angle by taking a weighted average of
 %   the fit parameters.
@@ -14,7 +14,7 @@ function expFitOut = fitRFdensity(ecc_deg,angle,scaleData)
 %             (0=nasal;90=superior;180=temporal;270=inferior)
 %
 % Outputs:
-%   expFitOut = Function that estimates the RGC recetive field denstity at 
+%   expFitOut = Function that estimates the RGC recetive field denstity at
 %               the input anlge as a funciton of eccentricity (deg).
 %
 % MAB 2017
@@ -22,35 +22,30 @@ function expFitOut = fitRFdensity(ecc_deg,angle,scaleData)
 
 % Use the equation in Wastson 2014 to estimate the ganglion cell receptive
 % field density as a function of eccentricity in degrees.
-% This estimate is then fit with a two term expontial og the form f(x) = a*exp(b*x) + c*exp(d*x)
+% This estimate is then fit with a two term expontial of the form f(x) = a*exp(b*x) + c*exp(d*x)
 
-
+% Generating mRGCf density from Watson 2014 scaled by max values from fitRGCdensityDev
 nasal          = 2*(14804.6) .* (0.9729*((1+ecc_deg./1.084)).^-2)+(1-0.9729).*exp(-1.*ecc_deg./7.633);
 nasal          = (nasal .* (0.8928*((1+ecc_deg./41.03).^-1)))./scaleData;
-%nasal          = (nasal .* (0.8928*((1+ecc_deg./41.03).^-1)));
 
 superior       = 2*(14804.6) * ( 0.9935*(1+ecc_deg/(1.035)).^-2+(1-0.9935)*exp(-1*ecc_deg/16.35));
 superior       = (superior .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
-%superior       = (superior .* (0.8928*(1+ecc_deg./41.03).^-1));
 
 temporal       = 2*(14804.6) * ( 0.9851*(1+ecc_deg/(1.058)).^-2+(1-0.9851)*exp(-1*ecc_deg/22.14));
 temporal       = (temporal .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
-%temporal       = (temporal .* (0.8928*(1+ecc_deg./41.03).^-1));
 
 inferior       = 2*(14804.6) * ( 0.996*(1+ecc_deg/(0.9932)).^-2+(1-0.996)*exp(-1*ecc_deg/12.13));
 inferior       = (inferior .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
-%inferior       = (inferior .* (0.8928*(1+ecc_deg./41.03).^-1));
 
+% Fit with a two term expontial of the form f(x) = a*exp(b*x) + c*exp(d*x)
+% to get the parameters a,b,c,d
 curve_nasal    = fit(ecc_deg,nasal,'exp2','Exclude', find(isnan(nasal)));
 curve_superior = fit(ecc_deg,superior,'exp2','Exclude', find(isnan(superior)));
 curve_temporal = fit(ecc_deg,temporal,'exp2','Exclude', find(isnan(temporal)));
 curve_inferior = fit(ecc_deg,inferior,'exp2','Exclude', find(isnan(inferior)));
 
-
+% Set an output function handle with the purpose of overwriting the parameters.
 expFitOut = curve_nasal;
-
-%% THIS NEEDS TO BE FIXED. THE ANGLES AND MIXING IS WRONG
-
 
 % Take a weighed average of the parameters of the fit exp2. The
 % weights are thet fraction of the input angle for both meridians that flank the
@@ -77,8 +72,8 @@ elseif angle >= 270 && angle < 360;
     nasalFrac = (angle-270)/90;
     inferiorFrac= 1 - nasalFrac;
     for i = ['a','b','c','d']
-         eval(sprintf('expFitOut.%s = inferiorFrac.*curve_inferior.%s + nasalFrac.*curve_nasal.%s;',i,i,i))
-
+        eval(sprintf('expFitOut.%s = inferiorFrac.*curve_inferior.%s + nasalFrac.*curve_nasal.%s;',i,i,i))
+        
     end
 end
 

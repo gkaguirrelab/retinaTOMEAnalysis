@@ -35,7 +35,9 @@
 % The meridian assignments are in the retinal coordinate frame. This can be
 % verified by observing that there is an interruption in the count data for
 % the nasal meridian corresponding to the blind spot.
-load('curcio_4meridian.mat') % Load the data 
+curcio_data = fullfile([getpref('octAnalysisForTOME','LocalDataPath') , '/Curcio/curcio_4meridian.mat']);
+data=load(curcio_data); % Load the data 
+data=data.data; 
 sampleBase_RGC_mm  = data(:,1); % Assign the eccentrciy (mm) to a var
 RGCdenisty_mmSq_temporal = data(:,2); % Assign the temporal RGC denstiy (cells/mm^2) to a var
 RGCdenisty_mmSq_superior  = data(:,4); % Assign the superior RGC denstiy (cells/mm^2) to a var

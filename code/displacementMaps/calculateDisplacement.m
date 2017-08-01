@@ -4,7 +4,7 @@ clear all
 %input angle 
 angle = 0;
 % fit the RGC density
-[ecc_deg,outParams_RGC,RGCdensityFit, scaleData] = fitRGCdensityDev(angle);
+[ecc_deg,outParams_RGC,RGCdensityFit, scaleData] = fitRGCdensity(angle);
 % fit the RF density -- need to convert mm to deg
 RFfit = fitRFdensity(ecc_deg,angle,scaleData);
 

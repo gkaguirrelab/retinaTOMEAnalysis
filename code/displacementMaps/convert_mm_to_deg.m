@@ -1,21 +1,21 @@
-function sampleBaseDeg = convert_mm_to_deg(sampleBaseMm)
+function ecc_deg = convert_mm_to_deg(ecc_mm)
 %convert_mm_to_deg -- Converts milimeters to degrees on the retina based on
 % the equation from the appendix of Watson 2014.
 %
 % Input: 
-%   sampleBaseMm   = Retinal postion(s) in milimeters. Either scalar value or
+%   ecc_mm  = Retinal postion(s) in milimeters. Either scalar value or
 %                     vector input accepted.
 %
 % Output: 
-%   sampleBaseDeg  = Retinal postion(s) in degrees
+%   ecc_deg = Retinal postion(s) in degrees
 %
 % Sample Call:
-%   sampleBaseMm   = 0:2:20;
-%   sampleBaseMDeg = convert_deg_to_mm(sampleBaseDeg);
+%   ecc_mm         = 0:2:20;
+%   sampleBaseDeg = convert_deg_to_mm(ecc_mm);
 %
 % MAB 2016
 
-sampleBaseDeg = 3.556.*sampleBaseMm + 0.05593.*(sampleBaseMm.^2) - 0.007358.*(sampleBaseMm.^3) +0.0003027.*(sampleBaseMm.^4);
+ecc_deg = 3.556.*ecc_mm + 0.05593.*(ecc_mm.^2) - 0.007358.*(ecc_mm.^3) +0.0003027.*(ecc_mm.^4);
 
 end
 

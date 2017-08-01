@@ -57,6 +57,7 @@ midget_rgcDensity_mmSq_nasal = rgcDensity_degSq_nasal.* midgetFraction;
 midget_rgcDensity_mmSq_inferior = rgcDensity_degSq_inferior.* midgetFraction;
 
 % set the scale to normalize the data so that the  Frechet PDF fits well.
+% scalar of 2 multiplied to place the max at 0.5. 
 % ## THIS MUST ALSO BE APPLIED TO THE RF DENSITY DATA ##
 %scaleData = 2*max([rgcDensity_mmSq_temporal;midget_rgcDensity_mmSq_superior;rgcDensity_mmSq_nasal;rgcDensity_mmSq_inferior]);
 scaleData = 2*max([midget_rgcDensity_mmSq_temporal; midget_rgcDensity_mmSq_superior;... 
@@ -100,17 +101,4 @@ end
 [outParams, RGCdensityFit] = fitFrechetToRGCDensity(ecc_deg, weightedAvgData, ones(size(ecc_deg)));
 
 end
-
-
-function midgetFraction = midgetFractionByEccen(ecc_deg)
-% function midgetFraction = midgetFractionByEccen(ecc_mm)
-%
-% This function returns the fraction of midget retinal ganglion cells in
-% relation to the entire count of RGCs at a given distance (in mm) from the
-% fovea. The equation is taken from Watson JoV 2016, 
-
-f0 = 0.8928;
-rm = 41.03;
-midgetFraction = f0.*(1+(ecc_deg/rm)).^-1;
-end % function
 
