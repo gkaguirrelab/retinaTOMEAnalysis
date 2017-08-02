@@ -1,7 +1,7 @@
 function [fitParams, RGCdensityFit] = fitFrechetToRGCDensity(ecc_mm, rgcDensity, weights, varargin)
 % function [fitParams, fitDisplacement] = fitGammaToDisplacement(radii_mm, displacement, weights, varargin)
 %
-%  Fits a gamma pdf to the retinal ganglion cell displacement function. The
+%  Fits a frechet pdf to the retinal ganglion cell displacement function. The
 %  use of a gamma pdf for the fit is driven both by the appearance of the
 %  data and the prior use of this function in Watson 2014 JoV, Eq 5.
 %
@@ -25,17 +25,17 @@ function [fitParams, RGCdensityFit] = fitFrechetToRGCDensity(ecc_mm, rgcDensity,
 %
 %  Outputs
 %    fitParams: the parameters of the best fit gamma pdf (shape, scale)
-%    fitDisplacement: the gamma function itself
+%    fitDisplacement: the frechet function itself
 %
 %
-%  Demo - create a gamma pdf (plus noise), a uniform weighting
+%  Demo - create a frechet pdf (plus noise), a uniform weighting
 %    function, and then fit it
 %
 %    radii_mm=0:0.005:5;
 %    displacement=gampdf(radii_mm,3,.2)+(rand(1,1001)-0.5)/5;
 %    weights=radii_mm.*0+1;
 %
-%    [fitParams, fitDisplacement] = fitGammaToDisplacement(radii_mm, ...
+%    [fitParams, fitDisplacement] = fitFrechetToDisplacement(radii_mm, ...
 %      displacement, weights, 'displayPlot', 'full');
 
 %% Parse vargin for options passed here
