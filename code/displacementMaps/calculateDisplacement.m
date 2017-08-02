@@ -23,8 +23,6 @@ RGC_function = @(x1)(exp(-((x1-location)/scale).^-shape));
 K_RGC = 0 - RGC_function(0);  
 
 
-
-
 %% Find K offset for RF fit integral 
 a = RFfit.a;
 b = RFfit.b;
@@ -41,6 +39,12 @@ plot(ecc_deg,(RF_Function(convert_mm_to_deg(ecc_deg))+K_RF),'r');
 hold on 
 plot(ecc_deg,((RGC_function(ecc_deg)+K_RGC)),'b')
 
+%% compute the number of receptive fields per 1 deg expanding ring 
+[CountPerRingRF] = RFcountFunc(RFfit,verbose)
+
+
+%% compute the number of midget retinal ganglion cells per 1 deg expanding ring 
+[CountPerRingRGC] = RGCcountFunc(outParams_RGC,verbose)
 
 %% Calculate Displacement 
 
