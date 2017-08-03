@@ -1,4 +1,4 @@
-function expFitOut = fitRFdensity(ecc_deg,angle,scaleData)
+function expFitOut = fitRFdensity(supportPosDeg,angle,scaleData)
 %fitRFdensity -- Estimates a RGC receptive field density function at a given angle on the retina.
 %
 % Description:
@@ -9,13 +9,13 @@ function expFitOut = fitRFdensity(ecc_deg,angle,scaleData)
 %   the fit parameters.
 %
 % Inputs:
-%   ecc_deg = Sample positions along a meridian in degrees.
-%   angle   = The dedsired angle of the density function on the retinal field.
-%             (0=nasal;90=superior;180=temporal;270=inferior)
+%   supportPosDeg = Sample positions along a meridian in degrees.
+%   angle         = The dedsired angle of the density function on the retinal field.
+%                   (0=nasal;90=superior;180=temporal;270=inferior)
 %
 % Outputs:
-%   expFitOut = Function that estimates the RGC recetive field denstity at
-%               the input anlge as a funciton of eccentricity (deg).
+%   expFitOut     = Function that estimates the RGC recetive field denstity at
+%                   the input anlge as a funciton of eccentricity (deg).
 %
 % MAB 2017
 
@@ -25,24 +25,24 @@ function expFitOut = fitRFdensity(ecc_deg,angle,scaleData)
 % This estimate is then fit with a two term expontial of the form f(x) = a*exp(b*x) + c*exp(d*x)
 
 % Generating mRGCf density from Watson 2014 scaled by max values from fitRGCdensityDev
-nasal          = 2*(14804.6) .* (0.9729*((1+ecc_deg./1.084)).^-2)+(1-0.9729).*exp(-1.*ecc_deg./7.633);
-nasal          = (nasal .* (0.8928*((1+ecc_deg./41.03).^-1)))./scaleData;
+nasal          = 2*(14804.6) .* (0.9729*((1+supportPosDeg./1.084)).^-2)+(1-0.9729).*exp(-1.*supportPosDeg./7.633);
+nasal          = (nasal .* (0.8928*((1+supportPosDeg./41.03).^-1)))./scaleData;
 
-superior       = 2*(14804.6) * ( 0.9935*(1+ecc_deg/(1.035)).^-2+(1-0.9935)*exp(-1*ecc_deg/16.35));
-superior       = (superior .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
+superior       = 2*(14804.6) * ( 0.9935*(1+supportPosDeg/(1.035)).^-2+(1-0.9935)*exp(-1*supportPosDeg/16.35));
+superior       = (superior .* (0.8928*(1+supportPosDeg./41.03).^-1))./scaleData;
 
-temporal       = 2*(14804.6) * ( 0.9851*(1+ecc_deg/(1.058)).^-2+(1-0.9851)*exp(-1*ecc_deg/22.14));
-temporal       = (temporal .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
+temporal       = 2*(14804.6) * ( 0.9851*(1+supportPosDeg/(1.058)).^-2+(1-0.9851)*exp(-1*supportPosDeg/22.14));
+temporal       = (temporal .* (0.8928*(1+supportPosDeg./41.03).^-1))./scaleData;
 
-inferior       = 2*(14804.6) * ( 0.996*(1+ecc_deg/(0.9932)).^-2+(1-0.996)*exp(-1*ecc_deg/12.13));
-inferior       = (inferior .* (0.8928*(1+ecc_deg./41.03).^-1))./scaleData;
+inferior       = 2*(14804.6) * ( 0.996*(1+supportPosDeg/(0.9932)).^-2+(1-0.996)*exp(-1*supportPosDeg/12.13));
+inferior       = (inferior .* (0.8928*(1+supportPosDeg./41.03).^-1))./scaleData;
 
 % Fit with a two term expontial of the form f(x) = a*exp(b*x) + c*exp(d*x)
 % to get the parameters a,b,c,d
-curve_nasal    = fit(ecc_deg,nasal,'exp2','Exclude', find(isnan(nasal)));
-curve_superior = fit(ecc_deg,superior,'exp2','Exclude', find(isnan(superior)));
-curve_temporal = fit(ecc_deg,temporal,'exp2','Exclude', find(isnan(temporal)));
-curve_inferior = fit(ecc_deg,inferior,'exp2','Exclude', find(isnan(inferior)));
+curve_nasal    = fit(supportPosDeg,nasal,'exp2','Exclude', find(isnan(nasal)));
+curve_superior = fit(supportPosDeg,superior,'exp2','Exclude', find(isnan(superior)));
+curve_temporal = fit(supportPosDeg,temporal,'exp2','Exclude', find(isnan(temporal)));
+curve_inferior = fit(supportPosDeg,inferior,'exp2','Exclude', find(isnan(inferior)));
 
 % Set an output function handle with the purpose of overwriting the parameters.
 expFitOut = curve_nasal;

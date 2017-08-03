@@ -1,4 +1,4 @@
-function [ecc_deg,outParams,RGCdensityFit, scaleData] = fitRGCdensityDev(angle)
+function [supportPosDeg,outParams,RGCdensityFit, scaleData] = fitRGCdensity(angle)
 % fitRGCdensity -- Estimates a RGC cell body density function at a given angle on the retina.
 %
 % Description:
@@ -36,21 +36,22 @@ data=data.data;
 %           This can be verified by observing that there is an interruption
 %           in the count data for the nasal meridian corresponding to the
 %           blind spot.
-ecc_mm  = data(:,1);
-ecc_deg = convert_mm_to_deg(ecc_mm);
+supportPosMm  = data(:,1);
+supportPosDeg = convert_mm_to_deg(supportPosMm);
 
-rgcDensity_degSq_temporal = convert_mmSq_to_degSq(ecc_deg,data(:,2));
-rgcDensity_degSq_superior = convert_mmSq_to_degSq(ecc_deg,data(:,4));
-rgcDensity_degSq_nasal    = convert_mmSq_to_degSq(ecc_deg,data(:,6));
-rgcDensity_degSq_inferior = convert_mmSq_to_degSq(ecc_deg,data(:,8));
+rgcDensity_degSq_temporal = convert_mmSq_to_degSq(supportPosDeg,data(:,2));
+rgcDensity_degSq_superior = convert_mmSq_to_degSq(supportPosDeg,data(:,4));
+rgcDensity_degSq_nasal    = convert_mmSq_to_degSq(supportPosDeg,data(:,6));
+rgcDensity_degSq_inferior = convert_mmSq_to_degSq(supportPosDeg,data(:,8));
 
+% get the standard deviation (not used but we might)
 rgcDensity_SD_temporal = data(:,3);
 rgcDensity_SD_superior = data(:,5);
 rgcDensity_SD_nasal    = data(:,7);
 rgcDensity_SD_inferior = data(:,9);
 
 % Adjust the RGC counts to reflect the fraction that is midget cells
-midgetFraction = midgetFractionByEccen(ecc_deg);
+midgetFraction = midgetFractionByEccen(supportPosDeg);
 midget_rgcDensity_mmSq_temporal = rgcDensity_degSq_temporal.* midgetFraction;
 midget_rgcDensity_mmSq_superior = rgcDensity_degSq_superior.* midgetFraction;
 midget_rgcDensity_mmSq_nasal = rgcDensity_degSq_nasal.* midgetFraction;
@@ -98,7 +99,7 @@ elseif angle >= 270 && angle < 360
     weightedAvgData = inferiorFrac.*norm_rgcDensity_inferior + nasalFrac.*norm_rgcDensity_nasal;
 end
 
-[outParams, RGCdensityFit] = fitFrechetToRGCDensity(ecc_deg, weightedAvgData, ones(size(ecc_deg)));
+[outParams, RGCdensityFit] = fitFrechetToRGCDensity(supportPosDeg, weightedAvgData, ones(size(supportPosDeg)));
 
 end
 

@@ -1,60 +1,43 @@
-%demo of fit functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Scirpt that is setting us up to compute the displacement. 
+% PARTS: 
+%   *Fit Functions  - fits a frechet PDF to the RGC and fits a 2 term
+%                    exponential to the RF and returns the 
+%
+%   *Plot the fits - Examine the fits ## COULD BE TURNED INTO A VERBOSE FLAG FOR THE FIT FUNCTIONS ## 
+%
+%   *Compute the number of receptive fields per 1 deg expanding ring
+%
+%   *Compute the number of midget retinal ganglion cells 1 deg expanding ring
+%
+%   *Calculate Displacement - NEEDs TO BE DONE WITH THE NEW FUNCTIONS FOR
+%                             COUNT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clear all
+
 %% Fit Functions
-%input angle 
+% Set the angle of the merdidian for the displacement to be computed on (0 = nasal, 90= superior).
 angle = 0;
-% fit the RGC density
-[ecc_deg,outParams_RGC,RGCdensityFit, scaleData] = fitRGCdensity(angle);
-% fit the RF density -- need to convert mm to deg
-RFfit = fitRFdensity(ecc_deg,angle,scaleData);
+% Fit the RGC density with the Frechet PDF
+[supportPosDeg,outParams_RGC,RGCdensityFit, scaleData] = fitRGCdensity(angle);
+% Fit the RF density with the two term exponential 
+RFfit = fitRFdensity(supportPosDeg,angle,scaleData);
 
-%% Plot 
+%% Plot the fits
 figure;
-plot(ecc_deg,RGCdensityFit,'g')
+plot(supportPosDeg,RGCdensityFit,'g')
 hold on
-plot(ecc_deg,RFfit(ecc_deg),'r')
+plot(supportPosDeg,RFfit(supportPosDeg),'r')
 
-%% Find K offset for RGC fit integral 
-% create function 
-shape    = outParams_RGC(1);
-scale    = outParams_RGC(2);
-location = outParams_RGC(3);
-RGC_function = @(x1)(exp(-((x1-location)/scale).^-shape));
-K_RGC = 0 - RGC_function(0);  
-
-
-%% Find K offset for RF fit integral 
-a = RFfit.a;
-b = RFfit.b;
-c = RFfit.c;
-d = RFfit.d;
-
-RF_Function = @(x2)((a.*exp(b.*x2)./b) + (c.*exp(d.*x2)./d));
-K_RF = (2*(14804.6)./scaleData) - RF_Function(0);
-
-
-%% plot
-figure
-plot(ecc_deg,(RF_Function(convert_mm_to_deg(ecc_deg))+K_RF),'r');
-hold on 
-plot(ecc_deg,((RGC_function(ecc_deg)+K_RGC)),'b')
 
 %% compute the number of receptive fields per 1 deg expanding ring 
+verbose = true;
 [CountPerRingRF] = RFcountFunc(RFfit,verbose)
 
 
 %% compute the number of midget retinal ganglion cells per 1 deg expanding ring 
+verbose = true;
 [CountPerRingRGC] = RGCcountFunc(outParams_RGC,verbose)
 
 %% Calculate Displacement 
-
-% 
-Drf = RF_Function(convert_mm_to_deg(ecc_deg))+K_RF;
-
-RGC_postition = (-log(Drf-K_RGC)).^(-1./shape).*(location.*(-log(Drf-K_RGC)).^(1./shape) + scale);
- 
-displacement =RGC_postition - ecc_deg;
-
-figure 
-plot(ecc_deg,displacement)
-
+% NEEDS TO BE DONE FOR THE NEW METHOD OF COUNTS PER RING.

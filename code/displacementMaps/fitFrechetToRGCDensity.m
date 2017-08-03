@@ -1,4 +1,4 @@
-function [fitParams, RGCdensityFit] = fitFrechetToRGCDensity(ecc_mm, rgcDensity, weights, varargin)
+function [fitParams, RGCdensityFit] = fitFrechetToRGCDensity(supportPosMm, rgcDensity, weights, varargin)
 % function [fitParams, fitDisplacement] = fitGammaToDisplacement(radii_mm, displacement, weights, varargin)
 %
 %  Fits a frechet pdf to the retinal ganglion cell displacement function. The
@@ -6,7 +6,8 @@ function [fitParams, RGCdensityFit] = fitFrechetToRGCDensity(ecc_mm, rgcDensity,
 %  data and the prior use of this function in Watson 2014 JoV, Eq 5.
 %
 %  Inputs:
-%    ecc_mm: vector with the eccentricity base of the data
+%    ecc_mm: vector with the eccentricity base of the data ## CHECK IF THIS
+%    SHOULD BE IN DEG OR IN MM ##
 %    displacement: vector with the RGC displacement from the fovea
 %    weights: vector that provides a weighting function for the error
 %      term as a function of eccentricity. The use of a weighting function
@@ -45,7 +46,7 @@ p.addRequired('displacement',@isnumeric);
 p.addRequired('weights',@isnumeric);
 p.addParameter('initialParams',[1,1,0],@isnumeric);
 p.addParameter('displayPlot','none',@ischar);
-p.parse(ecc_mm, rgcDensity, weights, varargin{:});
+p.parse(supportPosMm, rgcDensity, weights, varargin{:});
 
 % Unpack the arguments
 initialParams=p.Results.initialParams;
@@ -53,7 +54,7 @@ displayPlot=p.Results.displayPlot;
 
 % Check that all passed vectors are either row or column vectors and the
 % same length
-if ~all(size(ecc_mm)==size(rgcDensity)) || ~all(size(ecc_mm)==size(weights))
+if ~all(size(supportPosMm)==size(rgcDensity)) || ~all(size(supportPosMm)==size(weights))
     error('The passed vectors must be the same length and same row/column order');
 end
 
@@ -61,17 +62,17 @@ options=optimset('fminsearch');
 options=optimset(options,'Display','none');
 
 % Run the search
-fitParams = fminsearch( (@(p) modelFitError(p, ecc_mm, rgcDensity, weights)), initialParams, options);
+fitParams = fminsearch( (@(p) modelFitError(p, supportPosMm, rgcDensity, weights)), initialParams, options);
 
 % Obtain the Frechnet model fit at the passed eccentricities.
-RGCdensityFit = frechnetPDF(ecc_mm,fitParams(1),fitParams(2),fitParams(3));
+RGCdensityFit = frechnetPDF(supportPosMm,fitParams(1),fitParams(2),fitParams(3));
 
 % If the user requested a plot, give it to them
 if strcmp(displayPlot,'full')
     figure;
     % Plot the data
-    r1 = plot(ecc_mm, rgcDensity, '.r'); hold on;
-    r2 = plot(ecc_mm, RGCdensityFit);
+    r1 = plot(supportPosMm, rgcDensity, '.r'); hold on;
+    r2 = plot(supportPosMm, RGCdensityFit);
     % Make the plot pretty
     xlabel('Eccentricity (mm)');
     ylabel('Density (counts/mm2)');
