@@ -32,12 +32,12 @@ plot(supportPosDeg,RFfit(supportPosDeg),'r')
 
 %% compute the number of receptive fields per 1 deg expanding ring 
 verbose = true;
-[CountPerRingRF] = RFcountFunc(RFfit,verbose)
+[CountPerRingRF] = RFcountFunc(RFfit,verbose,scaleData)
 
 
 %% compute the number of midget retinal ganglion cells per 1 deg expanding ring 
 verbose = true;
-[CountPerRingRGC] = RGCcountFunc(outParams_RGC,verbose)
+[CountPerRingRGC] = RGCcountFunc(outParams_RGC,verbose,scaleData)
 
 %% Calculate Displacement 
 % NEEDS TO BE DONE FOR THE NEW METHOD OF COUNTS PER RING.

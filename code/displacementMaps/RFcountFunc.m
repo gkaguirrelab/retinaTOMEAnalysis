@@ -1,4 +1,4 @@
-function CountPerRingRF = RFcountFunc(RFfit,verbose)
+function CountPerRingRF = RFcountFunc(RFfit,verbose,scaleData)
 %RFcountFunc -- returns a function that calculates the number of RFs in a 1 deg ring  
 % 
 % Decription:

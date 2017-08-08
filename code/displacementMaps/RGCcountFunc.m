@@ -1,4 +1,4 @@
-function CountPerRingRGC = RGCcountFunc(outParams_RGC,verbose)
+function CountPerRingRGC = RGCcountFunc(outParams_RGC,verbose,scaleData)
 %RGCcountFunc -- returns a function that calculates the number of RGCs in a 1 deg ring  
 % 
 % Decription:
