@@ -19,7 +19,7 @@ close all
 % define some hard-coded params
 sampleResolutionDegrees = 0.01;
 
-% Define the meridia for which we will make the calculation
+% Define the meridians for which we will make the calculation
 meridians = [0 90 180 270];
 meridianNames = {'Nasal' 'Superior' 'Temporal' 'Inferior'};
 displacementPointDeg = [17 17 11 17];
