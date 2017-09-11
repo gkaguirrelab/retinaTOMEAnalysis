@@ -1,7 +1,7 @@
 function mRGCfPerSqDeg = drasdoMidgetRFDensitySqDeg(supportPosDeg, angle)
-% Genrates a vector of recetive feild dentity
+% Genrates a vector of midget recetive field density
 %
-% From Eq. 7 in Drasdo et al. 2007 Vision Research.
+% From Eq. 6 in Drasdo et al. 2007 Vision Research.
 % Formula is in Degrees
 %
 % The Drasdo equations are cast in terms of position in the visual field in
