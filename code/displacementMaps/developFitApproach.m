@@ -13,7 +13,7 @@ meridianAngles = [0, 90, 180, 270];
 
 % These are the empirical displacement values found for each meridian. We
 % want our function to produce these
-targetDisplacementPointDeg = [15 15 11 15];
+targetDisplacementPointDeg = [12 17 17 17];
 
 
 %% Step 0
@@ -75,7 +75,7 @@ for mm = 1:length(meridianAngles)
     
     % Define the reciprocal function and fit
     recipFunc = fittype('(1./(a+(b.*x)))+c','independent','x','dependent','y');
-    recipFit = fit(x,y,recipFunc,'StartPoint',[-.1,.1,-2],'Weights',weights,'Lower',[-.5,0,-4],'Upper',[.1,.3,0] );
+    recipFit = fit(x,y,recipFunc,'StartPoint',[-.1,.1,-2],'Weights',weights,'Lower',[-.2,0,-4],'Upper',[0,.2,-1] );
     
     % Save the fit params
     transformParams(mm).a=recipFit.a;
@@ -104,6 +104,7 @@ hold off
 % prepare figures
 figHandle(2) = figure;
 figHandle(3) = figure;
+figHandle(4) = figure;
 
 % Loop over the meridians
 for mm = 1:length(meridianAngles)
@@ -131,42 +132,23 @@ for mm = 1:length(meridianAngles)
     % Create an anonymous function that returns mRF density as a function of
     % the parameters of the reciprocal transform
     mRFDensityOverRegularSupport = @(transformParams) transformConeToMidgetRFDensity(coneDensityFit(regularSupportPosDeg),transformParams)';
-    
-    % Make a plot showing that the cone fits are good
-    % loglog(dispRegularSupportPosDeg,coneDensityFit(regularSupportPosDeg),'-r')
-    % hold on
-    % loglog(dispSupportPosDeg,coneDensitySqDeg,'xk')
-    % xlabel('log10 eccentricity deg');
-    % ylabel('log10 cone density per deg sq');
-    % title('Curcio cone density (x); spline fit (-)');
-    
-    % Make a plot showing that the mRF density returned by the model is a good
-    % approximation of the Watson prediction
-    % figure
-    % loglog(dispRegularSupportPosDeg,getWatsonMidgetReceptiveFieldDensityByEccen(regularSupportPosDeg, meridianAngles(mm)),'.k');
-    % hold on
-    % loglog(dispRegularSupportPosDeg,mRFDensityOverRegularSupport([transformParams(mm).a transformParams(mm).b transformParams(mm).c]),'-r');
-    % xlabel('log10 eccentricity deg');
-    % ylabel('log10 mRF density per deg sq');
-    % title('Watson mRF density (.); model fit from cone density (-)');
-    
+        
     
     %% Step 2
     % Build a function with the RGC density over the regular support
     
     % Load the RGC Density Data from Curcio and Allen 1990:
-    [ mRGCDensitySqDeg, supportPosDeg ] = getCurcioMidgetRGCDensityByEccen( meridianAngles(mm) );
+    [ RGCDensitySqDeg, supportPosDeg ] = getCurcioRGCDensityByEccen( meridianAngles(mm) );
+        % remove nan values
+    isvalididx=find(~isnan(RGCDensitySqDeg)  );
+    supportPosDeg = supportPosDeg(isvalididx);
+    RGCDensitySqDeg = RGCDensitySqDeg(isvalididx);
     % Fit a spline to the RGC density data
-    mRGCDensityFit = fit(supportPosDeg,mRGCDensitySqDeg,'smoothingspline', 'Exclude',find(isnan(mRGCDensitySqDeg)),'SmoothingParam', 1);
-    
-    % Make a plot showing that the mRGC fits are good
-    % figure
-    % plot(regularSupportPosDeg,mRGCDensityFit(regularSupportPosDeg),'-r')
-    % hold on
-    % plot(supportPosDeg,mRGCDensitySqDeg,'xk')
-    % xlabel('eccentricity deg');
-    % ylabel('mRGC density per deg sq');
-    % title('mRGC density empirical (x); spline fit (-)');
+    RGCDensityFit = fit(supportPosDeg,RGCDensitySqDeg,'smoothingspline', 'Exclude',find(isnan(RGCDensitySqDeg)),'SmoothingParam', 1);
+    % Create an anonymous function that returns mRGC density as a function of
+    % RGC density and the transformParams
+    mRGCDensityOverRegularSupport = @(transformParams) transformRGCToMidgetRGCDensity(regularSupportPosDeg,RGCDensityFit(regularSupportPosDeg)',transformParams);
+
     
     
     %% Step 3
@@ -177,20 +159,24 @@ for mm = 1:length(meridianAngles)
     % Set up an anonymous function and a variable that will hold the mRF and
     % mRGC cumulative sums, respectively
     mRF_ringcount = @(transformParams) calcCumulative(regularSupportPosDeg, mRFDensityOverRegularSupport(transformParams));
-    mRGC_ringcount = calcCumulative(regularSupportPosDeg, mRGCDensityFit(regularSupportPosDeg)');
+    mRGC_ringcount = @(transformParams) calcCumulative(regularSupportPosDeg, mRGCDensityOverRegularSupport(transformParams));
     % Create a non-linear constraint that tests if the RF values are greater
     % than the RGC values at eccentricities less than the displacement point
-    nonlinconst = @(transformParams) testRFGreaterThanRGC(regularSupportPosDeg, mRF_ringcount(transformParams), mRGC_ringcount, targetDisplacementPointDeg(mm));
+    nonlinconst = @(transformParams) testRFGreaterThanRGC(regularSupportPosDeg, mRF_ringcount(transformParams), mRGC_ringcount(transformParams), targetDisplacementPointDeg(mm));
     % Define an error function
-    errorFunc = @(transformParams) errorMatchingRFandRGC(regularSupportPosDeg, mRF_ringcount(transformParams), mRGC_ringcount, targetDisplacementPointDeg(mm));
+    errorFunc = @(transformParams) errorMatchingRFandRGC(regularSupportPosDeg, mRF_ringcount(transformParams), mRGC_ringcount(transformParams), targetDisplacementPointDeg(mm));
     % Set the initial param values to those found for this meridian
-    x0 = [transformParams(mm).a transformParams(mm).b transformParams(mm).c];
+    x0 = [transformParams(mm).a transformParams(mm).b transformParams(mm).c 39];
+    % set some bounds
+    lb = [-0.2 0 -4 39];
+    ub = [0.0 .2 -1 39];
+    x0 = [-0.1421    0.1370   -1.1503   39.0000];
     % Run the fitter
-    fitParams(mm,:) = fmincon(errorFunc,x0,[],[],[],[],[],[],nonlinconst);
+    fitParams(mm,:) = fmincon(errorFunc,x0,[],[],[],[],lb,ub,nonlinconst);
     % Plot the ringcounts
     set(0, 'CurrentFigure', figHandle(2))
     subplot(2,length(meridianAngles),mm+length(meridianAngles));
-    plot(regularSupportPosDeg,mRGC_ringcount,'-k')
+    plot(regularSupportPosDeg,mRGC_ringcount(fitParams(mm,:)),'-k')
     xlabel('eccentricity [deg]');
     ylabel('cells per sector');
     hold on
@@ -202,11 +188,11 @@ for mm = 1:length(meridianAngles)
     
     %% Step 4
     % Calculate displacement and plot
-    rgcDisplacementDeg=calcDisplacement(regularSupportPosDeg, mRGC_ringcount, mRF_ringcount(fitParams(mm,:)));
+    rgcDisplacementDeg=calcDisplacement(regularSupportPosDeg, mRGC_ringcount(fitParams(mm,:)), mRF_ringcount(fitParams(mm,:)));
     set(0, 'CurrentFigure', figHandle(2))
     subplot(2,length(meridianAngles),mm);
     plot(regularSupportPosDeg(1:length(rgcDisplacementDeg)),rgcDisplacementDeg,'-r')
-    ylim([-.5 2.5]);
+    ylim([-.5 3.0]);
     xlabel('eccentricity [deg]');
     ylabel('radial displacement of RGCs [deg]');
     title([meridianNames{mm} ' meridian']);
@@ -231,6 +217,7 @@ for mm = 1:length(meridianAngles)
     subplot(1,length(meridianAngles),mm);
         
     loglog(dispSupportPosDeg,midgetRFDensity_degSq./coneDensitySqDeg,'.k');
+    ylim([1e-4 1e1]);
     hold on
     xlabel('log10 eccentricity');
     ylabel('log10 cone:mRF');
@@ -244,11 +231,30 @@ for mm = 1:length(meridianAngles)
     loglog(dispSupportPosDeg,mRFDensityDegSq_adjusted./coneDensitySqDeg,'-r');
     hold off
     
+    
+    %% Step 5
+    % Examine how the midget ratio varies with the proportion of cumulative
+    % retinal ganglion cell density
+    
 end % loop over meridians
 
 
 
+function mRGCDensity = transformRGCToMidgetRGCDensity(regularSupportPosDeg,rgcDensitySqDeg,transformParams)
 
+% Distribute the transformParams
+rm = transformParams(4);
+
+% Calculate the midget fraction.
+% The equation is taken from Watson JoV 2014 (eq 7, plotted in fig 8), 
+% which Watson took from Drasdo et al 2007.
+f0 = 0.8928; % One of Watson's constants
+
+midgetFraction = f0.*(1+(regularSupportPosDeg./rm)).^-1;
+
+mRGCDensity = rgcDensitySqDeg .* midgetFraction;
+
+end
 
 
 function mRFDensity = transformConeToMidgetRFDensity(coneDensitySqDeg,transformParams)
