@@ -105,7 +105,6 @@ hold off
 % prepare figures
 figHandle(2) = figure;
 figHandle(3) = figure;
-figHandle(4) = figure;
 
 % Loop over the meridians
 for mm = 1:length(meridianAngles)
@@ -132,7 +131,7 @@ for mm = 1:length(meridianAngles)
     dispSupportPosDeg(1)=logZeroFix;
     % Create an anonymous function that returns mRF density as a function of
     % the parameters of the reciprocal transform
-    mRFDensityOverRegularSupport = @(transformParams) transformConeToMidgetRFDensity(coneDensityFit(regularSupportPosDeg),transformParams)';
+    mRFDensityOverRegularSupport = @(fitParams) transformConeToMidgetRFDensity(coneDensityFit(regularSupportPosDeg),fitParams(1:3))';
         
     
     %% Step 2
@@ -148,7 +147,7 @@ for mm = 1:length(meridianAngles)
     RGCDensityFit = fit(supportPosDeg,RGCDensitySqDeg,'smoothingspline', 'Exclude',find(isnan(RGCDensitySqDeg)),'SmoothingParam', 1);
     % Create an anonymous function that returns mRGC density as a function of
     % RGC density and the transformParams
-    mRGCDensityOverRegularSupport = @(transformParams) transformRGCToMidgetRGCDensity(regularSupportPosDeg,RGCDensityFit(regularSupportPosDeg)',transformParams);
+    mRGCDensityOverRegularSupport = @(fitParams) transformRGCToMidgetRGCDensity(regularSupportPosDeg,RGCDensityFit(regularSupportPosDeg)','recipFitParams',fitParams(4:6));
 
     
     %% Step 3
@@ -158,19 +157,17 @@ for mm = 1:length(meridianAngles)
     
     % Set up an anonymous function and a variable that will hold the mRF and
     % mRGC cumulative sums, respectively
-    mRF_ringcount = @(transformParams) calcCumulative(regularSupportPosDeg, mRFDensityOverRegularSupport(transformParams));
-    mRGC_ringcount = @(transformParams) calcCumulative(regularSupportPosDeg, mRGCDensityOverRegularSupport(transformParams));
+    mRF_ringcount = @(fitParams) calcCumulative(regularSupportPosDeg, mRFDensityOverRegularSupport(fitParams));
+    mRGC_ringcount = @(fitParams)calcCumulative(regularSupportPosDeg, mRGCDensityOverRegularSupport(fitParams));
     % Create a non-linear constraint that tests if the RF values are greater
     % than the RGC values at eccentricities less than the displacement point
-    nonlinconst = @(transformParams) testRFGreaterThanRGC(regularSupportPosDeg, mRF_ringcount(transformParams), mRGC_ringcount(transformParams), targetDisplacementPointDeg(mm));
+    nonlinconst = @(fitParams) testRFGreaterThanRGC(regularSupportPosDeg, mRF_ringcount(fitParams), mRGC_ringcount(fitParams), targetDisplacementPointDeg(mm));
     % Define an error function
-    errorFunc = @(transformParams) errorMatchingRFandRGC(regularSupportPosDeg, mRF_ringcount(transformParams), mRGC_ringcount(transformParams), targetDisplacementPointDeg(mm));
-    % Set the initial param values to those found for this meridian
-    x0 = [transformParams(mm).a transformParams(mm).b transformParams(mm).c 39];
+    errorFunc = @(fitParams) errorMatchingRFandRGC(regularSupportPosDeg, mRF_ringcount(fitParams), mRGC_ringcount(fitParams), targetDisplacementPointDeg(mm));
     % set some bounds
-    lb = [-0.2 0 -4 39];
-    ub = [0.0 .2 -1 39];
-    x0 = [-0.1421    0.1370   -1.1503   39.0000];
+    lb = [-0.2 0 -4 2.4026 -8.0877 -0.0139];
+    ub = [0.0 .2 -1 2.4026 -8.0877 -0.0139];
+    x0 = [-0.1421    0.1370   -1.1503 2.4026 -8.0877 -0.0139];
     % Run the fitter
     fitParams(mm,:) = fmincon(errorFunc,x0,[],[],[],[],lb,ub,nonlinconst);
     % Plot the ringcounts
@@ -205,7 +202,7 @@ for mm = 1:length(meridianAngles)
     % load the empirical cone density measured by Curcio
     [supportPosDeg,coneDensitySqDeg] = curcioConeDensitySqDeg(meridianAngles(mm));
     % calculate the mRF density at these eccentricity locations using
-    % Watson equation 8.
+    % Watson equation 7.
     [ midgetRFDensity_degSq ] = getWatsonMidgetReceptiveFieldDensityByEccen(supportPosDeg, meridianAngles(mm));
 
     % Get the log-friendly x axis values ready
@@ -232,70 +229,26 @@ for mm = 1:length(meridianAngles)
     hold off
     
     
-    %% Step 6
-    % Examine how the midget ratio varies with the proportion of cumulative
-    % retinal ganglion cell density
-    set(0, 'CurrentFigure', figHandle(4))
-    subplot(1,1,1);
-    RGC_ringcount = calcCumulative(regularSupportPosDeg,RGCDensityFit(regularSupportPosDeg)');
-    refPointIdx=find((regularSupportPosDeg-rgcCumProportionReferenceEccen)==min(abs(regularSupportPosDeg-rgcCumProportionReferenceEccen)));
-    propRGC_ringcount=RGC_ringcount./RGC_ringcount(refPointIdx);
-    zeroPoints=find(propRGC_ringcount==0);
-    if ~isempty(zeroPoints)
-        propRGC_ringcount(zeroPoints)=min(propRGC_ringcount(find(propRGC_ringcount~=0)));
-    end
-    midgetFraction = calcMidgetFraction(regularSupportPosDeg,0.8928,fitParams(mm,4));
-    plot(log10(propRGC_ringcount),midgetFraction,'.k')
-    hold on
-    ylim([0.4 1]);
-    xlabel('proportion cumulative RGC denisty count');
-    ylabel('midget fraction');
-    if mm==1
-        midgetConcat=midgetFraction;
-        propRGCConcat=propRGC_ringcount;
-    else
-        midgetConcat=[midgetConcat midgetFraction];
-        propRGCConcat=[propRGCConcat propRGC_ringcount];
-    end
-    % This looks like it will be well fit by a reciprocal function
+
     
 end % loop over meridians
 
-    set(0, 'CurrentFigure', figHandle(4))
-    subplot(1,1,1);
-    [propRGCConcat,sortOrder] = sort(propRGCConcat);
-    midgetConcat=midgetConcat(sortOrder);
-    highWeightZone=find(log10(propRGCConcat') < -4);
-    weights=ones(1,length(propRGCConcat));
-    weights(highWeightZone)=100;
-    recipFit=fit(log10(propRGCConcat')*(-1),0.8928-midgetConcat',recipFunc,'Weights',weights);
-    xFit=logspace(-12,1,50);
-    plot( log10(xFit),0.8928-recipFit(log10(xFit)*(-1)),'xr')
 
 
 
-
-function midgetFraction = calcMidgetFraction(supportPosDeg,f0,rm)
-
-% The equation is taken from Watson JoV 2014 (eq 7, plotted in fig 8), 
-% which Watson took from Drasdo et al 2007.
-midgetFraction = f0.*(1+(supportPosDeg./rm)).^-1;
-
-end
-
-function mRGCDensity = transformRGCToMidgetRGCDensity(regularSupportPosDeg,rgcDensitySqDeg,transformParams)
-
-% Distribute the transformParams
-rm = transformParams(4);
-
-% Calculate the midget fraction.
-f0 = 0.8928; % One of Watson's constants
-
-midgetFraction = calcMidgetFraction(regularSupportPosDeg,f0,rm);
-
-mRGCDensity = rgcDensitySqDeg .* midgetFraction;
-
-end
+% function mRGCDensity = transformRGCToMidgetRGCDensity(regularSupportPosDeg,rgcDensitySqDeg,transformParams)
+% 
+% % Distribute the transformParams
+% rm = transformParams(4);
+% 
+% % Calculate the midget fraction.
+% f0 = 0.8928; % One of Watson's constants
+% 
+% midgetFraction = calcWatsonMidgetFractionByEccen(regularSupportPosDeg,f0,rm);
+% 
+% mRGCDensity = rgcDensitySqDeg .* midgetFraction;
+% 
+% end
 
 
 function mRFDensity = transformConeToMidgetRFDensity(coneDensitySqDeg,transformParams)
@@ -310,12 +263,6 @@ mRFDensity = log10(coneDensitySqDeg) ./ (10.^( ( 1./(a+(b.*log10(coneDensitySqDe
 end
 
 
-function countsPerRing = calcCumulative(regularSupportPosDeg, densityFunction)
-
-ringArea = [0,diff(regularSupportPosDeg.^2 * pi)];
-countsPerRing = cumsum(densityFunction.*ringArea);
-
-end
 
 
 function [c,ceq] = testRFGreaterThanRGC(regularSupportPosDeg, countsPerRingRF, countsPerRingRGC, displacementPointDeg)
