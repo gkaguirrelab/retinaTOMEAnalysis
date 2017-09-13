@@ -150,7 +150,6 @@ for mm = 1:length(meridianAngles)
     mRGCDensityOverRegularSupport = @(transformParams) transformRGCToMidgetRGCDensity(regularSupportPosDeg,RGCDensityFit(regularSupportPosDeg)',transformParams);
 
     
-    
     %% Step 3
     % Our goal is to have the cumulative mRF and mRGC functions have minimally
     % different values past the displacement point, and for the cumulative mRF
@@ -232,13 +231,39 @@ for mm = 1:length(meridianAngles)
     hold off
     
     
-    %% Step 5
+    %% Step 6
     % Examine how the midget ratio varies with the proportion of cumulative
     % retinal ganglion cell density
+    set(0, 'CurrentFigure', figHandle(4))
+    subplot(1,1,1);
+    RGC_ringcount = calcCumulative(regularSupportPosDeg,RGCDensityFit(regularSupportPosDeg)');
+    propRGC_ringcount=RGC_ringcount./max(RGC_ringcount);
+    zeroPoints=find(propRGC_ringcount==0);
+    if ~isempty(zeroPoints)
+        propRGC_ringcount(zeroPoints)=min(propRGC_ringcount(find(propRGC_ringcount~=0)));
+    end
+    midgetFraction = calcMidgetFraction(regularSupportPosDeg,0.8928,fitParams(mm,4));
+    plot(log(propRGC_ringcount),midgetFraction,'.k')
+    hold on
+    recipFit=fit(log(propRGC_ringcount')*(-1),0.8928-midgetFraction',recipFunc);
+    plot(log(propRGC_ringcount),0.8928-recipFit(log(propRGC_ringcount')*(-1)),'-b')
+    ylim([0.4 1]);
+    xlabel('proportion cumulative RGC denisty count');
+    ylabel('midget fraction');
+    % This looks like it will be well fit by a reciprocal function
     
 end % loop over meridians
 
 
+
+
+function midgetFraction = calcMidgetFraction(supportPosDeg,f0,rm)
+
+% The equation is taken from Watson JoV 2014 (eq 7, plotted in fig 8), 
+% which Watson took from Drasdo et al 2007.
+midgetFraction = f0.*(1+(supportPosDeg./rm)).^-1;
+
+end
 
 function mRGCDensity = transformRGCToMidgetRGCDensity(regularSupportPosDeg,rgcDensitySqDeg,transformParams)
 
@@ -246,11 +271,9 @@ function mRGCDensity = transformRGCToMidgetRGCDensity(regularSupportPosDeg,rgcDe
 rm = transformParams(4);
 
 % Calculate the midget fraction.
-% The equation is taken from Watson JoV 2014 (eq 7, plotted in fig 8), 
-% which Watson took from Drasdo et al 2007.
 f0 = 0.8928; % One of Watson's constants
 
-midgetFraction = f0.*(1+(regularSupportPosDeg./rm)).^-1;
+midgetFraction = calcMidgetFraction(regularSupportPosDeg,f0,rm);
 
 mRGCDensity = rgcDensitySqDeg .* midgetFraction;
 
