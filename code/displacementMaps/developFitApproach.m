@@ -15,6 +15,7 @@ meridianAngles = [0, 90, 180, 270];
 % want our function to produce these
 targetDisplacementPointDeg = [12 17 17 17];
 
+rgcCumProportionReferenceEccen = 20;
 
 %% Step 0
 % Examine the relationship between cone density and midget
@@ -237,22 +238,39 @@ for mm = 1:length(meridianAngles)
     set(0, 'CurrentFigure', figHandle(4))
     subplot(1,1,1);
     RGC_ringcount = calcCumulative(regularSupportPosDeg,RGCDensityFit(regularSupportPosDeg)');
-    propRGC_ringcount=RGC_ringcount./max(RGC_ringcount);
+    refPointIdx=find((regularSupportPosDeg-rgcCumProportionReferenceEccen)==min(abs(regularSupportPosDeg-rgcCumProportionReferenceEccen)));
+    propRGC_ringcount=RGC_ringcount./RGC_ringcount(refPointIdx);
     zeroPoints=find(propRGC_ringcount==0);
     if ~isempty(zeroPoints)
         propRGC_ringcount(zeroPoints)=min(propRGC_ringcount(find(propRGC_ringcount~=0)));
     end
     midgetFraction = calcMidgetFraction(regularSupportPosDeg,0.8928,fitParams(mm,4));
-    plot(log(propRGC_ringcount),midgetFraction,'.k')
+    plot(log10(propRGC_ringcount),midgetFraction,'.k')
     hold on
-    recipFit=fit(log(propRGC_ringcount')*(-1),0.8928-midgetFraction',recipFunc);
-    plot(log(propRGC_ringcount),0.8928-recipFit(log(propRGC_ringcount')*(-1)),'-b')
     ylim([0.4 1]);
     xlabel('proportion cumulative RGC denisty count');
     ylabel('midget fraction');
+    if mm==1
+        midgetConcat=midgetFraction;
+        propRGCConcat=propRGC_ringcount;
+    else
+        midgetConcat=[midgetConcat midgetFraction];
+        propRGCConcat=[propRGCConcat propRGC_ringcount];
+    end
     % This looks like it will be well fit by a reciprocal function
     
 end % loop over meridians
+
+    set(0, 'CurrentFigure', figHandle(4))
+    subplot(1,1,1);
+    [propRGCConcat,sortOrder] = sort(propRGCConcat);
+    midgetConcat=midgetConcat(sortOrder);
+    highWeightZone=find(log10(propRGCConcat') < -4);
+    weights=ones(1,length(propRGCConcat));
+    weights(highWeightZone)=100;
+    recipFit=fit(log10(propRGCConcat')*(-1),0.8928-midgetConcat',recipFunc,'Weights',weights);
+    xFit=logspace(-12,1,50);
+    plot( log10(xFit),0.8928-recipFit(log10(xFit)*(-1)),'xr')
 
 
 
