@@ -1,11 +1,13 @@
-function [fitParams, fitDisplacement] = fitExpExpToDisplacement(radii_mm, displacement, weights, varargin)
-% function [fitParams, fitDisplacement] = fitExpExpToDisplacement(radii_mm, displacement, weights, varargin)
+function [fitParams, RGCdensityFit] = fitFrechetToRGCDensity(supportPosMm, rgcDensity, weights, varargin)
+% function [fitParams, fitDisplacement] = fitGammaToDisplacement(radii_mm, displacement, weights, varargin)
 %
-%  Fits an Chi Square Probabilty Density Function to the retinal ganglion cell displacement function.
-% 
+%  Fits a frechet pdf to the retinal ganglion cell displacement function. The
+%  use of a gamma pdf for the fit is driven both by the appearance of the
+%  data and the prior use of this function in Watson 2014 JoV, Eq 5.
 %
 %  Inputs:
-%    radii_mm: vector with the eccentricity base of the data
+%    ecc_mm: vector with the eccentricity base of the data ## CHECK IF THIS
+%    SHOULD BE IN DEG OR IN MM ##
 %    displacement: vector with the RGC displacement from the fovea
 %    weights: vector that provides a weighting function for the error
 %      term as a function of eccentricity. The use of a weighting function
@@ -24,17 +26,17 @@ function [fitParams, fitDisplacement] = fitExpExpToDisplacement(radii_mm, displa
 %
 %  Outputs
 %    fitParams: the parameters of the best fit gamma pdf (shape, scale)
-%    fitDisplacement: the gamma function itself
+%    fitDisplacement: the frechet function itself
 %
 %
-%  Demo - create a gamma pdf (plus noise), a uniform weighting
+%  Demo - create a frechet pdf (plus noise), a uniform weighting
 %    function, and then fit it
 %
 %    radii_mm=0:0.005:5;
 %    displacement=gampdf(radii_mm,3,.2)+(rand(1,1001)-0.5)/5;
 %    weights=radii_mm.*0+1;
 %
-%    [fitParams, fitDisplacement] = fitGammaToDisplacement(radii_mm, ...
+%    [fitParams, fitDisplacement] = fitFrechetToDisplacement(radii_mm, ...
 %      displacement, weights, 'displayPlot', 'full');
 
 %% Parse vargin for options passed here
@@ -42,9 +44,9 @@ p = inputParser;
 p.addRequired('radii_mm',@isnumeric);
 p.addRequired('displacement',@isnumeric);
 p.addRequired('weights',@isnumeric);
-p.addParameter('initialParams',[4],@isnumeric);
+p.addParameter('initialParams',[1,1,0],@isnumeric);
 p.addParameter('displayPlot','none',@ischar);
-p.parse(radii_mm, displacement, weights, varargin{:});
+p.parse(supportPosMm, rgcDensity, weights, varargin{:});
 
 % Unpack the arguments
 initialParams=p.Results.initialParams;
@@ -52,47 +54,49 @@ displayPlot=p.Results.displayPlot;
 
 % Check that all passed vectors are either row or column vectors and the
 % same length
-if ~all(size(radii_mm)==size(displacement)) || ~all(size(radii_mm)==size(weights))
+if ~all(size(supportPosMm)==size(rgcDensity)) || ~all(size(supportPosMm)==size(weights))
     error('The passed vectors must be the same length and same row/column order');
 end
 
-% Run the search
-fitParams = fminsearch( (@(p) expChiSqModelFit(p, radii_mm, displacement, weights)), initialParams);
+options=optimset('fminsearch');
+options=optimset(options,'Display','none');
 
-% Obtain the Gamma model fit at the passed eccentricities.
-fitDisplacement = ((radii_mm.^((fitParams(1)./2)-1)).*exp(-1.*radii_mm./2))./(2.^(fitParams(1)./2).*gamma(fitParams(1)./2));
+% Run the search
+fitParams = fminsearch( (@(p) modelFitError(p, supportPosMm, rgcDensity, weights)), initialParams, options);
+
+% Obtain the Frechnet model fit at the passed eccentricities.
+RGCdensityFit = frechnetPDF(supportPosMm,fitParams(1),fitParams(2),fitParams(3));
+
 % If the user requested a plot, give it to them
 if strcmp(displayPlot,'full')
     figure;
     % Plot the data
-    r1 = plot(radii_mm, displacement, '.r'); hold on;
-    r2 = plot(radii_mm, fitDisplacement);
+    r1 = plot(supportPosMm, rgcDensity, '.r'); hold on;
+    r2 = plot(supportPosMm, RGCdensityFit);
     % Make the plot pretty
     xlabel('Eccentricity (mm)');
-    ylabel('Displaement (mm)');
+    ylabel('Density (counts/mm2)');
 end
 
 end % main function
 
 
-function E = expChiSqModelFit(params, radii_mm, displacement, weights)
+function y = frechnetPDF( x, shape, scale, location )
 
-% Error function, calculating the sum-of-squares for the data vs. the fit.
-yhat= ((radii_mm.^((params(1)./2)-1)).*exp(-1.*radii_mm./2))./(2.^(params(1)./2).*gamma(params(1)./2));
-% Calculate the sums-of-square error
-errorPreSum =((displacement - yhat).^2);
-errorPreSum = errorPreSum .* weights;
-E = sum(errorPreSum);
+y = (shape./scale)*((x-location)./scale).^(-1-shape).* exp( -((x-location)./scale).^(-shape));
 
-% Determine if the derivative of the gamma function contains points with a
-% slope greater than unity. If so, inflate the error term by 10.
-% This is to avoid a non-physiologic displacement of an RGC back
-% past a more central, neighboring RGC.
 
-firstDeriv=diff(yhat)./diff(radii_mm);
-if max(firstDeriv) >=1
-    E=E*1;
 end
 
 
-end % error calculation for gamma pdf model
+function E = modelFitError(params, radii_mm, rgcDensity, weights)
+
+% Error function, calculating the sum-of-squares for the data vs. the fit.
+yhat = frechnetPDF(radii_mm,params(1),params(2),params(3));
+
+% Calculate the sums-of-square error
+errorPreSum =((rgcDensity - yhat).^2);
+errorPreSum = errorPreSum .* weights;
+E = nansum(errorPreSum);
+
+end
