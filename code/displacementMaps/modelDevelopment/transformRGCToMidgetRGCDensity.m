@@ -66,9 +66,7 @@ RGC_ringcount = calcCumulative(regularSupportPosDeg,rgcDensitySqDeg);
 
 % Find the index position in the regularSupportPosDeg that is as close
 % as possible to the referenceEccen
-refPointIdx= ...
-    find((regularSupportPosDeg-p.Results.referenceEccen)== ...
-    min(abs(regularSupportPosDeg-p.Results.referenceEccen)));
+[ ~, refPointIdx ] = min(abs(regularSupportPosDeg-p.Results.referenceEccen));
 % Calculate a proportion of the cumulative RGC density counts, relative
 % to the reference point (which is assigned a value of unity)
 propRGC_ringcount=RGC_ringcount./RGC_ringcount(refPointIdx);
