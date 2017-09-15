@@ -308,7 +308,7 @@ for ff = 1:length(figHandles)
 end
 
 % Dump the fitParams to the screen
-outline='meridian\t\tslope\tinflect\tmRGC a\tmRGC b\tmRGC c\n';
+outline='meridian\t\tslope\tinflect\tmRGC_a\tmRGC_b\tmRGC_c\n';
 fprintf(outline);
 for mm=1:length(meridianAngles)
     outline=[meridianNames{mm} '\t'];

@@ -8,7 +8,7 @@ function [coneDensitySqDeg, supportPosDeg] = getCurcioConeDensitySqDeg(angle)
 % Here, we load these data and convert from mm to degrees.
 %
 % Inputs:
-%   angle      = The dedsired angle of the density function on the retinal field.
+%   angle      = The desired angle of the density function on the retinal field.
 %                (0=nasal;90=superior;180=temporal;270=inferior)
 % Outputs:
 %   coneDensitySqDeg - the density (counts per square
