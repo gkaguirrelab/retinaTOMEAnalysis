@@ -11,17 +11,16 @@ clc
 sampleResolutionDegrees = 0.01;
 maxModeledEccentricity = 30;
 regularSupportPosDeg = 0:sampleResolutionDegrees:maxModeledEccentricity;
-
 % Each of the meridians is defined by a polar angle value.
 meridianNames = {'Nasal' 'Superior' 'Temporal' 'Inferior'};
 meridianAngles = [0, 90, 180, 270];
-
+meridianColors = {'g','b','r','k'};
 % This is point in degrees at which displacement should become zero for
 % each meridian
 targetDisplacementPointDeg = [12 15 15 15];
-
 % The x-axis value we will assign "zero" for log transforms
 logZeroPlotFix = 1e-5;
+
 
 %% Derive parameters for the transformation of RGC density to mRGC density
 [ rgcInitialTransformParams, figureHandle(1) ] = developMidgetRGCFractionModel();
@@ -44,13 +43,13 @@ for mm = 1:length(meridianAngles)
     % We build the function using cone density.
     
     % load the empirical cone density measured by Curcio
-    [supportPosDeg,coneDensitySqDeg] = curcioConeDensitySqDeg(meridianAngles(mm));
+    [coneNativeSupportPosDeg,coneDensitySqDeg] = getCurcioConeDensitySqDeg(meridianAngles(mm));
     % remove nan values
     isvalididx=find(~isnan(coneDensitySqDeg));
-    supportPosDeg = supportPosDeg(isvalididx);
+    coneNativeSupportPosDeg = coneNativeSupportPosDeg(isvalididx);
     coneDensitySqDeg = coneDensitySqDeg(isvalididx);
     % Obtain a spline fit function for cone density
-    coneDensityFit = fit(supportPosDeg',coneDensitySqDeg','smoothingspline','SmoothingParam', 1);
+    coneDensityFit = fit(coneNativeSupportPosDeg',coneDensitySqDeg','smoothingspline','SmoothingParam', 1);
     % Create an anonymous function that returns mRF density as a function
     % cone density, with the transform defined by the first two fitParams
     mRFDensityOverRegularSupport = ...
@@ -65,13 +64,13 @@ for mm = 1:length(meridianAngles)
     % We build the function using RGC density.
     
     % Load the RGC Density Data from Curcio and Allen 1990:
-    [ RGCDensitySqDeg, supportPosDeg ] = getCurcioRGCDensityByEccen( meridianAngles(mm) );
+    [ RGCDensitySqDeg, RGCNativeSupportPosDeg ] = getCurcioRGCDensityByEccen( meridianAngles(mm) );
     % remove nan values
     isvalididx=find(~isnan(RGCDensitySqDeg)  );
-    supportPosDeg = supportPosDeg(isvalididx);
+    RGCNativeSupportPosDeg = RGCNativeSupportPosDeg(isvalididx);
     RGCDensitySqDeg = RGCDensitySqDeg(isvalididx);
     % Fit a spline to the RGC density data
-    RGCDensityFit = fit(supportPosDeg,RGCDensitySqDeg,'smoothingspline', 'Exclude',find(isnan(RGCDensitySqDeg)),'SmoothingParam', 1);
+    RGCDensityFit = fit(RGCNativeSupportPosDeg,RGCDensitySqDeg,'smoothingspline', 'Exclude',find(isnan(RGCDensitySqDeg)),'SmoothingParam', 1);
     % Create an anonymous function that returns mRGC density as a function of
     % RGC density, with the transform defined by the last three fitParams
     mRGCDensityOverRegularSupport = ...
@@ -137,46 +136,47 @@ for mm = 1:length(meridianAngles)
     hold off
     drawnow
     
-    
-    %% Step 5
     % Compare the midgetRF : cone ratio for each meridian between the
     % Watson model and what we find is needed for good dispacement
     
-    % load the empirical cone density measured by Curcio
-    [supportPosDeg,coneDensitySqDeg] = curcioConeDensitySqDeg(meridianAngles(mm));
-    % calculate the mRF density at these eccentricity locations using
-    % Watson equation 7.
-    [ midgetRFDensity_degSq ] = getWatsonMidgetReceptiveFieldDensityByEccen(supportPosDeg, meridianAngles(mm));
+    % calculate the mRF density at locations for which we have empirical
+    % cone measurements using Watson equation 8.
+    [ mRFDensitySqDeg_watson ] = getWatsonMidgetReceptiveFieldDensityByEccen(coneNativeSupportPosDeg, meridianAngles(mm));
 
     % Get the log-friendly x axis values ready
-    dispSupportPosDeg=supportPosDeg;
+    dispSupportPosDeg=coneNativeSupportPosDeg;
     dispSupportPosDeg(1)=logZeroPlotFix;
 
     % Plot this ratio
     set(0, 'CurrentFigure', figHandle(4))
-    subplot(1,length(meridianAngles),mm);
-        
-    loglog(dispSupportPosDeg,midgetRFDensity_degSq./coneDensitySqDeg,'.k');
+    subplot(1,2,1);
+    loglog(dispSupportPosDeg,mRFDensitySqDeg_watson./coneDensitySqDeg,'-','Color',meridianColors{mm});
     ylim([1e-4 1e1]);
-    hold on
     xlabel('log10 eccentricity');
-    ylabel('log10 cone:mRF');
-    title([meridianNames{mm} ' - Watson (.), Adjusted (-)']);
-
+    ylabel('log10 mRF:cone');
+    ylim([1e-4 1e2]);
+    title('mRF:cone ratio by eccentricity from Watson');
+    hold on
+    
     % Get the midget receptive field density implied by the found transform
     % parameters
-    mRFDensityDegSq_adjusted=transformConeToMidgetRFDensity(coneDensityFit(supportPosDeg)','logitFitParams',fitParams(mm,1:2));
+    mRFDensitySqDeg_ours=transformConeToMidgetRFDensity(coneDensityFit(coneNativeSupportPosDeg)','logitFitParams',fitParams(mm,1:2));
 
     % Plot this ratio
-    loglog(dispSupportPosDeg,mRFDensityDegSq_adjusted./coneDensitySqDeg,'-r');
-    hold off
-    
-    
-
+    subplot(1,2,2);
+    loglog(dispSupportPosDeg,mRFDensitySqDeg_ours./coneDensitySqDeg,'-','Color',meridianColors{mm});
+    ylim([1e-4 1e2]);
+    hold on
+    drawnow
     
 end % loop over meridians
 
-
+% Clean up some figure legends
+set(0, 'CurrentFigure', figHandle(4))
+subplot(1,2,1);
+legend(meridianNames,'Location','southwest');
+subplot(1,2,2);
+legend(meridianNames,'Location','southwest');
 
 
 function [c,ceq] = testRFGreaterThanRGC(regularSupportPosDeg, countsPerRingRF, countsPerRingRGC, displacementPointDeg)

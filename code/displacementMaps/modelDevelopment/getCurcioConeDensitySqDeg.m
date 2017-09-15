@@ -1,4 +1,4 @@
-function [supportPosDeg,coneDensitySqDeg] = curcioConeDensitySqDeg(angle)
+function [supportPosDeg,coneDensitySqDeg] = getCurcioConeDensitySqDeg(angle)
 % fitConeDensity -- Loads and fits the Curcio 1990 cone density data
 %
 % Description:
