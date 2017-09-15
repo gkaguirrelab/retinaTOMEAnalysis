@@ -144,6 +144,12 @@ for mm = 1:length(p.Results.meridianAngles)
     % Perform the fit and save the param values.
     % The x values are (-1) * log10(proportionRGC)
     % The y values are the f0 value minus the midget fraction
+    
+    % turn off some warnings that are produced by the fit and plot
+    warningState = warning;
+    warning('off','curvefit:fit:complexXusingOnlyReal');
+    warning('off','MATLAB:plot:IgnoreImaginaryXYPart');
+
     recipFit= ...
         fit(log10(propRGC_ringcount'),p.Results.watsonEq8_f0-midgetFractionByEccen', ...
         recipFunc,'Weights',weights,'StartPoint',p.Results.recipFitStartPoint );
@@ -160,6 +166,9 @@ for mm = 1:length(p.Results.meridianAngles)
         xlabel('log10 proportion cumulative RGC density count');
         ylabel('midget fraction');
     end % if we are plotting
+    
+    % restore the saved warning state
+    warning(warningState);
     
 end % loop over meridians
 

@@ -21,17 +21,23 @@ targetDisplacementPointDeg = [11 17 17 17];
 
 
 %% Derive parameters for the transformation of RGC density to mRGC density
-[ rgcInitialTransformParams, figureHandle(1) ] = developMidgetRGCFractionModel();
+[ rgcInitialTransformParams, figHandles(1) ] = developMidgetRGCFractionModel();
 
 
 %% Derive parameters for the transformation of cone density to mRF density
-[ rfInitialTransformParams, figureHandle(2) ] = developMidgetRFFractionModel();
+[ rfInitialTransformParams, figHandles(2) ] = developMidgetRFFractionModel();
 
+%% prepare for figures
+figNames={'mRGCmodel','mRFmodel','displacement','mRGCwatsonCompare','mRFwatsonCompare'};
+figOutpath='~/Desktop/displacementModelFigs';
+if ~exist(figOutpath)
+    mkdir(figOutpath)
+end
+figHandles(3) = figure;
+figHandles(4) = figure;
+figHandles(5) = figure;
+set(gcf, 'PaperSize', [8.5 11]);
 
-%% prepare figure handles
-figHandle(3) = figure;
-figHandle(4) = figure;
-figHandle(5) = figure;
 
 %% Loop over the meridians
 for mm = 1:length(meridianAngles)
@@ -114,29 +120,61 @@ for mm = 1:length(meridianAngles)
     
     %% Plot the displacement and cumulative functions
     % plot the displacement
-    set(0, 'CurrentFigure', figHandle(3))
-    subplot(2,length(meridianAngles),mm);
+    set(0, 'CurrentFigure', figHandles(3))
+    subplot(length(meridianAngles),2,mm*2-1);
     plot(regularSupportPosDeg(1:length(rgcDisplacementDeg)),rgcDisplacementDeg,'-r')
     ylim([-.5 3.0]);
     xlabel('eccentricity [deg]');
-    ylabel('radial displacement of RGCs [deg]');
-    title([meridianNames{mm} ' meridian']);
+    ylabel('RGC displacement [deg]');
+    title(meridianNames{mm});
+    pbaspect([2 1 1]);
     
     % Plot the cumulative functions
-    subplot(2,length(meridianAngles),mm+length(meridianAngles));
+    subplot(length(meridianAngles),2,mm*2);
     plot(regularSupportPosDeg,mRGC_cumulative(fitParams(mm,:)),'-k')
     xlabel('eccentricity [deg]');
     ylabel('cells per sector');
+    pbaspect([2 1 1]);
     hold on
     plot(regularSupportPosDeg,mRF_cumulative(fitParams(mm,:)),'-b')
     ylim([0 8e5]);
-    title('mRGC black, mRF blue');
+    if mm==1
+        legend({'mRGC','mRF'},'Location','southeast');
+    end
     hold off
     drawnow
     
     
+    %% Plot the mRGC fraction
+    set(0, 'CurrentFigure', figHandles(4))
+    
+    % Plot Watson's midget fraction
+    subplot(1,2,1);
+    f0 = 0.8928; rm = 41.03; % Watson's values
+    midgetFraction_watson = calcWatsonMidgetFractionByEccen(RGCNativeSupportPosDeg,f0,rm);
+    plot(RGCNativeSupportPosDeg,midgetFraction_watson,'-k');
+    hold on
+    xlabel('eccentricity deg');
+    ylabel('midget fraction');
+    ylim([0 1]);
+    xlim([0 40]);
+    title('Watson''s midget fraction (from Drasdo)');
+    
+    % Plot our midget fraction
+    subplot(1,2,2);
+    [ ~, midgetFraction_ours ] = transformRGCToMidgetRGCDensity( RGCNativeSupportPosDeg', RGCDensitySqDeg', 'recipFitParams', fitParams(mm,3:5) );
+    plot(RGCNativeSupportPosDeg,midgetFraction_ours,'-','Color',meridianColors{mm});
+    hold on
+    ylim([0 1]);
+    xlim([0 40]);
+    xlabel('eccentricity deg');
+    ylabel('midget fraction');
+    title('Our midget fraction');
+    drawnow
+
+
     %% Plots related to midget RF density
-    set(0, 'CurrentFigure', figHandle(4))
+    set(0, 'CurrentFigure', figHandles(5))
     
     % calculate the mRF density using Watson equation 8 at the sites of
     % empirical cone measurement
@@ -170,7 +208,7 @@ for mm = 1:length(meridianAngles)
     xlabel('log10 eccentricity');
     ylabel('log10 mRF:cone');
     ylim([1e-4 1e2]);
-    title('Watom''s mRF:cone ratio by eccentricity');
+    title('Watson''s mRF:cone ratio by eccentricity');
     hold on
     
     % Plot the mRF : cone ratio for us
@@ -179,51 +217,32 @@ for mm = 1:length(meridianAngles)
         transformConeToMidgetRFDensity(coneDensityFit(coneNativeSupportPosDeg)','logitFitParams',fitParams(mm,1:2));
     loglog(coneNativeSupportPosDeg(2:end),mRFDensitySqDeg_ours(2:end)./coneDensitySqDeg(2:end),'-','Color',meridianColors{mm});
     ylim([1e-4 1e2]);
+    xlabel('log10 eccentricity');
+    ylabel('log10 mRF:cone');
     title('Our mRF:cone ratio by eccentricity');
     hold on
     drawnow
     
     
-    %% Plot the mRGC fraction
-    set(0, 'CurrentFigure', figHandle(5))
-    
-    % Plot Watson's midget fraction
-    subplot(1,2,1);
-    f0 = 0.8928; rm = 41.03; % Watson's values
-    midgetFraction_watson = calcWatsonMidgetFractionByEccen(RGCNativeSupportPosDeg,f0,rm);
-    plot(RGCNativeSupportPosDeg,midgetFraction_watson,'-k');
-    hold on
-    xlabel('eccentricity deg');
-    ylabel('midget fraction');
-    ylim([0 1]);
-    xlim([0 40]);
-    title('Watson''s midget fraction (from Drasdo)');
-    
-    % Plot our midget fraction
-    subplot(1,2,2);
-    [ ~, midgetFraction_ours ] = transformRGCToMidgetRGCDensity( RGCNativeSupportPosDeg', RGCDensitySqDeg', 'recipFitParams', fitParams(mm,3:5) );
-    plot(RGCNativeSupportPosDeg,midgetFraction_ours,'-','Color',meridianColors{mm});
-    hold on
-    ylim([0 1]);
-    xlim([0 40]);
-    xlabel('eccentricity deg');
-    ylabel('midget fraction');
-    title('Our midget fraction');
-    drawnow
-    
 end % loop over meridians
 
-% Clean up some figure legends
-set(0, 'CurrentFigure', figHandle(4))
+% Clean up the figures and save
+set(0, 'CurrentFigure', figHandles(4))
+subplot(1,2,2);
+legend(meridianNames,'Location','southwest');
+
+set(0, 'CurrentFigure', figHandles(5))
 subplot(2,2,1);
 legend(meridianNames,'Location','southwest');
 subplot(2,2,2);
 legend(meridianNames,'Location','southwest');
 
-set(0, 'CurrentFigure', figHandle(5))
-subplot(1,2,2);
-legend(meridianNames,'Location','southwest');
-
+for ff = 1:length(figHandles)
+set(0, 'CurrentFigure', figHandles(ff))
+    tightfig;
+    outFileName = fullfile(figOutpath,[figNames{ff} '.pdf']);
+    saveas(figHandles(ff), outFileName, 'pdf');
+end
 
 
 
