@@ -1,7 +1,7 @@
 function [ rgcDensitySqDeg, supportPosDeg ] = getCurcioRGCDensityByEccen(angle)
 % getCurcioMidgetRGCDensityByEccen(angle)
 %
-% Curcio and Allen obtained measurements of the denisty of all RGC classes
+% Curcio and Allen obtained measurements of the density of all RGC classes
 % within 6 human retinas at a set of positions relative to the fovea. These
 % data were provided online in 2013.
 %
@@ -17,10 +17,10 @@ function [ rgcDensitySqDeg, supportPosDeg ] = getCurcioRGCDensityByEccen(angle)
 %       (0=nasal; 90=superior; 180=temporal; 270=inferior)
 %
 % Outputs
-%   midget_rgcDensity_degSq - the density (counts per square
-%       degree) of midget RGCs at each of the positions
+%   rgcDensitySqDeg - the density (counts per square
+%       degree) of RGCs at each of the positions
 %   supportPosDeg - the positions (in degrees of visual angle) from the
-%       fovea at which the midget RGC density is defined
+%       fovea at which the RGC density is defined
 
 % Check the input
 if sum([0 90 180 270]==angle) ~= 1

@@ -105,7 +105,7 @@ for mm = 1:length(meridianAngles)
     % params
     
     % load the empirical cone density measured by Curcio
-    [coneNativeSupportPosDeg,coneDensitySqDeg] = getCurcioConeDensitySqDeg(meridianAngles(mm));
+    [coneDensitySqDeg, coneNativeSupportPosDeg] = getCurcioConeDensitySqDeg(meridianAngles(mm));
     % remove nan values
     isvalididx=find(~isnan(coneDensitySqDeg));
     coneNativeSupportPosDeg = coneNativeSupportPosDeg(isvalididx);
