@@ -50,7 +50,7 @@ clc
 %% Set up some variables
 
 % Each of the meridians is defined by a polar angle value.
-meridianNames = {'Nasal' 'Superior' 'Temporal' 'Inferior'};
+meridianNames = {'Nasal   ' 'Superior' 'Temporal' 'Inferior'};
 meridianAngles = [0, 90, 180, 270];
 meridianColors = {'g','b','r','k'};
 
@@ -308,8 +308,16 @@ for ff = 1:length(figHandles)
 end
 
 % Dump the fitParams to the screen
-fitParams
-
+outline='meridian\tslope\tinflect\tmRGC a\tmRGC b\tmRGC c\n';
+fprintf(outline);
+for mm=1:length(meridianAngles)
+    outline=[meridianNames{mm} '\t'];
+    for pp=1:size(fitParams,2)
+        outline=[outline '\t' num2str(fitParams(mm,pp))];
+    end
+    outline=[outline '\n'];
+    fprintf(outline);
+end
 
 %% LOCAL FUNCTIONS
 
