@@ -25,7 +25,7 @@ function [ fitParams, figHandle ] = developMidgetRGCFractionModel( varargin )
 % across merdians. This gives us a functional form that can be used to
 % convert RGC density to midget RGC density knowing only the proportion of
 % the cumulative RGC density function at the location for which the
-% measurement was made. If we term this proportion value x, then the 
+% measurement was made. If we term this proportion value x, then the
 % relationship is:
 %
 %   midgetFraction =  f0 - [(1./(a+(b.* log10(x) )))+c]
@@ -42,7 +42,7 @@ function [ fitParams, figHandle ] = developMidgetRGCFractionModel( varargin )
 %   referenceEccen - the reference eccentricity for the proportion of
 %       the cumulative RGC density. The proportion function will have a
 %       value of unity at this point.
-%   supportResolutionDegrees - the resolution (in degrees) for which the 
+%   supportResolutionDegrees - the resolution (in degrees) for which the
 %       calculations are made.
 %   supportEccenMaxDegrees - the maximum eccentricity used for modeling
 %   meridianNames - Cell array of the text string names of the meridia
@@ -68,8 +68,9 @@ p.addParameter('supportResolutionDegrees',0.01,@isnumeric);
 p.addParameter('supportEccenMaxDegrees',30,@isnumeric);
 p.addParameter('meridianNames',{'Nasal' 'Superior' 'Temporal' 'Inferior'},@iscell);
 p.addParameter('meridianAngles',[0, 90, 180, 270],@isnumeric);
+p.addParameter('meridianSymbols',{'.','x','o','^'},@cell);
 p.addParameter('watsonEq8_f0',0.8928,@isnumeric);
-p.addParameter('watsonEq8_rm',39,@isnumeric);
+p.addParameter('watsonEq8_rm',41.03,@isnumeric);
 p.addParameter('recipFitStartPoint',[3 -8 0],@isnumeric);
 
 % Optional display params
@@ -152,9 +153,10 @@ for mm = 1:length(p.Results.meridianAngles)
     
     % Add the data to the figure
     if p.Results.makePlots
-        plot(log10(propRGC_ringcount),midgetFractionByEccen,'.','color',[.8 .8 .8])
+        plot(log10(propRGC_ringcount),midgetFractionByEccen,p.Results.meridianSymbols{mm},'color',[.8 .8 .8])
         hold on
         ylim([0.4 1]);
+        xlim([-12 1]);
         xlabel('log10 proportion cumulative RGC density count');
         ylabel('midget fraction');
     end % if we are plotting
@@ -166,8 +168,12 @@ end % loop over meridians
 fitParams=median(fitParams);
 
 if p.Results.makePlots
-    xFit=logspace(-12,1,100);
-    plot( log10(xFit),p.Results.watsonEq8_f0-recipFunc(fitParams(1),fitParams(2),fitParams(3),log10(xFit)),'xr')
+    xFit=logspace(-12,0,100);
+    plot( log10(xFit), ...
+        p.Results.watsonEq8_f0-recipFunc(fitParams(1),fitParams(2),fitParams(3),log10(xFit)),'-r')
+    legend({p.Results.meridianNames{:} 'fit'},'Location','southwest');
+    title('midget fraction as a function of relative RGC cumulative density');
+    drawnow
 end
 
 

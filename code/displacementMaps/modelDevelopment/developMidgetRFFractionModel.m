@@ -23,7 +23,7 @@ function [ fitParams, figHandle ] = developMidgetRFFractionModel( varargin )
 %
 %	mRFtoConeDensityRatio = minRatio+(maxRatio-minRatio)./(1+(x./inflect).^slope)
 %
-% where maxRatio and minRatio are locked at the values of 2 and 0, respectively.
+% where maxRatio and minRatio are locked at the values of 1.9 and 0, respectively.
 %
 % We calculate the fit of this function across each of the four meridians,
 % then take the median of the two free fit parameters (slope and inflect)
@@ -62,6 +62,7 @@ p.addParameter('referenceEccen',30,@isnumeric);
 p.addParameter('supportEccenMaxDegrees',60,@isnumeric);
 p.addParameter('meridianNames',{'Nasal' 'Superior' 'Temporal' 'Inferior'},@iscell);
 p.addParameter('meridianAngles',[0, 90, 180, 270],@isnumeric);
+p.addParameter('meridianSymbols',{'.','x','o','^'},@cell);
 p.addParameter('minRatio',0,@isnumeric);
 p.addParameter('maxRatio',1.9,@isnumeric);
 p.addParameter('logitFitStartPoint',[3,-1],@isnumeric);
@@ -79,7 +80,7 @@ p.parse(varargin{:})
 % Define a four-parameter logistic function that will be used to fit the
 % modeled relationship. Two of the parameters (max and min asymptote) are
 % locked by the passed parameter
-logisticFunc = fittype( @(slope,inflect,minRatio,maxRatio,x) minRatio+(maxRatio-minRatio)./(1+(x./inflect).^slope), ...
+logisticFunc = fittype( @(slope,inflect,minRatio,maxRatio,x) minRatio+(maxRatio-minRatio)./(1+sign(x./inflect).*abs((x./inflect).^slope)), ...
     'independent','x','dependent','y','problem',{'minRatio','maxRatio'});
 
 % Prepare a figure if requested
@@ -117,6 +118,8 @@ for mm = 1:length(p.Results.meridianAngles)
     % Define the x-axis as the log10 of the proportion of max cone density
     x = log10(coneDensitySqDeg ./ max(coneDensitySqDeg))';
     
+    max(coneDensitySqDeg)
+    
     % Perform the logistic fit. Note that the max and min asymptote are
     % pinned by the passed parameters
     logitFit = fit(x,midgetRFtoConeRatio,logisticFunc, ...
@@ -130,12 +133,10 @@ for mm = 1:length(p.Results.meridianAngles)
     
     % Add the data to the figure
     if p.Results.makePlots
-        plot(x,midgetRFtoConeRatio,'.','Color',[.7 .7 .7]);
+        plot(x,midgetRFtoConeRatio,p.Results.meridianSymbols{mm},'Color',[.7 .7 .7]);
         hold on
-        legend off
         xlabel('log10 proportion max cone density');
         ylabel('mRF density : cone density');
-        title([p.Results.meridianNames{mm} ' meridian']);
     end % if we are plotting
     
 end % loop over meridians
@@ -148,6 +149,9 @@ if p.Results.makePlots
     xFit= -2:.01:0;
     plot( xFit, ...
         logisticFunc(fitParams(1), fitParams(2), p.Results.minRatio, p.Results.maxRatio, xFit),'-r')
+    legend({p.Results.meridianNames{:} 'fit'},'Location','southeast');
+    title('midget RF : cone ratio as a function of relative cone density');
+    drawnow
 end
 
 
