@@ -11,18 +11,6 @@
 	"type": "git",
 	"update": "",
 	"url": ""
-},
-{
-	"flavor": "",
-	"hook": "",
-	"importance": "",
-	"localHookTemplate": "",
-	"name": "tightfig",
-	"pathPlacement": "append",
-	"subfolder": "",
-	"toolboxRoot": "",
-	"type": "webget",
-	"update": "",
-	"url": "https:\/\/www.mathworks.com\/matlabcentral\/mlc-downloads\/downloads\/submissions\/34055\/versions\/6\/download\/zip"
 	}
 ]
+

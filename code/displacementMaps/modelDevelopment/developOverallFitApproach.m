@@ -1,3 +1,45 @@
+%% developOverallFitApproach
+%
+% This routine models retinal ganglion cell displacement.
+% Our strategy is to begin with empirical measurements of cone and retinal
+% ganglion cell densities obtained from each of the four cardinal meridians
+% of the human retina. The data we use are from two papers published by
+% Curcio and colleagues in 1990.
+%
+% We then engage in a modeling exercise to find a low-dimensional
+% parameterization of the transformation of cone density into midget
+% ganglion cell receptive field density (mRF) and of retinal ganglion cell
+% density into midget retinal ganglion cell density (mRGC). In each case,
+% the models do not make use of explicit information regarding the retinal
+% position of the measurement to be transformed.
+%
+% We are then in a position to model mRGC and mRF density as a function of
+% cone and RGC density, subject to a small number of parameters. Each of
+% these functions in turn can be expressed as a cumulative mRGC and mRF
+% count across the radial eccentricity of the retina.
+%
+% As described by Drasdo (2007), the cumulative counts of mRF and mRGCs
+% will become equal at the eccentricity at which the RGCs are no longer
+% displaced. Further, the mRF and mRGC cumulative counts should be
+% equivalent beyond this point.
+%
+% We engage in a non-linear model fit of the parameters that transform
+% cone density --> mRF density and RGC density --> mRGC density, subject
+% to the constraint that the cumulative mRF density must be greater than
+% the cumulative mRGC density within the displacement zone, and we minimize
+% an error function defined as the difference in mRGC and mRF cumulative
+% counts beyond the displacement zone. We set the displacement zone target
+% to be 17 degrees eccentricity for all meridians, except for the nasal
+% meridian within which the displacement point of 11 degrees is enforced by
+% the presence of the optic nerve head.
+%
+% We find that a single set of parameters that governs the RGC --> mRGC
+% transform is sufficient to model the data from all four meridians.
+% Further, we find sets of parameters that vary only slightly between the
+% meridians in the transform of cone density --> mRF density.
+%
+
+
 
 %% Housekeeping
 close all
@@ -5,19 +47,29 @@ clear all
 clc
 
 
-%% Setup some variables
-% The calculations are performed across a regular sampling of eccentricity
-% define a sample resolution
-sampleResolutionDegrees = 0.01;
-maxModeledEccentricity = 30;
-regularSupportPosDeg = 0:sampleResolutionDegrees:maxModeledEccentricity;
+%% Set up some variables
+
 % Each of the meridians is defined by a polar angle value.
 meridianNames = {'Nasal' 'Superior' 'Temporal' 'Inferior'};
 meridianAngles = [0, 90, 180, 270];
 meridianColors = {'g','b','r','k'};
+
 % This is point in degrees at which displacement should become zero for
 % each meridian
 targetDisplacementPointDeg = [11 17 17 17];
+
+% The calculations are performed across a regular sampling of eccentricity
+% define a sample resolution. We note that the sample resolution must be
+% sufficient fine so that the cumulative is an accurate estimate of the
+% integral. Further, we find that our results depend in unpredictable ways
+% on the particular maxModeledEccentricity selected. This latter value must
+% be sufficiently outside the displacement zone so that there is a portion
+% of the cumulative to match between the mRF and mRGC functions, but not so
+% large as to venture into the periphery where our transform models are
+% less accurate
+sampleResolutionDegrees = 0.01;
+maxModeledEccentricity = 30;
+regularSupportPosDeg = 0:sampleResolutionDegrees:maxModeledEccentricity;
 
 
 %% Derive parameters for the transformation of RGC density to mRGC density
@@ -36,15 +88,21 @@ end
 figHandles(3) = figure;
 figHandles(4) = figure;
 figHandles(5) = figure;
-set(gcf, 'PaperSize', [8.5 11]);
-
+for ff=1:length(figHandles)
+    set(0, 'CurrentFigure', figHandles(ff))
+    h=gcf;
+    set(h,'PaperOrientation','landscape');
+    set(h,'PaperUnits','normalized');
+    set(h,'PaperPosition', [0 0 1 1]);
+end
 
 %% Loop over the meridians
 for mm = 1:length(meridianAngles)
     
     %% mRF function
     % Build a function that returns mRF density over regular support.
-    % We build the function using cone density.
+    % We build the function using cone density, and subject to two fit
+    % params
     
     % load the empirical cone density measured by Curcio
     [coneNativeSupportPosDeg,coneDensitySqDeg] = getCurcioConeDensitySqDeg(meridianAngles(mm));
@@ -65,7 +123,8 @@ for mm = 1:length(meridianAngles)
     
     %% mRGC function
     % Build a function that returns mRGC density over regular support.
-    % We build the function using RGC density.
+    % We build the function using RGC density, and subject to the last
+    % three fit params
     
     % Load the RGC Density Data from Curcio and Allen 1990:
     [ RGCDensitySqDeg, RGCNativeSupportPosDeg ] = getCurcioRGCDensityByEccen( meridianAngles(mm) );
@@ -121,20 +180,20 @@ for mm = 1:length(meridianAngles)
     %% Plot the displacement and cumulative functions
     % plot the displacement
     set(0, 'CurrentFigure', figHandles(3))
-    subplot(length(meridianAngles),2,mm*2-1);
+    subplot(2,length(meridianAngles),mm);
     plot(regularSupportPosDeg(1:length(rgcDisplacementDeg)),rgcDisplacementDeg,'-r')
     ylim([-.5 3.0]);
     xlabel('eccentricity [deg]');
     ylabel('RGC displacement [deg]');
     title(meridianNames{mm});
-    pbaspect([2 1 1]);
+    pbaspect([1 1 1]);
     
     % Plot the cumulative functions
-    subplot(length(meridianAngles),2,mm*2);
+    subplot(2,length(meridianAngles),mm+length(meridianAngles));
     plot(regularSupportPosDeg,mRGC_cumulative(fitParams(mm,:)),'-k')
     xlabel('eccentricity [deg]');
     ylabel('cells per sector');
-    pbaspect([2 1 1]);
+    pbaspect([1 1 1]);
     hold on
     plot(regularSupportPosDeg,mRF_cumulative(fitParams(mm,:)),'-b')
     ylim([0 8e5]);
@@ -159,7 +218,8 @@ for mm = 1:length(meridianAngles)
     ylim([0 1]);
     xlim([0 40]);
     title('Watson''s midget fraction (from Drasdo)');
-    
+        pbaspect([2 1 1]);
+
     % Plot our midget fraction
     subplot(1,2,2);
     [ ~, midgetFraction_ours ] = transformRGCToMidgetRGCDensity( RGCNativeSupportPosDeg', RGCDensitySqDeg', 'recipFitParams', fitParams(mm,3:5) );
@@ -170,6 +230,7 @@ for mm = 1:length(meridianAngles)
     xlabel('eccentricity deg');
     ylabel('midget fraction');
     title('Our midget fraction');
+    pbaspect([2 1 1]);
     drawnow
 
 
@@ -188,6 +249,7 @@ for mm = 1:length(meridianAngles)
     xlabel('log10 eccentricity');
     ylabel('log10 mRF density / deg2');
     title('Watson''s mRF density by eccentricity');
+    pbaspect([2 1 1]);
     hold on
     
     % Plot the mRF density by eccentricity from our functions
@@ -199,6 +261,7 @@ for mm = 1:length(meridianAngles)
     xlabel('log10 eccentricity');
     ylabel('log10 mRF density / deg2');
     title('Our mRF density by eccentricity');
+    pbaspect([2 1 1]);
     hold on
     
     % Plot the mRF : cone ratio for Watson
@@ -209,6 +272,7 @@ for mm = 1:length(meridianAngles)
     ylabel('log10 mRF:cone');
     ylim([1e-4 1e2]);
     title('Watson''s mRF:cone ratio by eccentricity');
+    pbaspect([2 1 1]);
     hold on
     
     % Plot the mRF : cone ratio for us
@@ -221,6 +285,7 @@ for mm = 1:length(meridianAngles)
     ylabel('log10 mRF:cone');
     title('Our mRF:cone ratio by eccentricity');
     hold on
+    pbaspect([2 1 1]);
     drawnow
     
     
@@ -238,12 +303,12 @@ subplot(2,2,2);
 legend(meridianNames,'Location','southwest');
 
 for ff = 1:length(figHandles)
-set(0, 'CurrentFigure', figHandles(ff))
-    tightfig;
     outFileName = fullfile(figOutpath,[figNames{ff} '.pdf']);
     saveas(figHandles(ff), outFileName, 'pdf');
 end
 
+% Dump the fitParams to the screen
+fitParams
 
 
 %% LOCAL FUNCTIONS
