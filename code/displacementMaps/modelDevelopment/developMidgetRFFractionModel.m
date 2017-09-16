@@ -105,7 +105,7 @@ end
 for mm = 1:length(p.Results.meridianAngles)
     
     % Load the Cone density Data from Curcio 1990:
-    [coneDensitySqDeg, nativeSupportPosDeg] = getCurcioConeDensitySqDeg(p.Results.meridianAngles(mm));
+    [coneDensitySqDeg, nativeSupportPosDeg] = getCurcioConeDensityByEccen(p.Results.meridianAngles(mm));
     
     % remove nan values
     isvalididx=find(~isnan(coneDensitySqDeg)  );
@@ -114,7 +114,7 @@ for mm = 1:length(p.Results.meridianAngles)
     
     % calculate the mRF density at these eccentricity locations using
     % Watson equation 8.
-    [ midgetRFDensitySqDeg ] = getWatsonMidgetReceptiveFieldDensityByEccen(nativeSupportPosDeg, p.Results.meridianAngles(mm));
+    [ midgetRFDensitySqDeg ] = calcWatsonMidgetRFDensityByEccen(nativeSupportPosDeg, p.Results.meridianAngles(mm));
     
     % Remove nans and points beyond the modeled eccentricity bound
     isvalididx=find(~isnan(midgetRFDensitySqDeg).*~isnan(coneDensitySqDeg) .* (nativeSupportPosDeg < p.Results.supportEccenMaxDegrees) );

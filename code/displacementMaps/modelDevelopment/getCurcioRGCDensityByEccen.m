@@ -28,7 +28,8 @@ if sum([0 90 180 270]==angle) ~= 1
 end
 
 % Load the RGC Density Data from Curcio and Allen 1990:
-curcioDataFileName = fullfile([getpref('octAnalysisForTOME','LocalDataPath') , '/Curcio/curcio_4meridian.mat']);
+curcioDataFileName = ...
+    fullfile([getpref('octAnalysisForTOME','LocalDataPath') , '/Curcio_1990_JCompNeurol_GanglionCellTopography/curcio_4meridian.mat']);
 dataLoad=load(curcioDataFileName);
 curcioRGCdensity_mm = dataLoad.data;
 

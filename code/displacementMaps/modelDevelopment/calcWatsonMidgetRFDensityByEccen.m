@@ -1,5 +1,5 @@
-function [ midgetRFDensity_degSq ] = getWatsonMidgetReceptiveFieldDensityByEccen(supportPosDeg, angle)
-% getWatsonMidgetReceptiveFieldDensityByEccen(supportPosDeg, angle)
+function [ midgetRFDensity_degSq ] = calcWatsonMidgetRFDensityByEccen(supportPosDeg, angle)
+% calcWatsonMidgetRFDensityByEccen(supportPosDeg, angle)
 %
 % This function implements Equation 8 of Watson 2014.
 %

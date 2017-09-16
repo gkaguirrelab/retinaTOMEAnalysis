@@ -105,7 +105,7 @@ for mm = 1:length(meridianAngles)
     % params
     
     % load the empirical cone density measured by Curcio
-    [coneDensitySqDeg, coneNativeSupportPosDeg] = getCurcioConeDensitySqDeg(meridianAngles(mm));
+    [coneDensitySqDeg, coneNativeSupportPosDeg] = getCurcioConeDensityByEccen(meridianAngles(mm));
     % remove nan values
     isvalididx=find(~isnan(coneDensitySqDeg));
     coneNativeSupportPosDeg = coneNativeSupportPosDeg(isvalididx);
@@ -239,7 +239,7 @@ for mm = 1:length(meridianAngles)
     
     % calculate the mRF density using Watson equation 8 at the sites of
     % empirical cone measurement
-    [ mRFDensitySqDeg_watson ] = getWatsonMidgetReceptiveFieldDensityByEccen(coneNativeSupportPosDeg, meridianAngles(mm));
+    [ mRFDensitySqDeg_watson ] = calcWatsonMidgetRFDensityByEccen(coneNativeSupportPosDeg, meridianAngles(mm));
     
     % Plot the mRF density by eccentricity for Watson
     subplot(2,2,1);
