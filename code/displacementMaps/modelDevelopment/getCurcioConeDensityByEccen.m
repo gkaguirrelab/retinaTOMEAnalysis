@@ -1,5 +1,5 @@
-function [coneDensitySqDeg, supportPosDeg] = getCurcioConeDensitySqDeg(angle)
-% getCurcioConeDensitySqDeg(angle)
+function [coneDensitySqDeg, supportPosDeg] = getCurcioConeDensityByEccen(angle)
+% getCurcioConeDensityByEccen(angle)
 %
 % This routine returns the cone density data reported in:
 %
