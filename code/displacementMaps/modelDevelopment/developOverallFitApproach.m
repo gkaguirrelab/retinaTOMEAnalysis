@@ -50,13 +50,13 @@ clc
 %% Set up some variables
 
 % Each of the meridians is defined by a polar angle value.
-meridianNames = {'Nasal   ' 'Superior' 'Temporal' 'Inferior'};
-meridianAngles = [0, 90, 180, 270];
+meridianNames = {'Nasal   ' 'Superior' 'Temporal' 'Inferior' };
+meridianAngles = [0, 90, 180, 270 45];
 meridianColors = {'g','b','r','k'};
 
 % This is point in degrees at which displacement should become zero for
 % each meridian
-targetDisplacementPointDeg = [11 17 17 17];
+targetDisplacementPointDeg = [10 17 17 17];
 
 % The calculations are performed across a regular sampling of eccentricity
 % define a sample resolution. We note that the sample resolution must be
@@ -104,9 +104,7 @@ for mm = 1:length(meridianAngles)
     % We build the function using cone density, and subject to two fit
     % params
     
-    % Obtain a fit to the empirical cone density data of Curcio 1990
-    % Set the key-value 'splineOnly' to true to use the empirical cone
-    % densitities and not a fitted version
+    % Obtain a spline fit to the empirical cone density data of Curcio 1990
     [coneDensityFit] = getSplineFitToConeDensity(meridianAngles(mm));
     
     % Create an anonymous function that returns mRF density as a function
@@ -123,14 +121,8 @@ for mm = 1:length(meridianAngles)
     % We build the function using RGC density, and subject to the last
     % three fit params
     
-    % Load the RGC Density Data from Curcio and Allen 1990:
-    [ RGCDensitySqDeg, RGCNativeSupportPosDeg ] = getCurcioRGCDensityByEccen( meridianAngles(mm) );
-    % remove nan values
-    isvalididx=find(~isnan(RGCDensitySqDeg)  );
-    RGCNativeSupportPosDeg = RGCNativeSupportPosDeg(isvalididx);
-    RGCDensitySqDeg = RGCDensitySqDeg(isvalididx);
-    % Fit a spline to the RGC density data
-    RGCDensityFit = fit(RGCNativeSupportPosDeg,RGCDensitySqDeg,'smoothingspline', 'Exclude',find(isnan(RGCDensitySqDeg)),'SmoothingParam', 1);
+    % Obtain a spline fit to the empirical RGC density data of Curcio 1990
+    RGCDensityFit = getSplineFitToRGCDensity(meridianAngles(mm));
     % Create an anonymous function that returns mRGC density as a function of
     % RGC density, with the transform defined by the last three fitParams
     mRGCDensityOverRegularSupport = ...
@@ -203,6 +195,13 @@ for mm = 1:length(meridianAngles)
     
     %% Plot the mRGC fraction
     set(0, 'CurrentFigure', figHandles(4))
+    
+    % Load the RGC Density Data from Curcio and Allen 1990:
+    [ RGCDensitySqDeg, RGCNativeSupportPosDeg ] = getCurcioRGCDensityByEccen( meridianAngles(mm) );
+    % remove nan values
+    isvalididx=find(~isnan(RGCDensitySqDeg)  );
+    RGCNativeSupportPosDeg = RGCNativeSupportPosDeg(isvalididx);
+    RGCDensitySqDeg = RGCDensitySqDeg(isvalididx);
     
     % Plot Watson's midget fraction
     subplot(1,2,1);
