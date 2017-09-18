@@ -56,7 +56,7 @@ meridianColors = {'g','b','r','k'};
 
 % This is point in degrees at which displacement should become zero for
 % each meridian
-targetDisplacementPointDeg = [10 17 17 17];
+targetDisplacementPointDeg = [11 17 17 17];
 
 % The calculations are performed across a regular sampling of eccentricity
 % define a sample resolution. We note that the sample resolution must be
@@ -79,6 +79,7 @@ regularSupportPosDeg = 0:sampleResolutionDegrees:maxModeledEccentricity;
 %% Derive parameters for the transformation of cone density to mRF density
 [ rfInitialTransformParams, figHandles(2) ] = developMidgetRFFractionModel();
 
+
 %% prepare for figures
 figNames={'mRGCmodel','mRFmodel','displacement','mRGCwatsonCompare','mRFwatsonCompare'};
 figOutpath='~/Desktop/displacementModelFigs';
@@ -96,19 +97,19 @@ for ff=1:length(figHandles)
     set(h,'PaperPosition', [0 0 1 1]);
 end
 
+
 %% Loop over the meridians
 for mm = 1:length(meridianAngles)
     
     %% mRF function
-    % Build a function that returns mRF density over regular support.
-    % We build the function using cone density, and subject to two fit
-    % params
+    % We build a function that returns the cumulative mRF density, subject
+    % to two fit parameters. This function is based upon a model of cone
+    % density.
     
     % Obtain a spline fit to the empirical cone density data of Curcio 1990
     [coneDensityFit] = getSplineFitToConeDensity(meridianAngles(mm));
-    
     % Create an anonymous function that returns mRF density as a function
-    % cone density, with the transform defined by the first two fitParams
+    % of cone density, with the transform defined by the first two fitParams
     mRFDensityOverRegularSupport = ...
         @(fitParams) transformConeToMidgetRFDensity(coneDensityFit(regularSupportPosDeg), ...
         'logitFitParams',fitParams(1:2))';
@@ -117,9 +118,9 @@ for mm = 1:length(meridianAngles)
     
     
     %% mRGC function
-    % Build a function that returns mRGC density over regular support.
-    % We build the function using RGC density, and subject to the last
-    % three fit params
+    % We build a function that returns the cumulative mRGC density, subject
+    % to three fit parameters. This function is based upon a model of RGC
+    % density.
     
     % Obtain a spline fit to the empirical RGC density data of Curcio 1990
     RGCDensityFit = getSplineFitToRGCDensity(meridianAngles(mm));
@@ -133,16 +134,13 @@ for mm = 1:length(meridianAngles)
     
     
     %% Non-linear constraint and error functions
-    % Our goal is to have the cumulative mRF and mRGC functions have minimally
-    % different values past the displacement point, and for the cumulative mRF
-    % to have a greater value than the mRGC function prior to the displacement point
-    
     % Create a non-linear constraint that tests if the RF cumulative values
     % are greater than the RGC cumulative values at eccentricities less
     % than the displacement point
     nonlinconst = @(fitParams) testRFGreaterThanRGC(regularSupportPosDeg, mRF_cumulative(fitParams), mRGC_cumulative(fitParams), targetDisplacementPointDeg(mm));
     
-    % Define an error function
+    % The error function acts to minimize the diffrence between the 
+    % mRF and mRGC cumulative functions past the displacement point
     errorFunc = @(fitParams) errorMatchingRFandRGC(regularSupportPosDeg, mRF_cumulative(fitParams), mRGC_cumulative(fitParams), targetDisplacementPointDeg(mm));
     
     
@@ -321,6 +319,8 @@ for mm=1:length(meridianAngles)
     outline=[outline '\n'];
     fprintf(outline);
 end
+
+
 
 %% LOCAL FUNCTIONS
 
