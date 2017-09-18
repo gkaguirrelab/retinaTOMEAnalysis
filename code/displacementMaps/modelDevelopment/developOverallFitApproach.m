@@ -107,7 +107,7 @@ for mm = 1:length(meridianAngles)
     % Obtain a fit to the empirical cone density data of Curcio 1990
     % Set the key-value 'splineOnly' to true to use the empirical cone
     % densitities and not a fitted version
-    [coneDensityFit] = getConeDensityFit(meridianAngles(mm),'splineOnly', true);
+    [coneDensityFit] = getSplineFitToConeDensity(meridianAngles(mm));
     
     % Create an anonymous function that returns mRF density as a function
     % cone density, with the transform defined by the first two fitParams
