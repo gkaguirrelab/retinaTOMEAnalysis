@@ -1,4 +1,4 @@
-function [coneDensitySqDeg, supportPosDeg] = getCurcioConeDensityByEccen(angle)
+function [coneDensitySqDeg, supportPosDeg] = getCurcioConeDensityByEccen(polarAngle)
 % getCurcioConeDensityByEccen(angle)
 %
 % This routine returns the cone density data reported in:
@@ -8,7 +8,7 @@ function [coneDensitySqDeg, supportPosDeg] = getCurcioConeDensityByEccen(angle)
 % Here, we load these data and convert from mm to degrees.
 %
 % Inputs:
-%   angle      = The desired angle of the density function on the retinal field.
+%   polarAngle - The desired angle of the density function on the retinal field.
 %                (0=nasal;90=superior;180=temporal;270=inferior)
 % Outputs:
 %   coneDensitySqDeg - the density (counts per square
@@ -18,7 +18,7 @@ function [coneDensitySqDeg, supportPosDeg] = getCurcioConeDensityByEccen(angle)
 %
 
 % Check the input
-if sum([0 90 180 270]==angle) ~= 1
+if sum([0 90 180 270]==polarAngle) ~= 1
     error('The Curcio cone data are defined only for the cardinal meridia');
 end
 
@@ -43,7 +43,7 @@ curcioConeDensityPerSqDeg.(meridianNames{mm}) = ...
 end
 
 supportPosDeg = curcioConeDensityPerSqDeg.support;
-switch angle
+switch polarAngle
     case 0
         coneDensitySqDeg = curcioConeDensityPerSqDeg.nasal;
     case 90
