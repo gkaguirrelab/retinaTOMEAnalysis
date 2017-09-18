@@ -1,5 +1,5 @@
-function [coneDensityFit] = getConeDensityFit(polarAngle, varargin)
-% getConeDensityFit(angle)
+function [coneDensityFit] = getSplineFitToConeDensity(polarAngle, varargin)
+% getSplineFitToConeDensity(angle)
 %
 % This routine returns a fit to cone density data. Raw cone density data
 % are taken from Curcio et al (1990). Fits to the cardinal meridians are
@@ -16,9 +16,6 @@ function [coneDensityFit] = getConeDensityFit(polarAngle, varargin)
 %       polarAngle
 %
 % Options:
-%   splineOnly - if one of the cardinal meridians has been requested, then
-%       setting this parameter to true will cause the returned fit function
-%       to be to a spline fit of the cone density data.
 
 %% Parse input and define variables
 p = inputParser;
@@ -30,7 +27,6 @@ p.addRequired('polarAngle',@isnumeric);
 p.addParameter('meridianNames',{'Nasal' 'Superior' 'Temporal' 'Inferior'},@iscell);
 p.addParameter('meridianAngles',[0, 90, 180, 270],@isnumeric);
 p.addParameter('meridianSymbols',{'.','x','o','^'},@iscell);
-p.addParameter('splineOnly',false,@islogical);
 
 % Optional display params
 p.addParameter('verbose',true,@islogical);
@@ -53,9 +49,9 @@ for mm=1:length(p.Results.meridianAngles)
     coneDensitySqDeg = coneDensitySqDeg(isvalididx);
     
     startPoint = [max(coneDensitySqDeg) 1 1 1 1];
-    customFit = fit(coneNativeSupportPosDeg', coneDensitySqDeg', customFunc, 'StartPoint',startPoint);
-    paramLabels = coeffnames(customFit);
-    meridianFitParams(mm,:)=cellfun(@(x) customFit.(x), paramLabels);
+    splineFit = fit(coneNativeSupportPosDeg', coneDensitySqDeg', 'smoothingspline','SmoothingParam', 1);
+    paramLabels = coeffnames(splineFit);
+    meridianFitParams(mm,:)=cellfun(@(x) splineFit.(x), paramLabels);
 end
 
 % Loop through the fit parameters. For each, interpolate to the requested
