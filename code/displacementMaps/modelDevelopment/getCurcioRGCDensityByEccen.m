@@ -1,4 +1,4 @@
-function [ rgcDensitySqDeg, supportPosDeg ] = getCurcioRGCDensityByEccen(angle)
+function [ rgcDensitySqDeg, supportPosDeg ] = getCurcioRGCDensityByEccen(polarAngle)
 % getCurcioMidgetRGCDensityByEccen(angle)
 %
 % Curcio and Allen obtained measurements of the density of all RGC classes
@@ -13,7 +13,7 @@ function [ rgcDensitySqDeg, supportPosDeg ] = getCurcioRGCDensityByEccen(angle)
 %       No extra steps neded to reference the data.
 %
 % Inputs
-%   angle - the meridian to evaluate. Acceptable values are: 
+%   polarAngle - the meridian to evaluate. Acceptable values are: 
 %       (0=nasal; 90=superior; 180=temporal; 270=inferior)
 %
 % Outputs
@@ -23,7 +23,7 @@ function [ rgcDensitySqDeg, supportPosDeg ] = getCurcioRGCDensityByEccen(angle)
 %       fovea at which the RGC density is defined
 
 % Check the input
-if sum([0 90 180 270]==angle) ~= 1
+if sum([0 90 180 270]==polarAngle) ~= 1
     error('The Curcio and Allen data are defined only for the cardinal meridia');
 end
 
@@ -41,7 +41,7 @@ supportPosDeg = convert_mm_to_deg(supportPosMm);
 
 % The other columns contain the mean (across eyes) measurements. Use a
 % switch statement to grab the column corresponding to the passed angle
-switch angle
+switch polarAngle
     case 0 % nasal
         rgcDensitySqDeg = convert_mmSq_to_degSq(supportPosDeg,curcioRGCdensity_mm(:,6));
         
