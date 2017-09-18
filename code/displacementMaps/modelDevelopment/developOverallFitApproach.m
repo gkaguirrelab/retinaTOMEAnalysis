@@ -51,7 +51,7 @@ clc
 
 % Each of the meridians is defined by a polar angle value.
 meridianNames = {'Nasal   ' 'Superior' 'Temporal' 'Inferior' };
-meridianAngles = [0, 90, 180, 270 45];
+meridianAngles = [0, 90, 180, 270];
 meridianColors = {'g','b','r','k'};
 
 % This is point in degrees at which displacement should become zero for
