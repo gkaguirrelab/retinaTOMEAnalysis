@@ -104,14 +104,11 @@ for mm = 1:length(meridianAngles)
     % We build the function using cone density, and subject to two fit
     % params
     
-    % load the empirical cone density measured by Curcio
-    [coneDensitySqDeg, coneNativeSupportPosDeg] = getCurcioConeDensityByEccen(meridianAngles(mm));
-    % remove nan values
-    isvalididx=find(~isnan(coneDensitySqDeg));
-    coneNativeSupportPosDeg = coneNativeSupportPosDeg(isvalididx);
-    coneDensitySqDeg = coneDensitySqDeg(isvalididx);
-    % Obtain a spline fit function for cone density
-    coneDensityFit = fit(coneNativeSupportPosDeg',coneDensitySqDeg','smoothingspline','SmoothingParam', 1);
+    % Obtain a fit to the empirical cone density data of Curcio 1990
+    % Set the key-value 'splineOnly' to true to use the empirical cone
+    % densitities and not a fitted version
+    [coneDensityFit] = getConeDensityFit(meridianAngles(mm),'splineOnly', true);
+    
     % Create an anonymous function that returns mRF density as a function
     % cone density, with the transform defined by the first two fitParams
     mRFDensityOverRegularSupport = ...
@@ -236,6 +233,13 @@ for mm = 1:length(meridianAngles)
 
     %% Plots related to midget RF density
     set(0, 'CurrentFigure', figHandles(5))
+    
+    % load the empirical cone density measured by Curcio
+    [coneDensitySqDeg, coneNativeSupportPosDeg] = getCurcioConeDensityByEccen(meridianAngles(mm));
+    % remove nan values
+    isvalididx=find(~isnan(coneDensitySqDeg));
+    coneNativeSupportPosDeg = coneNativeSupportPosDeg(isvalididx);
+    coneDensitySqDeg = coneDensitySqDeg(isvalididx);
     
     % calculate the mRF density using Watson equation 8 at the sites of
     % empirical cone measurement
