@@ -1,4 +1,4 @@
-function [ midgetRFDensity_degSq ] = calcWatsonMidgetRFDensityByEccen(supportPosDeg, angle)
+function [ midgetRFDensity_degSq ] = calcWatsonMidgetRFDensityByEccen(supportPosDeg, polarAngle)
 % calcWatsonMidgetRFDensityByEccen(supportPosDeg, angle)
 %
 % This function implements Equation 8 of Watson 2014.
@@ -15,14 +15,14 @@ function [ midgetRFDensity_degSq ] = calcWatsonMidgetRFDensityByEccen(supportPos
 
 %% Check the input
 
-if sum([0 90 180 270]==angle) ~= 1
+if sum([0 90 180 270]==polarAngle) ~= 1
     error('The Watson equation for mRF density is defined only for the cardinal meridia');
 end
 
 %% Obtain the parameters of the modeled receptive field denisty for this angle
 
 % Taken from Table 1 of Watson
-switch angle
+switch polarAngle
     case 0 % nasal
         a = 0.9729;
         r2 = 1.084;

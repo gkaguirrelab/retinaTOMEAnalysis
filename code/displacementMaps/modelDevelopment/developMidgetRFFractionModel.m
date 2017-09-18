@@ -36,6 +36,9 @@ function [ fitParams, figHandle ] = developMidgetRFFractionModel( varargin )
 %      requested.
 %
 % OPTIONS
+%   referenceEccen - The eccentricity value at which the cumulative cone
+%       density is used to normalize the cumulative value at other
+%       eccentrivities. 
 %   supportEccenMaxDegrees - the maximum eccentricity used for modeling.
 %       This value should be sufficiently high so that we are in the
 %       asymptote range of cone density
@@ -61,7 +64,7 @@ p = inputParser;
 %p.addRequired('grayVideoName',@isstr);
 
 % Optional anaysis params
-p.addParameter('referenceEccen',30,@isnumeric);
+p.addParameter('referenceEccen',15,@isnumeric);
 p.addParameter('supportEccenMaxDegrees',60,@isnumeric);
 p.addParameter('meridianNames',{'Nasal' 'Superior' 'Temporal' 'Inferior'},@iscell);
 p.addParameter('meridianAngles',[0, 90, 180, 270],@isnumeric);
