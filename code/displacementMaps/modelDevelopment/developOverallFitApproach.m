@@ -161,14 +161,14 @@ for mm = 1:length(meridianAngles)
     
     
     %% Calculate displacement
-    rgcDisplacementDeg=calcDisplacement(regularSupportPosDeg, mRGC_cumulative(fitParams(mm,:)), mRF_cumulative(fitParams(mm,:)));
+    rgcDisplacementDegPolar(mm,:)=calcDisplacement(regularSupportPosDeg, mRGC_cumulative(fitParams(mm,:)), mRF_cumulative(fitParams(mm,:)));
     
     
     %% Plot the displacement and cumulative functions
     % plot the displacement
     set(0, 'CurrentFigure', figHandles(3))
     subplot(2,length(meridianAngles),mm);
-    plot(regularSupportPosDeg(1:length(rgcDisplacementDeg)),rgcDisplacementDeg,'-r')
+    plot(regularSupportPosDeg(1:length(rgcDisplacementDegPolar(mm,:))),rgcDisplacementDegPolar(mm,:),'-r')
     ylim([-.5 3.0]);
     xlabel('eccentricity [deg]');
     ylabel('RGC displacement [deg]');
@@ -321,6 +321,12 @@ for mm=1:length(meridianAngles)
 end
 
 
+% Create the displacement image
+maxDisplacementDeg = max(rgcDisplacementDegPolar(:))
+imP=rgcDisplacementDegPolar'./maxDisplacementDeg;
+imR = PolarToIm (imP, 0, 1, 1000, 1000);
+figure
+imagesc(imR)
 
 %% LOCAL FUNCTIONS
 
@@ -353,6 +359,8 @@ sampleResolutionDegrees = tmp(1);
 
 % Measure the displacement (in degrees)
 displaceInSamples=arrayfun(@(x) find(countPerRingRGC>x,1), countPerRingRF(2:end),'UniformOutput',false);
+emptyCells = find(cellfun(@(x) isempty(x), displaceInSamples));
+displaceInSamples(emptyCells)={NaN};
 displaceInSamples=cell2mat(displaceInSamples(cellfun(@(x) ~isempty(x), displaceInSamples)));
 displaceInDeg = (displaceInSamples - (1:1:length(displaceInSamples))) * sampleResolutionDegrees;
 displaceInDeg(find(displaceInDeg <= 0,1):end)=0;
