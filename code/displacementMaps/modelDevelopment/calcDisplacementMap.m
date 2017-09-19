@@ -39,7 +39,7 @@ function [ displacementMapDeg, fitParams, meridianAngles ] = calcDisplacementMap
 % Further, we find sets of parameters that vary only slightly between the
 % meridians in the transform of cone density --> mRF density.
 %
-
+%
 % OUTPUT
 %   displacementMapDeg -
 %   fitParams - The values of the five parameters that adjust the transform
@@ -63,6 +63,9 @@ function [ displacementMapDeg, fitParams, meridianAngles ] = calcDisplacementMap
 %       displacement should become zero for each cadinal meridian
 %   meridianAngleResolutionDeg - The resolution across polar angle for
 %       which displacements are calculated.
+%   displacementMapPixelsPerDeg - The resolution in pixels per degree at
+%       which the displacement map is rendered.
+%   verbose - Do we give you the text?
 %   makePlots - Do we make a figure?
 
 %% Parse input and define variables
@@ -73,7 +76,7 @@ p.addParameter('sampleResolutionDegrees',0.01,@isnumeric);
 p.addParameter('maxModeledEccentricity',30,@isnumeric);
 p.addParameter('targetDisplacementPointDeg',[11 17 17 17 17 17 17 17],@isnumeric);
 p.addParameter('meridianAngleResolutionDeg',45,@isnumeric);
-
+p.addParameter('displacementMapPixelsPerDeg',10,@isnumeric);
 
 % Optional display params
 p.addParameter('verbose',true,@islogical);
@@ -91,6 +94,8 @@ regularSupportPosDeg = ...
 % Prepare the set of meridian angles for which we will calculate
 % displacement
 meridianAngles = 0:p.Results.meridianAngleResolutionDeg:(360-p.Results.meridianAngleResolutionDeg);
+
+%% NEED TO CREATE HERE A SET OF INTERPOLATED DISPLACEMENT TARGET VALUES
 
 % Create a figure to hold the displacement profiles
 if p.Results.makePlots
@@ -211,10 +216,11 @@ for mm = 1:length(meridianAngles)
 end % loop over meridians
 
 % Create the displacement map
+imRdim = p.Results.maxModeledEccentricity * p.Results.displacementMapPixelsPerDeg * 2;
 maxDisplacementDeg = max(rgcDisplacementDegPolar(:));
 imP=rgcDisplacementDegPolar'./maxDisplacementDeg;
-ImR = PolarToIm (imP, 0, 1, 1000, 1000);
-displacementMapDeg = imrotate(ImR .* maxDisplacementDeg,-90);
+imR = PolarToIm (imP, 0, 1, imRdim, imRdim);
+displacementMapDeg = imrotate(imR .* maxDisplacementDeg,-90);
 
 % Plot the displacement map
 if p.Results.makePlots
@@ -225,9 +231,10 @@ if p.Results.makePlots
     c.Label.String='Radial RGC displacement [deg]';
     xlabel('Position [deg] temporal --> nasal');
     ylabel('Position [deg] inferior --> superior');
-    k=linspace(-24,30,10);
-    xticklabels(string(k))
-    yticklabels(string(k))
+    numTicks=length(xticks);
+    k=linspace(-1*p.Results.maxModeledEccentricity,p.Results.maxModeledEccentricity,numTicks+1);
+    xticklabels(string(k(2:end)))
+    yticklabels(string(k(2:end)))
 end
 
 
