@@ -78,9 +78,6 @@ for mm=1:length(p.Results.meridianAngles)
     BformSplineFit=spap2(knots, p.Results.splineOrder, rgcNativeSupportPosDeg', rgcDensitySqDeg');
     % convert from B-form to piecewise polynomial form
     ppFormSplineFits{mm} = fn2fm(BformSplineFit,'pp');
-    % While we are here, record what is the smallest eccentricity for which
-    % there is a non-zero RGC density measurement
-    minEccNonZeroRGCDensity(mm) = rgcNativeSupportPosDeg(find(rgcDensitySqDeg ~= 0,1));
 end
 
 % We will now assemble a new coefficient matrix for the spline fit that is
@@ -117,18 +114,9 @@ end
 ppFormSplineInterp = ppFormSplineFits{1};
 ppFormSplineInterp.coefs = interpCoefs;
 
-% Identify the smallest eccentricity value for which there was a non-zero
-% RGC density in the empirical data in the closest cardinal meridian
-[~,closestMeridian]=min(abs(p.Results.meridianAngles-polarAngle));
-
-
 % Create an anonymous function using the interpolated spline. This function
 % will return rgc density as a function of eccentricity in degrees.
-% The second portion of the function forces the RGC density value to be
-% zero if the eccentricity is in the range of the fovea with zero RGCs
-rgcDensityFit = @(supportPosDeg) ...
-    fnval(ppFormSplineInterp,supportPosDeg') .* ...
-    (supportPosDeg'>=minEccNonZeroRGCDensity(closestMeridian));
+rgcDensityFit = @(supportPosDeg) fnval(ppFormSplineInterp,supportPosDeg') ; 
 
 end % function
 
