@@ -1,4 +1,4 @@
-function [ displacementMapDeg, fitParams, meridianAngles ] = calcDisplacementMap( varargin )
+function [ displacementMapDeg, fitParams, meridianAngles, rgcDisplacementEachMeridian, mRGC_cumulativeEachMeridian, mRF_cumulativeEachMeridian ] = calcDisplacementMap( varargin )
 % calcDisplacementMap( varargin )
 %
 % This routine models retinal ganglion cell displacement.
@@ -41,7 +41,8 @@ function [ displacementMapDeg, fitParams, meridianAngles ] = calcDisplacementMap
 %
 %
 % OUTPUT
-%   displacementMapDeg -
+%   displacementMapDeg - The map of RGC radial displacement, in Cartesian
+%       coordinates.
 %   fitParams - The values of the five parameters that adjust the transform
 %      of cone --> mRF and RGC --> mRGC, provided for each meridian
 %   meridianAngles - a vector of polar angle values (in degrees) for which
@@ -74,7 +75,8 @@ p = inputParser;
 % Optional anaysis params
 p.addParameter('sampleResolutionDegrees',0.01,@isnumeric);
 p.addParameter('maxModeledEccentricity',30,@isnumeric);
-p.addParameter('targetDisplacementPointDeg',[11 17 17 17 17 17 17 17],@isnumeric);
+p.addParameter('targetDisplacementAtCardinalMeridiansDeg',[11 17 17 17],@isnumeric);
+p.addParameter('cardinalMeridianAngles',[0 90 180 270],@isnumeric);
 p.addParameter('meridianAngleResolutionDeg',45,@isnumeric);
 p.addParameter('displacementMapPixelsPerDeg',10,@isnumeric);
 
@@ -94,6 +96,13 @@ regularSupportPosDeg = ...
 % Prepare the set of meridian angles for which we will calculate
 % displacement
 meridianAngles = 0:p.Results.meridianAngleResolutionDeg:(360-p.Results.meridianAngleResolutionDeg);
+
+% Prepare the vector of targetDisplacement values. We interpolate from the
+% values given for the cardinal merdians to the other meridians
+targetValues = [p.Results.targetDisplacementAtCardinalMeridiansDeg p.Results.targetDisplacementAtCardinalMeridiansDeg(1)];
+angleBase = [p.Results.cardinalMeridianAngles 360];
+targetByAngleFit = fit(angleBase',targetValues','pchipinterp');
+targetDisplacementDegByMeridian = targetByAngleFit(meridianAngles);
 
 %% NEED TO CREATE HERE A SET OF INTERPOLATED DISPLACEMENT TARGET VALUES
 
@@ -150,11 +159,11 @@ for mm = 1:length(meridianAngles)
     % Create a non-linear constraint that tests if the RF cumulative values
     % are greater than the RGC cumulative values at eccentricities less
     % than the displacement point
-    nonlinconst = @(fitParams) testRFGreaterThanRGC(regularSupportPosDeg, mRF_cumulative(fitParams), mRGC_cumulative(fitParams), p.Results.targetDisplacementPointDeg(mm));
+    nonlinconst = @(fitParams) testRFGreaterThanRGC(regularSupportPosDeg, mRF_cumulative(fitParams), mRGC_cumulative(fitParams), targetDisplacementDegByMeridian(mm));
     
     % The error function acts to minimize the diffrence between the
     % mRF and mRGC cumulative functions past the displacement point
-    errorFunc = @(fitParams) errorMatchingRFandRGC(regularSupportPosDeg, mRF_cumulative(fitParams), mRGC_cumulative(fitParams), p.Results.targetDisplacementPointDeg(mm));
+    errorFunc = @(fitParams) errorMatchingRFandRGC(regularSupportPosDeg, mRF_cumulative(fitParams), mRGC_cumulative(fitParams), targetDisplacementDegByMeridian(mm));
     
     
     %% Perform the fit
@@ -172,15 +181,17 @@ for mm = 1:length(meridianAngles)
     % Fit that sucker
     fitParams(mm,:) = fmincon(errorFunc,x0,[],[],[],[],lb,ub,nonlinconst,options);
     
-    % Calculate and store displacement
-    rgcDisplacementDegPolar(mm,:)=calcDisplacement(regularSupportPosDeg, mRGC_cumulative(fitParams(mm,:)), mRF_cumulative(fitParams(mm,:)));
+    % Calculate and store displacement and cumulative functions
+    mRGC_cumulativeEachMeridian(mm,:)=mRGC_cumulative(fitParams(mm,:));
+    mRF_cumulativeEachMeridian(mm,:)=mRF_cumulative(fitParams(mm,:));
+    rgcDisplacementEachMeridian(mm,:)=calcDisplacement(regularSupportPosDeg, mRGC_cumulative(fitParams(mm,:)), mRF_cumulative(fitParams(mm,:)));
     
     % Report the results for this meridian
     if p.Results.verbose
-        zeroPoints = find(rgcDisplacementDegPolar(mm,:)==0);
+        zeroPoints = find(rgcDisplacementEachMeridian(mm,:)==0);
         convergenceIdx = find(regularSupportPosDeg(zeroPoints) > 2,1);
         convergenceEccen = regularSupportPosDeg(zeroPoints(convergenceIdx));
-        outLine = ['Polar angle: ' num2str(meridianAngles(mm)) ', max displacement: ' num2str(max(rgcDisplacementDegPolar(mm,:))) ', convergence eccen: ' num2str(convergenceEccen) '\n'];
+        outLine = ['Polar angle: ' num2str(meridianAngles(mm)) ', max displacement: ' num2str(max(rgcDisplacementEachMeridian(mm,:))) ', target convergence: ' num2str(targetDisplacementDegByMeridian(mm)) ', convergence eccen: ' num2str(convergenceEccen) '\n'];
         fprintf(outLine);
     end
     
@@ -188,7 +199,7 @@ for mm = 1:length(meridianAngles)
     if p.Results.makePlots
         % plot the displacement
         subplot(length(meridianAngles),2,mm*2);
-        plot(regularSupportPosDeg,rgcDisplacementDegPolar(mm,:),'-r')
+        plot(regularSupportPosDeg,rgcDisplacementEachMeridian(mm,:),'-r')
         axis off;
         ylim([-.5 3.0]);
         if mm == length(meridianAngles)
@@ -217,8 +228,8 @@ end % loop over meridians
 
 % Create the displacement map
 imRdim = p.Results.maxModeledEccentricity * p.Results.displacementMapPixelsPerDeg * 2;
-maxDisplacementDeg = max(rgcDisplacementDegPolar(:));
-imP=rgcDisplacementDegPolar'./maxDisplacementDeg;
+maxDisplacementDeg = max(rgcDisplacementEachMeridian(:));
+imP=rgcDisplacementEachMeridian'./maxDisplacementDeg;
 imR = PolarToIm (imP, 0, 1, imRdim, imRdim);
 displacementMapDeg = imrotate(imR .* maxDisplacementDeg,-90);
 
