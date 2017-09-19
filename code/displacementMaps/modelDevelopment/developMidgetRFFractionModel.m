@@ -6,10 +6,9 @@ function [ fitParams, figHandle ] = developMidgetRFFractionModel( varargin )
 % ratio of convergence of cones onto retinal ganglion cells, as well as the
 % fraction of retinal ganglion cells at any one point that are midgets.
 %
-% Judging from the work of Watson (2014), the ratio at the fovea, would be
+% Judging from the work of Watson (2014), the ratio at the fovea would be
 % expected to be 1.786 : 1, as there is believed to be a 2:1 cone:RGC
-% ratio, and the midget fraction is modeled as being 0.8928. However, a
-% higher value (1.9) was observed to best fit the data across meridians.
+% ratio, and the midget fraction is modeled as being 0.8928.
 %
 % For each meridian, We first load the Curcio cone density measurements.
 % At each of the sampled eccentricity values, we obtain the midgetRF
@@ -23,7 +22,7 @@ function [ fitParams, figHandle ] = developMidgetRFFractionModel( varargin )
 %
 %	mRFtoConeDensityRatio = minRatio+(maxRatio-minRatio)./(1+(x./inflect).^slope)
 %
-% where maxRatio and minRatio are locked at the values of 1.9 and 0, respectively.
+% where maxRatio and minRatio are locked parameters.
 %
 % We calculate the fit of this function across each of the four meridians,
 % then take the median of the two free fit parameters (slope and inflect)
@@ -49,8 +48,7 @@ function [ fitParams, figHandle ] = developMidgetRFFractionModel( varargin )
 %       value from coneDensitySqDeg is used.
 %   minRatio - The minimum value of the mRF:cone density ratio. Set to zero
 %       as the functions appear to asymptote close to this value.
-%   maxRatio - The maximuim value of the mRF:cone density ratio. Set to
-%       1.9 following the logic outlined above.
+%   maxRatio - The maximuim value of the mRF:cone density ratio.
 %   logitFitStartPoint - initial values used for the slope and inflection
 %       point parameters of the logisic fit. Informed by examination of
 %       typical data.
@@ -71,7 +69,7 @@ p.addParameter('meridianAngles',[0, 90, 180, 270],@isnumeric);
 p.addParameter('meridianSymbols',{'.','x','o','^'},@cell);
 p.addParameter('maxConeDensity',1.4806e+04,@(x)(isempty(x) | isnumeric(x)));
 p.addParameter('minRatio',0,@isnumeric);
-p.addParameter('maxRatio',1.9,@isnumeric);
+p.addParameter('maxRatio',1.786,@isnumeric);
 p.addParameter('logitFitStartPoint',[3,-1],@isnumeric);
 
 % Optional display params
@@ -81,12 +79,6 @@ p.addParameter('makePlots',true,@islogical);
 % parse
 p.parse(varargin{:})
 
-% Set the maxConeDensity value
-if isempty(p.Results.maxConeDensity)
-    maxConeDensity = max(coneDensitySqDeg);
-else
-    maxConeDensity = p.Results.maxConeDensity;
-end
 
 %% House keeping and setup
 
@@ -115,6 +107,13 @@ for mm = 1:length(p.Results.meridianAngles)
     nativeSupportPosDeg = nativeSupportPosDeg(isvalididx);
     coneDensitySqDeg = coneDensitySqDeg(isvalididx);
     
+    % Set the maxConeDensity value
+    if isempty(p.Results.maxConeDensity)
+        maxConeDensity = max(coneDensitySqDeg);
+    else
+        maxConeDensity = p.Results.maxConeDensity;
+    end
+
     % calculate the mRF density at these eccentricity locations using
     % Watson equation 8.
     [ midgetRFDensitySqDeg ] = calcWatsonMidgetRFDensityByEccen(nativeSupportPosDeg, p.Results.meridianAngles(mm));
