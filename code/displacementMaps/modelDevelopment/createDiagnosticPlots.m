@@ -45,7 +45,8 @@ for mm=1:4
     loglog(dispRGCNativeSupportPosDeg,RGCDensitySqDeg,'x','Color',meridianColors{mm});
     xlim([1e-2,70]);
     hold on
-    loglog(dispRGCNativeSupportPosDeg,RGCDensityFit(RGCNativeSupportPosDeg),'-','Color',meridianColors{mm});
+    regularSupportPosDeg=1e-2:0.01:70;
+    loglog(regularSupportPosDeg,RGCDensityFit(regularSupportPosDeg),'-','Color',meridianColors{mm});
     xlabel('log10 Eccentricity [deg]');
     ylabel('log10 RGC density [counts / deg2]');
 end
@@ -55,7 +56,7 @@ subplot(1,2,2)
 meridianAngles=[45 135 225 315];
 for mm=1:4
     [RGCDensityFit] = getSplineFitToRGCDensity(meridianAngles(mm));
-    loglog(dispRGCNativeSupportPosDeg,RGCDensityFit(RGCNativeSupportPosDeg),'-','Color',meridianColors{mm});
+    loglog(regularSupportPosDeg,RGCDensityFit(regularSupportPosDeg),'-','Color',meridianColors{mm});
     xlim([1e-2,70]);
     xlabel('log10 Eccentricity [deg]');
     ylabel('log10 RGC density [counts / deg2]');
