@@ -52,14 +52,10 @@ function [ fitParams, figHandle ] = developMidgetRFFractionModel( varargin )
 %   logitFitStartPoint - initial values used for the slope and inflection
 %       point parameters of the logisic fit. Informed by examination of
 %       typical data.
-%   verbose - Controls text output to console
 %   makePlots - Do we make a figure?
 
 %% Parse input and define variables
 p = inputParser;
-
-% required input
-%p.addRequired('grayVideoName',@isstr);
 
 % Optional anaysis params
 p.addParameter('referenceEccen',15,@isnumeric);
@@ -73,8 +69,7 @@ p.addParameter('maxRatio',1.786,@isnumeric);
 p.addParameter('logitFitStartPoint',[3,-1],@isnumeric);
 
 % Optional display params
-p.addParameter('verbose',true,@islogical);
-p.addParameter('makePlots',true,@islogical);
+p.addParameter('makePlots',false,@islogical);
 
 % parse
 p.parse(varargin{:})

@@ -53,14 +53,10 @@ function [ fitParams, figHandle ] = developMidgetRGCFractionModel( varargin )
 %       three-parameter reciprocal function. It is critical that the second
 %       parameter (b) has a negative start point to fit this inverted
 %       reciprocal.
-%   verbose - Controls text output to console
 %   makePlots - Do we make a figure?
 
 %% Parse input and define variables
 p = inputParser;
-
-% required input
-%p.addRequired('grayVideoName',@isstr);
 
 % Optional anaysis params
 p.addParameter('referenceEccen',30,@isnumeric);
@@ -74,8 +70,7 @@ p.addParameter('watsonEq8_rm',41.03,@isnumeric);
 p.addParameter('recipFitStartPoint',[3 -8 0],@isnumeric);
 
 % Optional display params
-p.addParameter('verbose',true,@islogical);
-p.addParameter('makePlots',true,@islogical);
+p.addParameter('makePlots',false,@islogical);
 
 % parse
 p.parse(varargin{:})
