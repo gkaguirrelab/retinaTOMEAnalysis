@@ -117,7 +117,7 @@ targetDisplacementDegByMeridian = targetByAngleFit(meridianAngles);
 %% Loop over the meridians
 for mm = 1:length(meridianAngles)
     
-    %% mRF function
+    %% mRF_cumulative function
     % We build a function that returns the cumulative mRF density, subject
     % to two fit parameters. This function is based upon a model of cone
     % density.
@@ -133,7 +133,7 @@ for mm = 1:length(meridianAngles)
     mRF_cumulative = @(fitParams) calcCumulative(regularSupportPosDeg, mRFDensityOverRegularSupport(fitParams));
     
     
-    %% mRGC function
+    %% mRGC_cumulative function
     % We build a function that returns the cumulative mRGC density, subject
     % to three fit parameters. This function is based upon a model of RGC
     % density.
