@@ -12,19 +12,18 @@
 	"update": "",
 	"url": ""
 	},
-	{
-		"flavor": "",
-		"hook": "",
-		"importance": "",
-		"localHookTemplate": "",
-		"name": "PolarRectangularConv0",
-		"pathPlacement": "append",
-		"subfolder": "",
-		"toolboxRoot": "",
-		"type": "webget",
-		"update": "",
-		"url": "https:\/\/www.mathworks.com\/matlabcentral\/mlc-downloads\/downloads\/submissions\/17933\/versions\/1\/download\/zip"
+ 	{
+	"flavor": "",
+	"hook": "",
+	"importance": "",
+	"localHookTemplate": "",
+	"name": "rgcDisplacementMap",
+	"pathPlacement": "append",
+	"subfolder": "",
+	"toolboxRoot": "",
+	"type": "include",
+	"update": "",
+	"url": ""
 	}
-
 ]
 
