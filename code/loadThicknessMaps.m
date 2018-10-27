@@ -9,7 +9,7 @@ thickness=[];
 allSubs = [];
 imageSize = [768 768];
 foveaThickThresh = 75;
-everyThicknessMap = [];
+everyThicknessMap = nan(nSubs,2,imageSize(1),imageSize(2));
 
 for ss=1:nSubs
     
@@ -31,88 +31,81 @@ for ss=1:nSubs
     
     % Report this subject's name
     fprintf(['Processing subject: ' subjectList(ss).name '\n']);
-
+    
     % Open a figure to display the maps
-%    figure('Name',subjectList(ss).name,'NumberTitle','off');
-
+    %    figure('Name',subjectList(ss).name,'NumberTitle','off');
+    
     % Loop over the right and left eye
-    for ii = 1:2
-                
-        % If there are data from only one eye, store nans for this map
-        if ii==2 && length(fileList)==1
-            everyThicknessMap(ss,ii,:,:)=nan(imageSize(1),imageSize(2));
+    for ii = 1:length(fileList)
+        
+        % There are a few eyes with bad registrations. We skip them
+        % here until such time as Min has them working again.
+        if any(contains(fileList(ii).name,{'11028_OS.mat','11055_OS.mat','11088_OD.mat','11091_OS.mat'}))
+            continue
+        end
+        
+        % Assemble the name of this file and load it
+        fileName = fullfile(fileList(ii).folder,fileList(ii).name);
+        load(fileName);
+        
+        % Get the thickness by summing the layers defined in
+        % layerIdx
+        thisThick = sum(subject.BothMeanLayerThicknessesOnSLOInterp(:,:,layerIdx),3);
+        
+        % If these are data from the left eye, mirror reverse
+        if contains(fileList(ii).name,'_OS.mat')
+            thisThick = fliplr(thisThick);
+        end
+        
+        % Set points with zero thickness to nan
+        thisThick(thisThick==0)=nan;
+        
+        % Resize the map to ensure that all maps have the same
+        % dimensions (some were acquired in 1536x1536 resolution
+        thisThick=imresize(thisThick,imageSize,'bilinear');
+        
+        % Now shift the image so that the fovea is at a standard
+        % location. First, find the fovea at the center of the
+        % image. This is defined by taking the weighted mean of the
+        % thinnest portion of the central 20% of the image
+        w=thisThick;
+        w(1:round(imageSize(1)*0.4),:)=nan;
+        w(round(imageSize(1)*0.6):end,:)=nan;
+        w(:,1:round(imageSize(1)*0.4))=nan;
+        w(:,round(imageSize(1)*0.6):end)=nan;
+        w(w>foveaThickThresh)=nan;
+        w=max(max(w))-w;
+        w=w(1:prod(imageSize));
+        w=w./nansum(w);
+        [X,Y] = ind2sub(imageSize,1:prod(imageSize));
+        foveaCoord(1) = nansum(X.*w(1:prod(imageSize)));
+        foveaCoord(2) = nansum(Y.*w(1:prod(imageSize)));
+        
+        % Save a mask of the nan values
+        nanMask = zeros(size(thisThick));
+        nanMask(isnan(thisThick))=1;
+        thisThick(isnan(thisThick))=0;
+        
+        % Shift the thickness and nanmask images to align the foveas
+        thisThick = imtranslate(thisThick,fliplr((imageSize./2)-foveaCoord),'method','cubic','FillValues',nan);
+        nanMask = imtranslate(nanMask,fliplr((imageSize./2)-foveaCoord),'method','cubic','FillValues',nan);
+        
+        % Restore the nans
+        thisThick(nanMask>0.25)=nan;
+        
+        % Store the this thickness map in the full array
+        if contains(fileList(ii).name,'_OS.mat')
+            everyThicknessMap(ss,1,:,:)=thisThick;
         else
-            % There are a few eyes with bad registrations. We skip them
-            % here until such time as Min has them working again.
-            if any(contains(fileList(ii).name,{'11028_OS.mat','11055_OS.mat','11088_OD.mat','11091_OS.mat'}))
-                % Store nans because we have no map
-                everyThicknessMap(ss,ii,:,:)=nan(imageSize(1),imageSize(2));
-                continue
-            end
-            
-            % Assemble the name of this file and load it
-            fileName = fullfile(fileList(ii).folder,fileList(ii).name);
-            load(fileName);
-            
-            % Get the thickness by summing the layers defined in
-            % layerIdx
-            thisThick = sum(subject.BothMeanLayerThicknessesOnSLOInterp(:,:,layerIdx),3);
-                                    
-            % If these are data from the left eye, mirror reverse
-            if contains(fileList(ii).name,'_OS.mat')
-                thisThick = fliplr(thisThick);
-            end
-            
-            % Set points with zero thickness to nan
-            thisThick(thisThick==0)=nan;
-            
-            % Resize the map to ensure that all maps have the same
-            % dimensions (some were acquired in 1536x1536 resolution
-            thisThick=imresize(thisThick,imageSize,'bilinear');            
-            
-            % Now shift the image so that the fovea is at a standard
-            % location. First, find the fovea at the center of the
-            % image. This is defined by taking the weighted mean of the
-            % thinnest portion of the central 20% of the image
-            w=thisThick;
-            w(1:round(imageSize(1)*0.4),:)=nan;
-            w(round(imageSize(1)*0.6):end,:)=nan;
-            w(:,1:round(imageSize(1)*0.4))=nan;
-            w(:,round(imageSize(1)*0.6):end)=nan;
-            w(w>foveaThickThresh)=nan;
-            w=max(max(w))-w;
-            w=w(1:prod(imageSize));
-            w=w./nansum(w);
-            [X,Y] = ind2sub(imageSize,1:prod(imageSize));
-            foveaCoord(1) = nansum(X.*w(1:prod(imageSize)));
-            foveaCoord(2) = nansum(Y.*w(1:prod(imageSize)));
-            
-            % Save a mask of the nan values
-            nanMask = zeros(size(thisThick));
-            nanMask(isnan(thisThick))=1;
-            thisThick(isnan(thisThick))=0;
-            
-            % Shift the thickness and nanmask images to align the foveas
-            thisThick = imtranslate(thisThick,fliplr((imageSize./2)-foveaCoord),'method','cubic','FillValues',nan);
-            nanMask = imtranslate(nanMask,fliplr((imageSize./2)-foveaCoord),'method','cubic','FillValues',nan);
-            
-            % Restore the nans
-            thisThick(nanMask>0.25)=nan;
-            
-            % Store the this thickness map in the full array
-            if contains(fileList(ii).name,'_OS.mat')
-                everyThicknessMap(ss,1,:,:)=thisThick;
-            else
-                everyThicknessMap(ss,2,:,:)=thisThick;
-            end
-            
-            % Show this map
-%             subplot(1,2,ii)
-%             imagesc(thisThick);
-%             axis square
-%             drawnow
-            
-        end % There was a valid result file to process
+            everyThicknessMap(ss,2,:,:)=thisThick;
+        end
+        
+        % Show this map
+        %             subplot(1,2,ii)
+        %             imagesc(thisThick);
+        %             axis square
+        %             drawnow
+        
     end % Looping over the two eyes
 end % Looping over subjects
 
@@ -146,7 +139,7 @@ for ss=1:nSubs
 end
 figure
 plot(meanThickByEye(:,1),meanThickByEye(:,2),'*r');
-lsline
+refline(1,0);
 xlim([45 70])
 ylim([45 70])
 axis square
@@ -180,17 +173,17 @@ for ii=1:4
     coeffMap(observedIdx)=coeff(:,ii);
     imagesc(coeffMap);
     xlim([0 imageSize(1)]);
-ylim([0 imageSize(1)]);
-axis square
+    ylim([0 imageSize(1)]);
+    axis square
 end
 
 
 % mesh(thickness)
-% 
+%
 % dims = size(thickness);
 % [x,y] = ind2sub(dims,1:prod(dims));
 % z = thickness(1:prod(dims));
 % gf = gridfit(x,y,z,0:10:dims(1),0:10:dims(2),'smoothness',1,'interp','bilinear');
 % surf(0:10:dims(1),0:10:dims(2),gf);
-% 
-% 
+%
+%
