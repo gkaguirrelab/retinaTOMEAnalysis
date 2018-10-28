@@ -1,4 +1,6 @@
 dirRootPath = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis/2DThicknessMapsAllLayers_10_19_2018';
+rgcMapSavePath = '/Users/aguirre/Documents/MATLAB/projects/rgcPopulationModel/data/rgcIplThicknessMap.mat';
+
 subjectList = dir(dirRootPath);
 subjectList = subjectList(4:end);
 
@@ -38,7 +40,7 @@ for ss=1:nSubs
     fprintf(['Processing subject: ' subjectList(ss).name '\n']);
     
     % Open a figure to display the maps
-    %    figure('Name',subjectList(ss).name,'NumberTitle','off');
+    figure('Name',subjectList(ss).name,'NumberTitle','off');
     
     % Loop over the right and left eye
     for ii = 1:length(fileList)
@@ -52,73 +54,84 @@ for ss=1:nSubs
         % Assemble the name of this file and load it
         fileName = fullfile(fileList(ii).folder,fileList(ii).name);
         load(fileName);
-
+        
         % Empty the variable that will hold the fovea coordinates
-                        foveaCoord=[];
-
-        % Loop over the layer sets        
+        foveaCoord=[];
+        
+        % Loop over the layer sets
         for jj=1:nSets
-
+            
             % Get the thickness by summing the layers defined in
-        % layerIdx
-        thisThick = sum(subject.BothMeanLayerThicknessesOnSLOInterp(:,:,layerSets{jj}),3);
-        
-        % If these are data from the left eye, mirror reverse
-        if contains(fileList(ii).name,'_OS.mat')
-            thisThick = fliplr(thisThick);
-        end
-        
-        % Set points with zero thickness to nan
-        thisThick(thisThick==0)=nan;
-        
-        % Resize the map to ensure that all maps have the same
-        % dimensions (some were acquired in 1536x1536 resolution
-        thisThick=imresize(thisThick,imageSize,'bilinear');
-        
-        % If this is the first layer set, then we are working with the
-        % RGC-IPL layer. Use this to find the fovea at the center of the
-        % image. This is defined by taking the weighted mean of the
-        % thinnest portion of the central 20% of the image
-        if jj==1
-            w=thisThick;
-            w(1:round(imageSize(1)*0.4),:)=nan;
-            w(round(imageSize(1)*0.6):end,:)=nan;
-            w(:,1:round(imageSize(1)*0.4))=nan;
-            w(:,round(imageSize(1)*0.6):end)=nan;
-            w(w>foveaThickThresh)=nan;
-            w=max(max(w))-w;
-            w=w(1:prod(imageSize));
-            w=w./nansum(w);
-            [X,Y] = ind2sub(imageSize,1:prod(imageSize));
-            foveaCoord(1) = nansum(X.*w(1:prod(imageSize)));
-            foveaCoord(2) = nansum(Y.*w(1:prod(imageSize)));
-        end
-        
-        % Save a mask of the nan values
-        nanMask = zeros(size(thisThick));
-        nanMask(isnan(thisThick))=1;
-        thisThick(isnan(thisThick))=0;
-        
-        % Shift the thickness and nanmask images to align the foveas
-        thisThick = imtranslate(thisThick,fliplr((imageSize./2)-foveaCoord),'method','cubic','FillValues',nan);
-        nanMask = imtranslate(nanMask,fliplr((imageSize./2)-foveaCoord),'method','cubic','FillValues',nan);
-        
-        % Restore the nans
-        thisThick(nanMask>0.25)=nan;
-        
-        % Store the this thickness map in the full array
-        if contains(fileList(ii).name,'_OS.mat')
-            everyThicknessMap(jj,ss,1,:,:)=thisThick;
-        else
-            everyThicknessMap(jj,ss,2,:,:)=thisThick;
-        end
-        
+            % layerIdx
+            thisThick = sum(subject.BothMeanLayerThicknessesOnSLOInterp(:,:,layerSets{jj}),3);
+            
+            % If these are data from the left eye, mirror reverse
+            if contains(fileList(ii).name,'_OS.mat')
+                thisThick = fliplr(thisThick);
+            end
+            
+            % Set points with zero thickness to nan
+            thisThick(thisThick==0)=nan;
+            
+            % Resize the map to ensure that all maps have the same
+            % dimensions (some were acquired in 1536x1536 resolution
+            thisThick=imresize(thisThick,imageSize,'bilinear');
+            
+            % If this is the first layer set, then we are working with the
+            % RGC-IPL layer. Use this to find the fovea at the center of the
+            % image. This is defined by taking the weighted mean of the
+            % thinnest portion of the central 20% of the image
+            if jj==1
+                w=thisThick;
+                w(1:round(imageSize(1)*0.4),:)=nan;
+                w(round(imageSize(1)*0.6):end,:)=nan;
+                w(:,1:round(imageSize(1)*0.4))=nan;
+                w(:,round(imageSize(1)*0.6):end)=nan;
+                w(w>foveaThickThresh)=nan;
+                w=max(max(w))-w;
+                w=w(1:prod(imageSize));
+                w=w./nansum(w);
+                [X,Y] = ind2sub(imageSize,1:prod(imageSize));
+                foveaCoord(1) = nansum(X.*w(1:prod(imageSize)));
+                foveaCoord(2) = nansum(Y.*w(1:prod(imageSize)));
+            end
+            
+            % Save a mask of the nan values
+            nanMask = zeros(size(thisThick));
+            nanMask(isnan(thisThick))=1;
+            thisThick(isnan(thisThick))=0;
+            
+            % Shift the thickness and nanmask images to align the foveas
+            thisThick = imtranslate(thisThick,fliplr((imageSize./2)-foveaCoord),'method','cubic','FillValues',nan);
+            nanMask = imtranslate(nanMask,fliplr((imageSize./2)-foveaCoord),'method','cubic','FillValues',nan);
+            
+            % Restore the nans
+            thisThick(nanMask>0.25)=nan;
+            
+            % Store the this thickness map in the full array
+            if contains(fileList(ii).name,'_OS.mat')
+                everyThicknessMap(jj,ss,1,:,:)=thisThick;
+            else
+                everyThicknessMap(jj,ss,2,:,:)=thisThick;
+            end
+            
+            % Show the RGC+IPL map
+            if jj==1
+                tmp = fliplr(thisThick);
+                if contains(fileList(ii).name,'_OS.mat')
+                    subplot(1,2,1)
+                    tmp = fliplr(tmp);
+                else
+                    subplot(1,2,2)
+                end
+                imagesc(tmp);
+                hold on
+                plot(imageSize(1)/2,imageSize(2)/2,'+k')
+                axis square
+                drawnow
+            end
+            
         end % Loop over layer sets
-        % Show this map
-        %             subplot(1,2,ii)
-        %             imagesc(thisThick);
-        %             axis square
-        %             drawnow
         
     end % Looping over the two eyes
 end % Looping over subjects
@@ -129,11 +142,15 @@ end % Looping over subjects
 % subjects of the locations with data.
 grandAverage = squeeze(mean(nanmean(everyThicknessMap,3),2));
 
-% Trim the optic disc area away as this region contains segmentation
-% artifacts
+% Trim away areas with artifacts and strangeness at the edge of the image.
+% The largest of these is in the area of the optic disc
 grandAverage(:,:,640:end)=nan;
+grandAverage(:,:,640:end)=nan;
+grandAverage(:,1:20,:)=nan;
+grandAverage(:,1:20,:)=nan;
+grandAverage(:,712:end,:)=nan;
 
-% Display the grand average
+% Display the grand averages
 figure
 for jj=1:nSets
     subplot(2,2,jj)
@@ -143,32 +160,41 @@ for jj=1:nSets
     axis square
 end
 
+% Save the RGC+IPL thickness map
+rgcIplThicknessMap = squeeze(grandAverage(1,:,:));
+save(rgcMapSavePath,'rgcIplThicknessMap');
+
 % Find the set of map locations for which every subject has a measurement
 observedIdx = ~isnan(squeeze(sum(grandAverage,1)));
 
 % Obtain the mean thickness for the left and right eye for each subject,
-% plot and report the across subject correlation of the two eyes
 for ss=1:nSubs
     for ii=1:2
         for jj=1:nSets
-        tmp = squeeze(everyThicknessMap(jj,ss,ii,:,:));
-        meanThickByEye(jj,ss,ii) = nanmean(tmp(observedIdx));
+            tmp = squeeze(everyThicknessMap(jj,ss,ii,:,:));
+            meanThickByEye(jj,ss,ii) = nanmean(tmp(observedIdx));
         end
     end
 end
+
+% Plot and report the across subject correlation of the two eyes
 figure
 for jj=1:nSets
     subplot(2,2,jj);
     plot(meanThickByEye(jj,:,1),meanThickByEye(jj,:,2),'*r');
     refline(1,0);
-    xlim([45 70])
-    ylim([45 70])
+    axis equal
     axis square
     xlabel([layerSetLabels{jj} ' mean thickness OS']);
     ylabel([layerSetLabels{jj} ' mean thickness OD']);
     rho = corrcoef(meanThickByEye(jj,:,1),meanThickByEye(jj,:,2),'rows','pairwise');
-    fprintf(['Left and right ' layerSetLabels{jj} ' thickness correlation across subjects R (%d df) = %2.0f \n'],sum(~isnan(mean(meanThickByEye,2))),rho(1,2));
+    fprintf(['Left and right ' layerSetLabels{jj} ' thickness correlation across subjects R (%d df) = %2.2f \n'],sum(~isnan(mean(squeeze(meanThickByEye(jj,:,:)),2))),rho(1,2));
 end
+
+% Report the correlation coefficients of the measures (averaged across
+% eyes) across subjects
+layerSetLabels
+corrcoef(nanmean(meanThickByEye,3)','rows','pairwise')
 
 % Conduct a PCA analysis across subjects, averaged over eyes. First,
 % Convert the non-nan portion of the image to a vector
@@ -193,7 +219,7 @@ figure
 for ii=1:4
     subplot(2,2,ii);
     coeffMap(observedIdx)=coeff(:,ii);
-    imagesc(coeffMap);
+    mesh(coeffMap);
     xlim([0 imageSize(1)]);
     ylim([0 imageSize(1)]);
     axis square
