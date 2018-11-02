@@ -42,15 +42,13 @@ for ss=1:nSubs
     % Open a figure to display the maps
     figure('Name',subjectList(ss).name,'NumberTitle','off');
     
+    if length(fileList)==1
+        warning(['subject ' subjectList(ss).name 'has just one eye']);
+    end
+    
     % Loop over the right and left eye
     for ii = 1:length(fileList)
-        
-        % There are a few eyes with bad registrations. We skip them
-        % here until such time as Min has them working again.
-        if any(contains(fileList(ii).name,{'11028_OS.mat','11055_OS.mat','11088_OD.mat','11091_OS.mat'}))
-            continue
-        end
-        
+                
         % Assemble the name of this file and load it
         fileName = fullfile(fileList(ii).folder,fileList(ii).name);
         load(fileName);
