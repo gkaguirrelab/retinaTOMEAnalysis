@@ -1,7 +1,9 @@
-dirRootPath = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis/2DThicknessMapsAllLayers_MinChenMontage';
-rgcMapSavePath = '/Users/aguirre/Documents/MATLAB/projects/rgcPopulationModel/data/rgcIplThicknessMap.mat';
-allDataSavePath = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis/averageThicknessMapsBySubject';
-resultTableFileName = 'data/octRGCResultTable.csv';
+function analyzeThicknessMaps(dirRootPath, rgcMapSavePath, resultTableFileName)
+
+% dirRootPath = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis/2DThicknessMapsAllLayers_MinChenMontage';
+% rgcMapSavePath = '/Users/aguirre/Documents/MATLAB/projects/rgcPopulationModel/data/rgcIplThicknessMap.mat';
+% allDataSavePath = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis/averageThicknessMapsBySubject';
+% resultTableFileName = 'data/octRGCResultTable.csv';
 
 rawSubjectList = dir(dirRootPath);
 rawSubjectList = rawSubjectList(4:end);
