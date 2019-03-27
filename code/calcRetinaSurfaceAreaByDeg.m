@@ -18,7 +18,20 @@ for ii=1:length(subjects)
     eye = modelEyeParameters('axialLength',axialLength(ii),'sphericalAmetropia',SR,'measuredCornealCurvature',cc,'calcLandmarkFovea',true);
     
     % Create a matrix of 
-    alpha = foo;
+    S = eye.retina.S;
+    alpha = eye.landmarks.fovea.degField;
+    horizVals = -15:5:15;
+    vertVals = -15:5:15;
+    for jj = 1:length(horizVals)
+        for kk = 1:length(vertVals)
+            degField = [horizVals(jj) vertVals(kk) 0] - alpha;
+            [~,X0] = findRetinaFieldPoint( eye, degField);
+            degField = degField + [0.0707 0.0707 0];
+            [~,X1] = findRetinaFieldPoint( eye, degField);
+            distance = quadric.panouGeodesicDistance(S,[],[],X0,X1);
+            mmSqPerDegSq(jj,kk) = (distance*10)^2;
+        end
+    end
     
 end
 
