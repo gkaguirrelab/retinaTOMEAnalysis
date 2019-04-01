@@ -5,12 +5,11 @@ k1 = [41.56,nan,43.38,43.38,41.77,43.32, 44.2,nan,45.30, 45.7,41.62,nan,nan,nan,
 k2 = [42.35,nan,43.55,43.95,43.55, 44.4,44.94,nan,46.23, 46.6,43.66,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,42.83,nan,nan,nan,44.64,45.36,45.42,43.72,44.70,43.05,45.86,42.51, 42.2,42.72,43.89,45.86,44.64,47.34,43.89,43.55,45.06,47.14,45.30];
 angle = [5,nan,153,166,25,23,156,nan,8,0,174,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,16,nan,nan,25,3,4,42,173,175,18,166,1,178,26,28,48,178,163,165,8,172,17,5];
 
-saveDir = '~/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis';
+saveDir = '/Volumes/balthasarExternalDrive/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis';
 
 resultSet = {};
 
 parfor (ii = 1:length(subjects))
-%for ii = 1:length(subjects)
 
     cc=[k1(ii),k2(ii),angle(ii)];
     if any(isnan(cc))
@@ -22,31 +21,32 @@ parfor (ii = 1:length(subjects))
     end
     eye = modelEyeParameters('axialLength',axialLength(ii),'sphericalAmetropia',SR,'measuredCornealCurvature',cc);
     
-    % Create a matrix of 
     S = eye.retina.S;
     alpha = [5.45 2.5 0];
-    horizVals = -15:15:15;
-    vertVals = -15:15:15;
+    horizVals = -15:2.5:15;
+    vertVals = -15:2.5:15;
 
-    mmSqPerDegSq = nan(length(horizVals),length(vertVals));
+    mmPerDeg = nan(length(horizVals),length(vertVals));
 
     for jj = 1:length(horizVals)
         for kk = 1:length(vertVals)
             degField = [horizVals(jj) vertVals(kk) 0] + alpha;
-            [~,X0] = findRetinaFieldPoint( eye, degField);
+            [~,X0,angleError0] = findRetinaFieldPoint( eye, degField);
             degField = degField + [0.0707 0.0707 0];
-            [~,X1] = findRetinaFieldPoint( eye, degField);
+            [~,X1,angleError1] = findRetinaFieldPoint( eye, degField);
+            if angleError0 < 1e-3 && anglerError1 < 1e-3
             distance = quadric.panouGeodesicDistance(S,[],[],X0,X1);
-            mmSqPerDegSq(jj,kk) = (distance*10)^2;
+            mmPerDeg(jj,kk) = (distance*10)^2;
+            end
         end
     end
-    fprintf(['Done subject ' num2str(subjects(ii))]);
-    resultSet(ii) = {mmSqPerDegSq};
+    fprintf(['Done subject ' num2str(subjects(ii)) '\n\n']);
+    resultSet(ii) = {mmPerDeg};
 end
 
 
 for ii = 1:length(subjects)
-    outfile = fullfile(saveDir,'mmSqPerDegSqMaps',[num2str(subjects(ii)) '_mmSqPerDegSqMap.mat']);
-    mmSqPerDegSq = resultSet{ii};
-    save(outfile,'mmSqPerDegSq');
+    outfile = fullfile(saveDir,'mmPerDegMaps',[num2str(subjects(ii)) '_mmPerDegMap.mat']);
+    mmPerDeg = resultSet{ii};
+    save(outfile,'mmPerDeg');
 end
