@@ -9,7 +9,7 @@ saveDir = '~/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis';
 
 resultSet = {};
 
-parfor (ii = 1:2, 2) %length(subjects)
+parfor (ii = 1:length(subjects))
 
     cc=[k1(ii),k2(ii),angle(ii)];
     if any(isnan(cc))
@@ -42,6 +42,7 @@ parfor (ii = 1:2, 2) %length(subjects)
     fprintf(['Done subject ' num2str(subjects(ii))]);
     resultSet(ii) = {mmSqPerDegSq};
 end
+
 
 for ii = 1:length(subjects)
     outfile = fullfile(saveDir,'mmSqPerDegSqMaps',[num2str(subjects(ii)) '_mmSqPerDegSqMap.mat']);
