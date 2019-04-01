@@ -25,8 +25,8 @@ parfor (ii = 1:length(subjects))
     % Create a matrix of 
     S = eye.retina.S;
     alpha = [5.45 2.5 0];
-    horizVals = -15:2.5:15;
-    vertVals = -15:2.5:15;
+    horizVals = -15:15:15;
+    vertVals = -15:15:15;
 
     mmSqPerDegSq = nan(length(horizVals),length(vertVals));
 
