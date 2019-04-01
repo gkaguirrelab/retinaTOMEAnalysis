@@ -39,7 +39,7 @@ parfor (ii = 1:2, 2) %length(subjects)
             mmSqPerDegSq(jj,kk) = (distance*10)^2;
         end
     end
-
+    fprintf(['Done subject ' num2str(subjects(ii))]);
     resultSet(ii) = {mmSqPerDegSq};
 end
 
