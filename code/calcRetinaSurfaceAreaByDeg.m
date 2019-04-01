@@ -10,6 +10,7 @@ saveDir = '~/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis';
 resultSet = {};
 
 parfor (ii = 1:length(subjects))
+%for ii = 1:length(subjects)
 
     cc=[k1(ii),k2(ii),angle(ii)];
     if any(isnan(cc))
@@ -24,8 +25,8 @@ parfor (ii = 1:length(subjects))
     % Create a matrix of 
     S = eye.retina.S;
     alpha = [5.45 2.5 0];
-    horizVals = -15:1:15;
-    vertVals = -15:1:15;
+    horizVals = -15:2.5:15;
+    vertVals = -15:2.5:15;
 
     mmSqPerDegSq = nan(length(horizVals),length(vertVals));
 
@@ -35,8 +36,7 @@ parfor (ii = 1:length(subjects))
             [~,X0] = findRetinaFieldPoint( eye, degField);
             degField = degField + [0.0707 0.0707 0];
             [~,X1] = findRetinaFieldPoint( eye, degField);
-%            distance = quadric.panouGeodesicDistance(S,[],[],X0,X1);
-            distance = sqrt(sum((X0-X1).^2));
+            distance = quadric.panouGeodesicDistance(S,[],[],X0,X1);
             mmSqPerDegSq(jj,kk) = (distance*10)^2;
         end
     end
