@@ -35,7 +35,8 @@ parfor (ii = 1:length(subjects))
             [~,X0] = findRetinaFieldPoint( eye, degField);
             degField = degField + [0.0707 0.0707 0];
             [~,X1] = findRetinaFieldPoint( eye, degField);
-            distance = quadric.panouGeodesicDistance(S,[],[],X0,X1);
+%            distance = quadric.panouGeodesicDistance(S,[],[],X0,X1);
+            distance = sqrt(sum((X0-X1).^2));
             mmSqPerDegSq(jj,kk) = (distance*10)^2;
         end
     end
