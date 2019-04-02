@@ -10,6 +10,7 @@ saveDir = '/Volumes/balthasarExternalDrive/Dropbox (Aguirre-Brainard Lab)/AOSO_a
 resultSet = {};
 
 parfor (ii = 1:length(subjects))
+%for ii = 1:length(subjects)
 
     cc=[k1(ii),k2(ii),angle(ii)];
     if any(isnan(cc))
@@ -32,11 +33,11 @@ parfor (ii = 1:length(subjects))
         for kk = 1:length(vertVals)
             degField = [horizVals(jj) vertVals(kk) 0] + alpha;
             [~,X0,angleError0] = findRetinaFieldPoint( eye, degField);
-            degField = degField + [0.0707 0.0707 0];
+            degField = degField + sign(degField).*[0.7071 0.7071 0];
             [~,X1,angleError1] = findRetinaFieldPoint( eye, degField);
             if angleError0 < 1e-3 && angleError1 < 1e-3
-                distance = quadric.panouGeodesicDistance(S,[],[],X0,X1);
-                mmPerDeg(jj,kk) = (distance*10)^2;
+                distance = abs(quadric.panouGeodesicDistance(S,[],[],X0,X1));
+                mmPerDeg(jj,kk) = distance;
             end
         end
     end
