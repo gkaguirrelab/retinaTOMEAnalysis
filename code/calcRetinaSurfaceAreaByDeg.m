@@ -1,53 +1,83 @@
-subjects = [11015,11018,11028,11031,11043,11049,11050,11051,11052,11053,11055,11056,11057,11058,11060,11061,11062,11064,11065,11067,11068,11069,11070,11071,11072,11073,11074,11075,11076,11077,11078,11080,11081,11082,11083,11084,11086,11087,11088,11089,11091,11092,11093,11094,11095,11096,11097,11098,11099,11100];
-axialLength = [27.52,27.07,24.03,21.89,25.15,24.49,24.9,26.05,22.76,23.89,27.49,25.1,22.18,22.96,23.91,24.92,24.79,22.69,23.45,22.9,24.83,23.54,25.35,22.64,26.54,25.47,25.29,24.18,25.35,24.66,25.35,22.44,23.45,22.88,23.67,23.38,23.73,24.01,24.06,24.5,25.7,26.57,23.56,23.39,22.17,26.24,23.08,24.23,22.11,24.85];
-sphericalAmetropia = [-7.5,-4.75,0.25,3.5,-1.75,-3.25,-3.75,-8.5,-0.5,-5.25,-10.25,-3.25,0.5,-0.25,-0.75,-2,-2,-1.25,-0.5,0.75,-1,-0.5,-0.5,0,-6,-2,-5.25,-0.75,-5,-4.25,-1.5,0.5,-0.75,0.25,0.5,0,-0.25,-1.75,-0.25,0.25,-5.25,-5.25,-1,-0.5,-1,-6.25,-0.25,-1.5,0.25,-5];
-k1 = [41.56,nan,43.38,43.38,41.77,43.32, 44.2,nan,45.30, 45.7,41.62,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,42.08,nan,nan,41.36,43.49,44.35,45.42,42.61,43.77,42.67,45.49,42.03,41.21,41.87,42.61,45.61,43.66,46.87,43.38,42.45,42.72,45.92,44.00];
-k2 = [42.35,nan,43.55,43.95,43.55, 44.4,44.94,nan,46.23, 46.6,43.66,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,42.83,nan,nan,nan,44.64,45.36,45.42,43.72,44.70,43.05,45.86,42.51, 42.2,42.72,43.89,45.86,44.64,47.34,43.89,43.55,45.06,47.14,45.30];
-angle = [5,nan,153,166,25,23,156,nan,8,0,174,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,nan,16,nan,nan,25,3,4,42,173,175,18,166,1,178,26,28,48,178,163,165,8,172,17,5];
 
+% Load the subject data table
+subjectTableFileName='~/Dropbox (Aguirre-Brainard Lab)/TOME_subject/TOME-AOSO_SubjectInfo.xlsx';
+opts = detectImportOptions(subjectTableFileName);
+subjectTable = readtable(subjectTableFileName, opts);
+
+% Set the save directory and initialize the cell array resultSet
 saveDir = '/Volumes/balthasarExternalDrive/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis';
-
 resultSet = {};
 
-parfor (ii = 1:length(subjects))
-%for ii = 1:length(subjects)
+parfor (ii = 1:length(subjectTable.AOSO_ID))
+%for ii = 1:length(subjectTable.AOSO_ID)
 
-    cc=[k1(ii),k2(ii),angle(ii)];
+    % Assemble the corneal curvature, spherical error, and axial length.
+    % For some subjects there are missing measures so we model the default
+    % value for this eye.
+    cc=[subjectTable.K1_average(ii),subjectTable.K2_average(ii),subjectTable.K1_angle_average(ii)];
     if any(isnan(cc))
         cc = [];
     end
-    SR = sphericalAmetropia(ii);
+    SR = subjectTable.Spherical_Error_average(ii);
     if isnan(SR)
         SR=[];
     end
-    eye = modelEyeParameters('axialLength',axialLength(ii),'sphericalAmetropia',SR,'measuredCornealCurvature',cc);
+    axialLength = subjectTable.Axial_Length_average(ii);
+    if isnan(SR)
+        axialLength=[];
+    end
+
+    % Create the model eye
+    eye = modelEyeParameters('axialLength',axialLength,'sphericalAmetropia',SR,'measuredCornealCurvature',cc);
     
+    % Extract the quadric surface for the vitreo-retinal interface
     S = eye.retina.S;
+    
+    % Set the alpha angles to the population mean
     alpha = [5.45 2.5 0];
+    
+    % Define the visual field domain over which we will make the measure
     horizVals = -15:2.5:15;
     vertVals = -15:2.5:15;
 
+    % Define an empty matrix to hold the results
     mmPerDeg = nan(length(horizVals),length(vertVals));
 
+    % Define the delta deg
+    deltaDegEuclidean = 1;
+    deltaAngles = [sqrt(deltaDegEuclidean/2) sqrt(deltaDegEuclidean/2) 0];
+    
+    % Loop over horizontal and vertical field positions
     for jj = 1:length(horizVals)
         for kk = 1:length(vertVals)
+            % The position in the field relative to the optical axis of the
+            % eye
             degField = [horizVals(jj) vertVals(kk) 0] + alpha;
-            [~,X0,angleError0] = findRetinaFieldPoint( eye, degField);
-            degField = degField + sign(degField).*[0.7071 0.7071 0];
-            [~,X1,angleError1] = findRetinaFieldPoint( eye, degField);
+            % Obtain the retinal points that are delta degrees on either
+            % side of the specified degree field position
+            [~,X0,angleError0] = findRetinaFieldPoint( eye, degField - deltaAngles./2);
+            [~,X1,angleError1] = findRetinaFieldPoint( eye, degField + deltaAngles./2);
+            % If the ray trace was accurate, calculate and store the
+            % distance
             if angleError0 < 1e-3 && angleError1 < 1e-3
+                % This is the minimal geodesic distance across the
+                % ellipsoidal surface (like the great circle on a sphere)
                 distance = abs(quadric.panouGeodesicDistance(S,[],[],X0,X1));
-                mmPerDeg(jj,kk) = distance;
+                % Need to divide by the delta distance to express as mm per
+                % degree of visual angle
+                mmPerDeg(jj,kk) = distance / deltaDegEuclidean;
             end
         end
     end
-    fprintf(['Done subject ' num2str(subjects(ii)) '\n\n']);
+    % Give some console update
+    fprintf(['Done subject ' num2str(subjectTable.AOSO_ID(ii)) '\n']);
+    % Store the map in a cell array that accumulates across the parfor
     resultSet(ii) = {mmPerDeg};
 end
 
-
-for ii = 1:length(subjects)
-    outfile = fullfile(saveDir,'mmPerDegMaps',[num2str(subjects(ii)) '_mmPerDegMap.mat']);
+% Write out the maps
+for ii = 1:length(subjectTable.AOSO_ID)
+    outfile = fullfile(saveDir,'mmPerDegMaps',[num2str(subjectTable.AOSO_ID(ii)) '_mmPerDegMap.mat']);
     mmPerDeg = resultSet{ii};
     save(outfile,'mmPerDeg');
 end
