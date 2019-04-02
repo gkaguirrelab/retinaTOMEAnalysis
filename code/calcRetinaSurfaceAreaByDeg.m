@@ -1,6 +1,6 @@
 
 % Load the subject data table
-subjectTableFileName='~/Dropbox (Aguirre-Brainard Lab)/TOME_subject/TOME-AOSO_SubjectInfo.xlsx';
+subjectTableFileName='/Volumes/balthasarExternalDrive/Dropbox (Aguirre-Brainard Lab)/TOME_subject/TOME-AOSO_SubjectInfo.xlsx';
 opts = detectImportOptions(subjectTableFileName);
 subjectTable = readtable(subjectTableFileName, opts);
 
