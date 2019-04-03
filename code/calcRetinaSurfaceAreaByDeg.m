@@ -1,6 +1,7 @@
 
 % Load the subject data table
 subjectTableFileName='/Volumes/balthasarExternalDrive/Dropbox (Aguirre-Brainard Lab)/TOME_subject/TOME-AOSO_SubjectInfo.xlsx';
+%subjectTableFileName='~/Dropbox (Aguirre-Brainard Lab)/TOME_subject/TOME-AOSO_SubjectInfo.xlsx';
 opts = detectImportOptions(subjectTableFileName);
 subjectTable = readtable(subjectTableFileName, opts);
 
@@ -9,7 +10,7 @@ saveDir = '/Volumes/balthasarExternalDrive/Dropbox (Aguirre-Brainard Lab)/AOSO_a
 resultSet = {};
 
 parfor (ii = 1:length(subjectTable.AOSO_ID))
-%for ii = 1:length(subjectTable.AOSO_ID)
+%for ii = 4:length(subjectTable.AOSO_ID)
 
     % Assemble the corneal curvature, spherical error, and axial length.
     % For some subjects there are missing measures so we model the default
@@ -61,8 +62,14 @@ parfor (ii = 1:length(subjectTable.AOSO_ID))
             % distance
             if angleError0 < 1e-3 && angleError1 < 1e-3
                 % This is the minimal geodesic distance across the
-                % ellipsoidal surface (like the great circle on a sphere)
+                % ellipsoidal surface (like the great circle on a sphere).
+                % Not using this because of too many failures across the
+                % umbilical point, which is within the sampled area
+                %{
                 distance = abs(quadric.panouGeodesicDistance(S,[],[],X0,X1));
+                %}
+                % This is the Euclidean distance between the points
+                distance = sqrt(sum((X0-X1).^2));
                 % Need to divide by the delta distance to express as mm per
                 % degree of visual angle
                 mmPerDeg(jj,kk) = distance / deltaDegEuclidean;
