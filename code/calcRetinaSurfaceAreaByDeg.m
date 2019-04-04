@@ -1,16 +1,48 @@
+% calcRetintalSurfaceAreaByDeg
+% Creates and saves maps of the conversion of degrees to mm on the retina
+%
+% Description:
+%   Each position in the visual field projects to a position on the retina.
+%   Position in the visual field is expressed in degrees of visual angle.
+%   This routine calculates, for any position in the visual field, the mm
+%   of retina that are subtended by a degree of visual angle at that
+%   position. A general rule of thumb is that one degree of visual angle
+%   equals roughly three millimeters. The exact value will vary principally
+%   based upon the axial length of the eye, and to a lesser extent upon the
+%   position in the visual field as influenced by the optics of the cornea,
+%   the misalignment of the optical and visual axes of the eye, and the
+%   particulars of the radii of the ellipsoidal vitreous chamber.
+%
+%   This routine loads the eye biometric parameters measured for the TOME
+%   subjects and uses these to create a model eye for each subject. Ray
+%   tracing in that model eye is then conducted to produce a map of the mm
+%   of retina per degree of visual angle on the retinal surface.
+%
+%   The resulting map is 13 x 13 samples, and has the following properties:
+%       mmPerDeg(1,1) -- nasal, superior
+%       mmPerDeg(13,1) -- temporal, superior
+%       mmPerDeg(1,13) -- nasal, inferior
+%       mmPerDeg(13,13) -- temporal, inferior
+%       mmPerDeg(7,7) -- fovea
+%
+%   The model assumes that all subjects have the same alpha angles (the
+%   angle between the visual and optical axes of the eye). While this is an
+%   inaccurate assumption, we lack this measurement for each subject, and
+%   instead use the mean value for all subjects.
+%
+
+
 
 % Load the subject data table
-subjectTableFileName='/Volumes/balthasarExternalDrive/Dropbox (Aguirre-Brainard Lab)/TOME_subject/TOME-AOSO_SubjectInfo.xlsx';
-%subjectTableFileName='~/Dropbox (Aguirre-Brainard Lab)/TOME_subject/TOME-AOSO_SubjectInfo.xlsx';
+subjectTableFileName='~/Dropbox (Aguirre-Brainard Lab)/TOME_subject/TOME-AOSO_SubjectInfo.xlsx';
 opts = detectImportOptions(subjectTableFileName);
 subjectTable = readtable(subjectTableFileName, opts);
 
 % Set the save directory and initialize the cell array resultSet
-saveDir = '/Volumes/balthasarExternalDrive/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis';
+saveDir = '~/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis';
 resultSet = {};
 
 parfor (ii = 1:length(subjectTable.AOSO_ID))
-%for ii = 4:length(subjectTable.AOSO_ID)
 
     % Assemble the corneal curvature, spherical error, and axial length.
     % For some subjects there are missing measures so we model the default
