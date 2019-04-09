@@ -12,19 +12,6 @@
 	"update": "",
 	"url": ""
 	},
- 	{
-	"flavor": "",
-	"hook": "",
-	"importance": "",
-	"localHookTemplate": "",
-	"name": "rgcDisplacementMap",
-	"pathPlacement": "append",
-	"subfolder": "",
-	"toolboxRoot": "",
-	"type": "include",
-	"update": "",
-	"url": ""
-	},
 	{
 		"flavor": "",
 		"hook": "",
@@ -37,19 +24,6 @@
 		"type": "include",
 		"update": "",
 		"url": ""
-	},
- 	{
-	"flavor": "",
-	"hook": "",
-	"importance": "",
-	"localHookTemplate": "",
-	"name": "octExplorerSupport",
-	"pathPlacement": "append",
-	"subfolder": "",
-	"toolboxRoot": "",
-	"type": "include",
-	"update": "",
-	"url": ""
 	}
 ]
 
