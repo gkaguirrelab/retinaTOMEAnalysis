@@ -1,4 +1,4 @@
-function makeHorVertOCTMontage(inputVolandSegDir,thicknessMapSaveDir)
+function makeHorizontalVerticalMontage(inputVolandSegDir,thicknessMapSaveDir)
 
 %load data
 %Input output locations
