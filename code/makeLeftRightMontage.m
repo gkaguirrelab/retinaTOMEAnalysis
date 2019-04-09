@@ -174,7 +174,7 @@ for ss=1:length(rawSubjectList)
     % Save the structure variable
     outfileDir = fullfile(saveDir,subjectName);
     if ~exist(outfileDir,'dir')
-        mkdir fileOutDir
+        mkdir(outfileDir)
     end
     outfile = fullfile(outfileDir,[subjectName,'_averageMaps.mat']);
     save(outfile,'averageMaps');
