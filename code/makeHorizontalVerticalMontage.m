@@ -10,8 +10,9 @@ LN = 11; %number of layers in segmentation image
 
 AllSubIDs = dir(fullfile(inputVolandSegDir,'1*'));
 
+
 for e = 1:2 %eye side
-    for i = 2:length(AllSubIDs) %subject folders found.
+    for i = 1:length(AllSubIDs) %subject folders found.
         subject = struct;
         if (e == 1)
             subject.eyeSide = 'OD';
