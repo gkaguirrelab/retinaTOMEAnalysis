@@ -1,4 +1,4 @@
-function generateAlignedThicknessMaps(inputVolandSegDir,thicknessMapSaveDir)
+function makeHorVertOCTMontage(inputVolandSegDir,thicknessMapSaveDir)
 
 %load data
 %Input output locations

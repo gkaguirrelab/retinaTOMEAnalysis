@@ -1,36 +1,54 @@
+function octExplorerXMLToMatlab(dataRootDir, varargin)
+% 
+% We have collected OCT data using a Heidelberg Spectralis system. A
+% horizontal and vertical macular scan was collected for the left and right
+% eye for each subject. The data were exported from the OCT system and
+% saved in `.E2E` format (which is proprietary to Heidelberg) and in `.vol`
+% format.
+% 
+% The `.vol` files were copied to a separate location and then processed by
+% an operator (Kara Cloud) using OCT Explorer v5.0 (on a Macintosh). This
+% analysis yields (for each `.vol` file) a file named
+% `_Surfaces_Retina-JEI-Final.xml`.
+% 
+% The routine `xmlConversionWrapper.m` is used to convert the `.xml` file
+% to a `.mat` file. The wrapper makes use of the routine `xml2volmask.m`
+% which is present within the `octExplorerSupport` toolbox, and was written
+% by Jin Gahm from the LONI group, USC.
+% 
+% The resulting `.mat` file has the dimensions 768x97x496, corresponding to
+% the vertical, axial (depth) and horizontal diimensions. Each voxel is
+% given an integer value from 0 - 11, corresponding to a retinal layer
+% (with a value of zero indicating that the voxel does not reside within
+% the retina). The depth dimension is in units of mm, while the transverse
+% (horizontal and vertical) dimensions are in units of degrees of visual
+% angle; our macular acquisitions were 30° wide.
+
+
+
+%% Parse vargin for options passed here
+p = inputParser;
+
+% Required
+p.addRequired('dataRootDir',@ischar);
+
+% Optional analysis params
+p.addParameter('inFileSuffix','_Surfaces_Retina-JEI-Final.xml',@ischar);
+p.addParameter('outFileSuffix','_Surfaces_Retina-JEI-Final.mat',@ischar);
+p.addParameter('subjectsToProcess',{},@(x)(isempty(x) || iscell(x)));
+
+
+%% Parse and check the parameters
+p.parse(dataRootDir, varargin{:});
+
+
+
 % Convert OCT seg XML to .mat volumes
 
 
-subjectsToProcess={'11083','11084','11086','11087','11088','11089','11091','11092','11093','11095','11096','11097','11098','11099'};
-
-% set dropbox directory
-[~,hostname] = system('hostname');
-hostname = strtrim(lower(hostname));
-
-% handle hosts with custom dropbox locations
-switch hostname
-    case 'seele.psych.upenn.edu'
-        dropboxDir = '/Volumes/seeleExternalDrive/Dropbox (Aguirre-Brainard Lab)';
-    case 'magi-1-melchior.psych.upenn.edu'
-        dropboxDir = '/Volumes/melchiorExternalDrive/Dropbox (Aguirre-Brainard Lab)';
-    case 'magi-2-balthasar.psych.upenn.edu'
-        dropboxDir = '/Volumes/balthasarExternalDrive/Dropbox (Aguirre-Brainard Lab)';
-    otherwise
-        [~, userName] = system('whoami');
-        userName = strtrim(userName);
-        dropboxDir = ...
-            fullfile('/Users', userName, ...
-            'Dropbox (Aguirre-Brainard Lab)');
-end
-
-
-dataRootDir = [dropboxDir '/AOSO_analysis/OCTExplorerSegmentationData'];
-inFileSuffix = '_Surfaces_Retina-JEI-Final.xml';
-outFileSuffix = '_Surfaces_Retina-JEI-Final.mat';
-
 % Obtain the paths to all of the pupil data files within the specified
 % directory, including within sub-drectories.
-fileListStruct=subdir(fullfile(dataRootDir,['*' inFileSuffix]));
+fileListStruct=subdir(fullfile(dataRootDir,['*' p.Results.inFileSuffix]));
 
 % If we found at least one pupil data file, then proceed.
 if ~isempty(fileListStruct)
@@ -39,9 +57,9 @@ if ~isempty(fileListStruct)
         
         processThisOneFlag = true;
         % Check if we have a list of subjects to process
-        if ~isempty(subjectsToProcess)
+        if ~isempty(p.Results.subjectsToProcess)
             % Check if this subject is on the list
-            if ~contains(fileListStruct(ii).name,subjectsToProcess)
+            if ~contains(fileListStruct(ii).name,p.Results.subjectsToProcess)
                 processThisOneFlag = false;
             end
         end
@@ -51,8 +69,8 @@ if ~isempty(fileListStruct)
             mask = xml2volmask(fileListStruct(ii).name);
             
             % Create an output file path
-            outFileRoot = extractBefore(fileListStruct(ii).name,inFileSuffix);
-            outputFile = [outFileRoot outFileSuffix];
+            outFileRoot = extractBefore(fileListStruct(ii).name,p.Results.inFileSuffix);
+            outputFile = [outFileRoot p.Results.outFileSuffix];
             
             % Save the file
             save(outputFile,'mask');
@@ -63,6 +81,7 @@ if ~isempty(fileListStruct)
     end
 end
 
+end % main
 
 
 
