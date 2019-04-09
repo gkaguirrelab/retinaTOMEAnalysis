@@ -1,4 +1,4 @@
-% calcRetintalSurfaceAreaByDeg
+% createMmPerDegMaps
 % Creates and saves maps of the conversion of degrees to mm on the retina
 %
 % Description:
@@ -31,15 +31,16 @@
 %   instead use the mean value for all subjects.
 %
 
-
+% Get the dropboxBaseDir
+dropboxBaseDir = getpref('retinaTOMEAnalysis','dropboxBaseDir');
 
 % Load the subject data table
-subjectTableFileName='~/Dropbox (Aguirre-Brainard Lab)/TOME_subject/TOME-AOSO_SubjectInfo.xlsx';
+subjectTableFileName=fullfile(dropboxBaseDir,'TOME_subject','TOME-AOSO_SubjectInfo.xlsx');
 opts = detectImportOptions(subjectTableFileName);
 subjectTable = readtable(subjectTableFileName, opts);
 
 % Set the save directory and initialize the cell array resultSet
-saveDir = '~/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis';
+saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps');
 resultSet = {};
 
 parfor (ii = 1:length(subjectTable.AOSO_ID))
@@ -116,7 +117,7 @@ end
 
 % Write out the maps
 for ii = 1:length(subjectTable.AOSO_ID)
-    outfile = fullfile(saveDir,'mmPerDegMaps',[num2str(subjectTable.AOSO_ID(ii)) '_mmPerDegMap.mat']);
+    outfile = fullfile(saveDir,[num2str(subjectTable.AOSO_ID(ii)) '_mmPerDegMap.mat']);
     mmPerDeg = resultSet{ii};
     save(outfile,'mmPerDeg');
 end
