@@ -1,4 +1,4 @@
-% createMmPerDegMaps
+function makeMmPerDegMaps(saveDir, varargin)
 % Creates and saves maps of the conversion of degrees to mm on the retina
 %
 % Description:
@@ -31,16 +31,26 @@
 %   instead use the mean value for all subjects.
 %
 
-% Get the dropboxBaseDir
-dropboxBaseDir = getpref('retinaTOMEAnalysis','dropboxBaseDir');
+
+%% Parse vargin for options passed here
+p = inputParser;
+
+% Required
+p.addRequired('saveDir',@ischar);
+
+% Optional analysis params
+p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
+p.addParameter('alpha',[5.45 2.5 0],@isnumeric);
+
+%% Parse and check the parameters
+p.parse(saveDir, varargin{:});
+
 
 % Load the subject data table
-subjectTableFileName=fullfile(dropboxBaseDir,'TOME_subject','TOME-AOSO_SubjectInfo.xlsx');
-opts = detectImportOptions(subjectTableFileName);
-subjectTable = readtable(subjectTableFileName, opts);
+opts = detectImportOptions(p.Results.subjectTableFileName);
+subjectTable = readtable(p.Results.subjectTableFileName, opts);
 
-% Set the save directory and initialize the cell array resultSet
-saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps');
+% Create an empty cell array to hold the results
 resultSet = {};
 
 parfor (ii = 1:length(subjectTable.AOSO_ID))
@@ -67,9 +77,6 @@ parfor (ii = 1:length(subjectTable.AOSO_ID))
     % Extract the quadric surface for the vitreo-retinal interface
     S = eye.retina.S;
     
-    % Set the alpha angles to the population mean
-    alpha = [5.45 2.5 0];
-    
     % Define the visual field domain over which we will make the measure
     horizVals = -15:2.5:15;
     vertVals = -15:2.5:15;
@@ -86,7 +93,7 @@ parfor (ii = 1:length(subjectTable.AOSO_ID))
         for kk = 1:length(vertVals)
             % The position in the field relative to the optical axis of the
             % eye
-            degField = [horizVals(jj) vertVals(kk) 0] + alpha;
+            degField = [horizVals(jj) vertVals(kk) 0] + p.Results.alpha;
             % Obtain the retinal points that are delta degrees on either
             % side of the specified degree field position
             [~,X0,angleError0] = findRetinaFieldPoint( eye, degField - deltaAngles./2);

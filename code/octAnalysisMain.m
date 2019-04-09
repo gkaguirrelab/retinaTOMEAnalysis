@@ -30,3 +30,11 @@ makeHorizontalVerticalMontage(dataDir,saveDir)
 dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','2DThicknessMapsAllLayers_MinChenMontage');
 saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
 makeLeftRightMontage(dataDir,saveDir)
+
+
+%% makeMmPerDegMaps
+% Saves maps of the conversion of degree of visual angle to mm of retina
+saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps');
+makeMmPerDegMaps(saveDir)
+
+
