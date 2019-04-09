@@ -21,20 +21,12 @@ dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','OCTExplorerSegmentationData')
 saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','2DThicknessMapsAllLayers_MinChenMontage');
 makeHorizontalVerticalMontage(dataDir,saveDir)
 
-%% makeleftRightMontage
 
-saveDir = '/Users/aguirre/Documents/MATLAB/projects/rgcPopulationModel/data/';
-%
-%input directories
-inputVolandSegDir = fullfile(dropboxBaseDir,'AOSO_analysis','OCTExplorerSegmentationData');
-
-%output directories
-thicknessMapSaveDir = fullfile(dropboxBaseDir,'AOSO_analysis','2DThicknessMapsAllLayers_MinChenMontage');
-rgcMapSavePath = fullfile(saveDir,'rgcIplThicknessMap.mat');
-resultTableFileName = fullfile(saveDir,'data/octRGCResultTable.csv');
- 
-mkdir(thicknessMapSaveDir);
-mkdir(saveDir);
-
-makeHorVertOCTMontage(inputVolandSegDir,thicknessMapSaveDir)
-analyzeThicknessMaps(thicknessMapSaveDir, rgcMapSavePath, resultTableFileName)
+%% makeLeftRightMontage
+% The data from both eyes are positioned such that the fovea is at the
+% center of the imaging space. The data from the left eye is mirror
+% reversed. Data are averaged across the eyes. Signal values from close to
+% the optic disc are trimmed away.
+dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','2DThicknessMapsAllLayers_MinChenMontage');
+saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
+makeLeftRightMontage(dataDir,saveDir)
