@@ -25,6 +25,19 @@
 	"update": "",
 	"url": ""
 	},
+	{
+		"flavor": "",
+		"hook": "",
+		"importance": "",
+		"localHookTemplate": "",
+		"name": "gkaModelEye",
+		"pathPlacement": "append",
+		"subfolder": "",
+		"toolboxRoot": "",
+		"type": "include",
+		"update": "",
+		"url": ""
+	},
  	{
 	"flavor": "",
 	"hook": "",
