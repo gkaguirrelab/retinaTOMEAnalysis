@@ -1,4 +1,4 @@
-function analyzeThicknessMaps(dirRootPath, rgcMapSavePath, resultTableFileName)
+function analyzeThicknessMaps(dirRootPath,saveDir,rgcMapSavePath, resultTableFileName)
 
 % dirRootPath = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis/2DThicknessMapsAllLayers_MinChenMontage';
 % rgcMapSavePath = '/Users/aguirre/Documents/MATLAB/projects/rgcPopulationModel/data/rgcIplThicknessMap.mat';
@@ -6,7 +6,7 @@ function analyzeThicknessMaps(dirRootPath, rgcMapSavePath, resultTableFileName)
 % resultTableFileName = 'data/octRGCResultTable.csv';
 
 rawSubjectList = dir(dirRootPath);
-rawSubjectList = rawSubjectList(4:end);
+rawSubjectList = rawSubjectList(3:end-1);
 
 showPlotsFlag = false;
 
@@ -27,7 +27,7 @@ subjectList = {};
 for ss=1:length(rawSubjectList)
     
     % Assemble the path to the data directory for this subject
-    dirPath = fullfile(rawSubjectList(ss).folder,rawSubjectList(ss).name);
+    dirPath = fullfile(dirRootPath,rawSubjectList(ss).name);
     
     % Obtain the list of result files for this subject
     fileList = dir(fullfile(dirPath,'*.mat'));
@@ -64,7 +64,7 @@ for ss=1:length(rawSubjectList)
     for ii = 1:length(fileList)
         
         % Assemble the name of this file and load it
-        fileName = fullfile(fileList(ii).folder,fileList(ii).name);
+        fileName = fullfile(dirPath,fileList(ii).name);
         load(fileName);
         
         % Empty the variable that will hold the fovea coordinates
@@ -78,7 +78,7 @@ for ss=1:length(rawSubjectList)
             thisThick = sum(subject.BothMeanLayerThicknessesOnSLOInterp(:,:,layerSets{jj}),3);
             
             % If these are data from the left eye, mirror reverse
-            if contains(fileList(ii).name,'_OS.mat')
+            if strfind(fileList(ii).name,'_OS.mat')
                 thisThick = fliplr(thisThick);
             end
             
@@ -122,7 +122,7 @@ for ss=1:length(rawSubjectList)
             thisThick(thisThick==0)=nan;
             
             % Store the this thickness map in the full array
-            if contains(fileList(ii).name,'_OS.mat')
+            if strfind(fileList(ii).name,'_OS.mat')
                 everyThicknessMap(jj,subIdx,1,:,:)=thisThick;
             else
                 everyThicknessMap(jj,subIdx,2,:,:)=thisThick;
@@ -157,7 +157,7 @@ end % Looping over subjects
 nSubs = subIdx - 1;
 
 % Save the primary variable
-save('~/Desktop/everyThicknessMap','everyThicknessMap','subjectList','-v7.3');
+save(fullfile(saveDir,'everyThicknessMap.mat'),'everyThicknessMap','subjectList','-v7.3');
 
 % Trim away artifacts in the area of the optic disc
 everyThicknessMap(:,:,:,:,640:end)=nan;
@@ -229,9 +229,10 @@ end
 
 % Calc the PCA
 [coeff,score,latent,tsquared,explained,mu] = pca(X,'Centered',true);
-Xfit = score(:,1:3)*coeff(:,1:3)'+(repmat(mu,48,1));
+Xfit = score(:,1:3)*coeff(:,1:3)'+(repmat(mu,50,1));
 
 % Show a plot of the explanatory power of the components
+
 if showPlotsFlag
     figure
     plot(explained)
