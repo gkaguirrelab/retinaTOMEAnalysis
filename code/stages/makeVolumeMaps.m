@@ -15,11 +15,15 @@ p.addRequired('mmPerDegMapDir',@ischar);
 p.addRequired('saveDir',@ischar);
 
 % Optional analysis params
+p.addParameter('degreesFOV',30,@isscalar);
+p.addParameter('showPlots',false,@islogical);
+
+
+% Optional analysis params
 p.addParameter('layerSetLabels',{'RGCIPL','RNFL','OPL','TotalRetina'},@iscell);
 
 %% Parse and check the parameters
 p.parse(thicknessMapDir, mmPerDegMapDir, saveDir, varargin{:});
-
 
 
 %find all subjects
@@ -58,26 +62,30 @@ for ii = 1:length(subIDs)
         %resize to same size as slo
         mmPerDegMapInterp_rot_resize = imresize(mmPerDegInterp_rot,[XN YN]);
         
+        % Calculate the degrees per pixel
+        degreesPerPixel = p.Results.degreesFOV / XN;
         
         %convert thickness map to volume map with thickness(mm)*degree^2
-        volumeMap_mmCubedDegSquared = (thicknessMicronMap./100).*(mmPerDegMapInterp_rot_resize.^2);
+        volumeMap_mmCubedDegSquared = (thicknessMicronMap./100).*((mmPerDegMapInterp_rot_resize*degreesPerPixel).^2);
         
         
         save(savename,'volumeMap_mmCubedDegSquared');
         
     end
-    
-    % figure(1)
-    % imshow(mmPerDegMapInterp_rot_resize)
-    % caxis([min(mmPerDegMapInterp_rot_resize(:)) max(mmPerDegMapInterp_rot_resize(:))])
-    % colorbar
-    % figure(2)
-    % imshow(volumeMap_mmDegSquared)
-    % caxis([min(volumeMap_mmDegSquared(:)) max(volumeMap_mmDegSquared(:))])
-    % colorbar
-    % figure(3)
-    % imshow(volumeMap_mmCubed)
-    % caxis([min(volumeMap_mmCubed(:)) max(volumeMap_mmCubed(:))])
-    % colorbar
+
+    if p.Results.showPlots
+    figure(1)
+    imshow(mmPerDegMapInterp_rot_resize)
+    caxis([min(mmPerDegMapInterp_rot_resize(:)) max(mmPerDegMapInterp_rot_resize(:))])
+    colorbar
+    figure(2)
+    imshow(volumeMap_mmDegSquared)
+    caxis([min(volumeMap_mmDegSquared(:)) max(volumeMap_mmDegSquared(:))])
+    colorbar
+    figure(3)
+    imshow(volumeMap_mmCubed)
+    caxis([min(volumeMap_mmCubed(:)) max(volumeMap_mmCubed(:))])
+    colorbar
+    end
     
 end
