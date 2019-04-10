@@ -1,4 +1,4 @@
-function generateAlignedThicknessMaps(inputVolandSegDir,thicknessMapSaveDir)
+function makeHorizontalVerticalMontage(inputVolandSegDir,thicknessMapSaveDir)
 
 %load data
 %Input output locations
@@ -9,6 +9,7 @@ function generateAlignedThicknessMaps(inputVolandSegDir,thicknessMapSaveDir)
 LN = 11; %number of layers in segmentation image
 
 AllSubIDs = dir(fullfile(inputVolandSegDir,'1*'));
+
 
 for e = 1:2 %eye side
     for i = 1:length(AllSubIDs) %subject folders found.

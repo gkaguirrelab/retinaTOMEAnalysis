@@ -1,10 +1,10 @@
-function OLFlickerSensitivityLocalHook
-% OLFlickerSensitivityLocalHook - Configure things for working on OneLight projects.
+function retinaTOMEAnalysisLocalHook
+% retinaTOMEAnalysisLocalHook - Configure things for working on OneLight projects.
 %
 % For use with the ToolboxToolbox.  If you copy this into your
 % ToolboxToolbox localToolboxHooks directory (by default,
 % ~/localToolboxHooks) and delete "LocalHooksTemplate" from the filename,
-% this will get run when you execute tbUse({'OLFlickerSensitivityConfig'}) to set up for
+% this will get run when you execute tbUse({'retinaTOMEAnalysisConfig'}) to set up for
 % this project.  You then edit your local copy to match your local machine.
 %
 % The main thing that this does is define Matlab preferences that specify input and output
@@ -15,7 +15,7 @@ function OLFlickerSensitivityLocalHook
 
  
 %% Define project
-projectName = 'octAnalysisForTOME';
+projectName = 'retinaTOMEAnalysis';
  
 %% Say hello
 fprintf('Running % local hook\n',projectName);
@@ -29,24 +29,28 @@ end
 projectBaseDir = tbLocateProject(projectName);
 
 % Obtain the Dropbox path
-[~, userID] = system('whoami');
-userID = strtrim(userID);
-switch userID
-    case {'melanopsin' 'pupillab'}
-        dropboxBaseDir = ['/Users/' userID '/Dropbox (Aguirre-Brainard Lab)/'];
-        dataPath = ['/Users/' userID '/Dropbox (Aguirre-Brainard Lab)/MELA_data/'];
-    case {'dhb'}
-        dropboxBaseDir = ['/Users1'  '/Dropbox (Aguirre-Brainard Lab)/'];
-        dataPath = ['/Users1/' '/Dropbox (Aguirre-Brainard Lab)/MELA_data/'];        
+[~,hostname] = system('hostname');
+hostname = strtrim(lower(hostname));
+
+% handle hosts with custom dropbox locations
+switch hostname
+    case 'seele.psych.upenn.edu'
+        dropboxBaseDir = '/Volumes/seeleExternalDrive/Dropbox (Aguirre-Brainard Lab)';
+    case 'magi-1-melchior.psych.upenn.edu'
+        dropboxBaseDir = '/Volumes/melchiorBayTwo/Dropbox (Aguirre-Brainard Lab)';
+    case 'magi-2-balthasar.psych.upenn.edu'
+        dropboxBaseDir = '/Volumes/balthasarExternalDrive/Dropbox (Aguirre-Brainard Lab)';
     otherwise
-        dropboxBaseDir = ['/Users/' userID '/Dropbox (Aguirre-Brainard Lab)'];
-        DropBoxDataPath = [dropboxBaseDir '/retData/'];
-        LocalDataPath = [projectBaseDir '/data'];
+        [~, userName] = system('whoami');
+        userName = strtrim(userName);
+        dropboxBaseDir = ...
+            fullfile('/Users', userName, ...
+            'Dropbox (Aguirre-Brainard Lab)');
 end
- 
+
+
 %% Set preferences for project output
 
-setpref(projectName,'mainDir',projectBaseDir); % main directory path 
-setpref(projectName,'DropBoxDataPath',DropBoxDataPath); % path to data stroed on dropbox
-setpref(projectName,'LocalDataPath',LocalDataPath); % path to small file within the git repo 
+setpref(projectName,'dropboxBaseDir',dropboxBaseDir); % main directory path 
+setpref(projectName,'projectBaseDir',projectBaseDir); % main directory path 
 end
