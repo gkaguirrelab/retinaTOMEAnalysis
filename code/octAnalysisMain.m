@@ -38,3 +38,11 @@ saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps');
 makeMmPerDegMaps(saveDir)
 
 
+%% makeVolumeMaps
+% The maps of RGCIPL thickness are combined with the mmPerDeg maps to
+% create maps of tissue volume per square visual degree.
+thicknessMapDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
+mmPerDegMapDir = fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps');
+saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','volumeMapsBySubject');
+makeVolumeMaps(thicknessMapDir,mmPerDegMapDir,saveDir);
+
