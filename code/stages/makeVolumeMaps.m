@@ -63,7 +63,7 @@ for ii = 1:length(subIDs)
         degreesPerPixel = p.Results.degreesFOV / XN;
         
         %convert thickness map to volume map with thickness(mm)*degree^2
-        volumeMap_mmCubedDegSquared = (thicknessMicronMap./100).*((mmPerDegMapInterp_rot_resize*degreesPerPixel).^2);
+        volumeMap_mmCubedDegSquared = (thicknessMicronMap./1000).*((mmPerDegMapInterp_rot_resize*degreesPerPixel).^2);
         
         
         save(savename,'volumeMap_mmCubedDegSquared');
