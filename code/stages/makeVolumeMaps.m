@@ -17,9 +17,6 @@ p.addRequired('saveDir',@ischar);
 % Optional analysis params
 p.addParameter('degreesFOV',30,@isscalar);
 p.addParameter('showPlots',false,@islogical);
-
-
-% Optional analysis params
 p.addParameter('layerSetLabels',{'RGCIPL','RNFL','OPL','TotalRetina'},@iscell);
 
 %% Parse and check the parameters

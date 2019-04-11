@@ -46,3 +46,11 @@ mmPerDegMapDir = fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps');
 saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','volumeMapsBySubject');
 makeVolumeMaps(thicknessMapDir,mmPerDegMapDir,saveDir);
 
+
+%% analyzeMaps
+% Examine the relationship between thickness, volume, and biometric values.
+thicknessMapDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
+volumeMapDir = fullfile(dropboxBaseDir,'AOSO_analysis','volumeMapsBySubject');
+saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','thicknessVsVolumeComparison');
+analyzeMaps(thicknessMapDir,volumeMapDir,saveDir);
+
