@@ -1,4 +1,4 @@
-function analyzeMps(thicknessMapDir,volumeMapDir, saveDir, varargin)
+function analyzeMaps(thicknessMapDir,volumeMapDir, saveDir, varargin)
 % Do some analysis
 %
 % Description:
@@ -15,12 +15,18 @@ p.addRequired('volumeMapDir',@ischar);
 p.addRequired('saveDir',@ischar);
 
 % Optional analysis params
-p.addParameter('degreesFOV',30,@isscalar);
-p.addParameter('showPlots',false,@islogical);
+p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 p.addParameter('layerSetLabels',{'RGCIPL','RNFL','OPL','TotalRetina'},@iscell);
+p.addParameter('showPlots',false,@islogical);
 
 %% Parse and check the parameters
 p.parse(thicknessMapDir, volumeMapDir, saveDir, varargin{:});
+
+% Load the subject data table
+opts = detectImportOptions(p.Results.subjectTableFileName);
+subjectTable = readtable(p.Results.subjectTableFileName, opts);
+axialLength = subjectTable.Axial_Length_average(ii);
+
 
 subIDs = dir(fullfile(volumeMapDir,'1*'));
 
@@ -53,7 +59,7 @@ for layer = 1:length(p.Results.layerSetLabels) %L controls which layer we're loo
     
     % writeout the overlap
     
-    savename = fullfile(saveDir, [p.Results.layerSetLabels{layer} ' _overlapMap.mat']);
+    savename = fullfile(saveDir, [p.Results.layerSetLabels{layer} '_overlapMap.mat']);
     save(savename,'overlap');
     
     
