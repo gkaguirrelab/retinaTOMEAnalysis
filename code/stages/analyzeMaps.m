@@ -22,10 +22,12 @@ p.addParameter('showPlots',false,@islogical);
 %% Parse and check the parameters
 p.parse(thicknessMapDir, volumeMapDir, saveDir, varargin{:});
 
+
+
 % Load the subject data table
 opts = detectImportOptions(p.Results.subjectTableFileName);
 subjectTable = readtable(p.Results.subjectTableFileName, opts);
-axialLength = subjectTable.Axial_Length_average(ii);
+axialLength = subjectTable.Axial_Length_average;
 
 
 subIDs = dir(fullfile(volumeMapDir,'1*'));
@@ -79,6 +81,9 @@ for layer = 1:length(p.Results.layerSetLabels) %L controls which layer we're loo
     end
     
 end
+
+% Add axial length
+measurements(:,10)=axialLength;
 
 
 filename = fullfile(saveDir,'meanThicknessAndVolumes.xlsx');
