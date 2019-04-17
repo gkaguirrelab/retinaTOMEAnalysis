@@ -15,7 +15,7 @@ p.addParameter('layerSets',[{2:3},{1},{6},{1:11}],@iscell);
 p.addParameter('foveaThickThresh',75,@isscalar);
 p.addParameter('showPlots',true,@islogical);
 p.addParameter('verbose',true,@islogical);
-p.addParameter('artifactTrim',1280,@isscalar);
+p.addParameter('artifactTrim',[1280, 1536, 1280, 1536],@isscalar);
 
 
 %% Parse and check the parameters
@@ -26,6 +26,9 @@ rawSubjectList = dir(dataRootDir);
 
 % How many sets are there
 nSets = length(p.Results.layerSets);
+
+% Prepare a variable to hold the overlap maps
+overlapMaps = struct;
 
 % Loop over subjects
 for ss=1:length(rawSubjectList)
@@ -51,9 +54,9 @@ for ss=1:length(rawSubjectList)
     
     % Report this subject's name
     if p.Results.verbose
-    fprintf(['Processing subject: ' subjectName '\n']);
+        fprintf(['Processing subject: ' subjectName '\n']);
     end
-        
+    
     % Open a figure to display the maps
     if p.Results.showPlots
         figure('Name',subjectName,'NumberTitle','off');
@@ -62,7 +65,7 @@ for ss=1:length(rawSubjectList)
     if length(fileList)==1
         warning(['subject ' subjectName ' has just one eye']);
     end
-           
+    
     % Loop over the right and left eye
     for ii = 1:length(fileList)
         
@@ -72,7 +75,7 @@ for ss=1:length(rawSubjectList)
         
         % Empty the variable that will hold the fovea coordinates
         foveaCoord=[];
-                
+        
         % Loop over the layer sets
         for jj=1:nSets
             
@@ -89,6 +92,13 @@ for ss=1:length(rawSubjectList)
                 everyThicknessMap = nan(nSets,2,imageSize(1),imageSize(2));
             end
             
+            % If not yet defined, set up the overlapMaps variable for this
+            % layer
+            if ~isfield(overlapMaps,p.Results.layerSetLabels{jj})
+                overlapMaps.(p.Results.layerSetLabels{jj}) = ...
+                    ones(imageSize(1),imageSize(2));
+            end
+            
             % If these are data from the left eye, mirror reverse
             if contains(fileList(ii).name,'_OS.mat')
                 thisThick = fliplr(thisThick);
@@ -96,7 +106,7 @@ for ss=1:length(rawSubjectList)
             
             % Set points with zero thickness to nan
             thisThick(thisThick==0)=nan;
-                        
+            
             % If this is the first layer set, then we are working with the
             % RGC-IPL layer. Use this to find the fovea at the center of the
             % image. This is defined by taking the weighted mean of the
@@ -129,6 +139,9 @@ for ss=1:length(rawSubjectList)
             thisThick(nanMask>0.25)=nan;
             thisThick(thisThick==0)=nan;
             
+            % Trim away artifacts in the area of the optic disc
+            thisThick(:,p.Results.artifactTrim(jj):end)=nan;
+            
             % Store the this thickness map in the full array
             if contains(fileList(ii).name,'_OS.mat')
                 everyThicknessMap(jj,1,:,:)=thisThick;
@@ -136,39 +149,55 @@ for ss=1:length(rawSubjectList)
                 everyThicknessMap(jj,2,:,:)=thisThick;
             end
             
-            % Show the RGC+IPL map
+            % Show the RGC+IPL map and the RNFL map
             if p.Results.showPlots
-                if jj==1
-                    tmp = fliplr(thisThick);
-                    if contains(fileList(ii).name,'_OS.mat')
-                        subplot(1,2,1)
-                        tmp = fliplr(tmp);
-                    else
-                        subplot(1,2,2)
-                    end
-                    imagesc(tmp);
-                    hold on
-                    plot(imageSize(1)/2,imageSize(2)/2,'+k')
-                    axis square
-                    drawnow
+                switch p.Results.layerSetLabels{jj}
+                    case 'OPL'
+                        tmp = fliplr(thisThick);
+                        if contains(fileList(ii).name,'_OS.mat')
+                            subplot(2,2,1)
+                            tmp = fliplr(tmp);
+                        else
+                            subplot(2,2,2)
+                        end
+                        imagesc(tmp);
+                        hold on
+                        plot(imageSize(1)/2,imageSize(2)/2,'+k')
+                        axis square
+                        drawnow
+                    case 'TotalRetina'
+                        tmp = fliplr(thisThick);
+                        if contains(fileList(ii).name,'_OS.mat')
+                            subplot(2,2,3)
+                            tmp = fliplr(tmp);
+                        else
+                            subplot(2,2,4)
+                        end
+                        imagesc(tmp);
+                        hold on
+                        plot(imageSize(1)/2,imageSize(2)/2,'+k')
+                        axis square
+                        drawnow
                 end
             end
             
         end % Loop over layer sets
         
     end % Looping over the two eyes
-
+    
     % Obtain the nanmean across eyes
     everyThicknessMap = squeeze(nanmean(everyThicknessMap,2));
-    
-    % Trim away artifacts in the area of the optic disc
-    everyThicknessMap(:,:,p.Results.artifactTrim:end)=nan;
     
     % Loop over sets and assemble the data into a struct
     averageMaps = struct();
     for jj=1:nSets
+        
+        % Store the average map
         averageMaps.(p.Results.layerSetLabels{jj}) = ...
-            squeeze(everyThicknessMap(jj,:,:));        
+            squeeze(everyThicknessMap(jj,:,:));
+        
+        % Update the overlapMaps to nan those points that are nan here
+        overlapMaps.(p.Results.layerSetLabels{jj})(isnan(averageMaps.(p.Results.layerSetLabels{jj}))) = nan;
     end
     
     % Save the structure variable
@@ -180,4 +209,10 @@ for ss=1:length(rawSubjectList)
     save(outfile,'averageMaps');
     
 end % Looping over subjects
+
+% Save the overlapMaps
+outfile = fullfile(saveDir,'overlapMaps.mat');
+save(outfile,'overlapMaps');
+
+
 
