@@ -1,4 +1,4 @@
-function analyzeMaps(thicknessMapDir,volumeMapDir, saveDir, varargin)
+function analyzeMaps(thicknessMapDir, volumeMapDir, saveDir, varargin)
 % Do some analysis
 %
 % Description:
@@ -29,6 +29,10 @@ opts = detectImportOptions(p.Results.subjectTableFileName);
 subjectTable = readtable(p.Results.subjectTableFileName, opts);
 axialLength = subjectTable.Axial_Length_average;
 
+% Load the overlapMaps
+inFile = fullfile(thicknessMapDir,'overlapMaps.mat');
+load(inFile,'overlapMaps');
+
 
 subIDs = dir(fullfile(volumeMapDir,'1*'));
 
@@ -42,31 +46,11 @@ header = {'subject ID', 'RGCIPL mean thickness', 'RGCIPL mean volume', ...
 
 
 for layer = 1:length(p.Results.layerSetLabels) %L controls which layer we're looking
-    overlap = [];
-    
-    %first we find the overlaping region across all subjects
-    for ss = 1:length(subIDs)
-        LoadthicknessMap=load(fullfile(thicknessMapDir,subIDs(ss).name,[subIDs(ss).name '_averageMaps.mat']));
-        
-        thicknessMap = LoadthicknessMap.averageMaps.(p.Results.layerSetLabels{layer});
-        loadname = fullfile(volumeMapDir, subIDs(ss).name, [subIDs(ss).name '_' p.Results.layerSetLabels{layer} '_volumeMap.mat']);
-        load(loadname,'volumeMap_mmCubedDegSquared');
-        
-        if(isempty(overlap))
-            overlap = ones(size(volumeMap_mmCubedDegSquared));
-        end
-        
-        overlap= overlap & ~isnan(volumeMap_mmCubedDegSquared) &  ~isnan(thicknessMap);
-    end
-    
-    % writeout the overlap
-    
-    savename = fullfile(saveDir, [p.Results.layerSetLabels{layer} '_overlapMap.mat']);
-    save(savename,'overlap');
-    
     
     %now that we've got the overlap, we go back through and calculate the
     %mean for each subject across the overlap
+    overlap = ~isnan(overlapMaps.(p.Results.layerSetLabels{layer}));
+    
     
     for ss = 1:length(subIDs)
         LoadthicknessMap=load(fullfile(thicknessMapDir,subIDs(ss).name,[subIDs(ss).name '_averageMaps.mat']));
