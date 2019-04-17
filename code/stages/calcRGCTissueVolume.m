@@ -76,5 +76,5 @@
 % This is the mmPerDeg at the ellipsoidal pole of the vitreous chamber
 mmPerDeg = @(axialLength) (0.0165.*axialLength)-0.1070;
 
-correctedThickness = (thick-45).*mmPerDeglength(length).^2;
+correctedThickness = (thick-45).*mmPerDeg(length).^2;
 
