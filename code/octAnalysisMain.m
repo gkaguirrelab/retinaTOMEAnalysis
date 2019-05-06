@@ -31,6 +31,10 @@ dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','2DThicknessMapsAllLayers_MinC
 saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
 makeLeftRightMontage(dataDir,saveDir)
 
+%% Conduct a PCA analysis of the thickness maps
+dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
+thicknessPCAAnalysis(dataDir)
+
 
 %% makeMmPerDegMaps
 % Saves maps of the conversion of degree of visual angle to mm of retina
