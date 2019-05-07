@@ -56,9 +56,11 @@ for ii = 1:length(p.Results.layerSetLabels)
     % Calc the PCA
     [coeff,score,~,~,explained,mu] = pca(X,'Centered',false);
     
-    % Decide how many coefficients to keep
+    % Decide how many coefficients to keep; report variance explained
     explained = [nan; explained(2:end)./sum(explained(2:end))];
-    nCoeff = 9;
+    nCoeff = 4;
+    outline=sprintf('Variance explained by first %d covariates: %2.2f \n',nCoeff,nansum(explained(1:nCoeff)));
+    fprintf(outline);
     
     % Obtain the fit to the data
     Xfit = score(:,1:nCoeff)*coeff(:,1:nCoeff)'+(repmat(mu,nSubs,1));
@@ -66,16 +68,21 @@ for ii = 1:length(p.Results.layerSetLabels)
     % Find the two subjects with the values close to the median for the
     % first coefficient, but maximally different from each other on the
     % second coefficient
-    medianThickness = median(meanThicknessBySubject);
-    [~,idxThickOrder] = sort(abs(meanThicknessBySubject-medianThickness),'ascend');
+    medianThickness = median(score(:,1));
+    [~,idxThickOrder] = sort(abs(score(:,1)-medianThickness),'ascend');
     rankThickOrder(idxThickOrder)=1:length(idxThickOrder);
+
     [~,idxLowCoeff] = sort(score(:,2),'ascend');
-    rankLowCoeff(idxLowCoeff)=1:length(idxLowCoeff);
+    rankLowCoeff2(idxLowCoeff)=1:length(idxLowCoeff);
     [~,idxHighCoeff] = sort(score(:,2),'descend');
-    rankHighCoeff(idxHighCoeff)=1:length(idxHighCoeff);
+    rankHighCoeff2(idxHighCoeff)=1:length(idxHighCoeff);
+    [~,idxLowCoeff] = sort(-score(:,3),'ascend');
+    rankLowCoeff3(idxLowCoeff)=1:length(idxLowCoeff);
+    [~,idxHighCoeff] = sort(-score(:,3),'descend');
+    rankHighCoeff3(idxHighCoeff)=1:length(idxHighCoeff);
     
-    rankThickLow = mean([rankThickOrder; rankLowCoeff]);
-    rankThickHigh = mean([rankThickOrder; rankHighCoeff]);
+    rankThickLow = mean([rankThickOrder; rankLowCoeff2]);
+    rankThickHigh = mean([rankThickOrder; rankHighCoeff2]);
     [~,subjectIdx(1)] = min(rankThickLow);
     [~,subjectIdx(2)] = min(rankThickHigh);
     
@@ -86,13 +93,13 @@ for ii = 1:length(p.Results.layerSetLabels)
         plot(explained)
     end
     
-    % Create a 3D plot of the scores for the first 3 components
+    % Create a 3D plot of the scores
     if p.Results.showPlots
         figure
         plot3(score(:,1),score(:,2),score(:,3),'*k')
         hold on
-        plot3(score(subjectIdx(1),1),score(subjectIdx(1),2),score(subjectIdx(1),3),'*b')
-        plot3(score(subjectIdx(2),1),score(subjectIdx(2),2),score(subjectIdx(2),3),'*r')
+        plot3(score(subjectIdx(1),1),score(subjectIdx(1),2),score(subjectIdx(1),3),'*r')
+        plot3(score(subjectIdx(2),1),score(subjectIdx(2),2),score(subjectIdx(2),3),'*b')
         axis equal
     end
     
@@ -102,7 +109,7 @@ for ii = 1:length(p.Results.layerSetLabels)
     if p.Results.showPlots
         figure
         for jj=1:nCoeff
-            subplot(3,3,jj);
+            subplot(2,2,jj);
             coeffMap(observedIdx)=coeff(:,jj);
             mesh(coeffMap);
             xlim([0 imageSize(1)]);
@@ -113,12 +120,16 @@ for ii = 1:length(p.Results.layerSetLabels)
     
     % Show some PCA reconstructed OCT scans vs. the actual data
     if p.Results.showPlots
+        figA = figure();
+        figB = figure();
         for jj = 1:length(subjectIdx)
-            subjectID = split(rawSubjectList(1).name,'_');
+            subjectID = split(rawSubjectList(jj).name,'_');
             subjectID = subjectID{1};
             
+            figure(figA);
             subplot(length(subjectIdx),3,1+3*(jj-1))
-            mesh(squeeze(avgMapBySubject(subjectIdx(jj),:,:)));
+            theMap = squeeze(avgMapBySubject(subjectIdx(jj),:,:));
+            mesh(theMap);
             caxis([0 125]);
             xlim([0 imageSize(1)]);
             ylim([0 imageSize(1)]);
@@ -136,14 +147,22 @@ for ii = 1:length(p.Results.layerSetLabels)
             zlim([0 150]);
             title('PCA reconstructed')
             axis square
-            
+
             subplot(length(subjectIdx),3,3+3*(jj-1))
-            mesh(reconMap-squeeze(avgMapBySubject(subjectIdx(jj),:,:)));
+            mesh(reconMap-theMap);
             caxis([-62.5 62.5]);
             xlim([0 imageSize(1)]);
             ylim([0 imageSize(1)]);
-            zlim([-75 75]);
-            title('reconstruction error')
+            zlim([-62.5 62.5]);
+            title('Error')
+            axis square
+
+            figure(figB);
+            plot(reconMap(imageSize(1)/2,:));
+            hold on
+            xlim([0 imageSize(2)]);
+            ylim([0 150]);
+            title('Horizontal meridian')
             axis square
         end
     end
