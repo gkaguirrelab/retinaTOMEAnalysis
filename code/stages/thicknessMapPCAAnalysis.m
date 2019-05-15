@@ -1,4 +1,4 @@
-function volumeMapPCAAnalysis(dataDir, varargin)
+function thicknessMapPCAAnalysis(dataDir, varargin)
 % Do some analysis
 %
 % Description:
