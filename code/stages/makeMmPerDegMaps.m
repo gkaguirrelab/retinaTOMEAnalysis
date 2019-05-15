@@ -6,8 +6,8 @@ function makeMmPerDegMaps(saveDir, varargin)
 %   Position in the visual field is expressed in degrees of visual angle.
 %   This routine calculates, for any position in the visual field, the mm
 %   of retina that are subtended by a degree of visual angle at that
-%   position. A general rule of thumb is that one degree of visual angle
-%   equals roughly three millimeters. The exact value will vary principally
+%   position. A general rule of thumb is that one mm of retina corresponds
+%   to three degrees of visual angle. The exact value will vary principally
 %   based upon the axial length of the eye, and to a lesser extent upon the
 %   position in the visual field as influenced by the optics of the cornea,
 %   the misalignment of the optical and visual axes of the eye, and the
@@ -41,6 +41,7 @@ p.addRequired('saveDir',@ischar);
 % Optional analysis params
 p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 p.addParameter('alpha',[5.45 2.5 0],@isnumeric);
+p.addParameter('outlierThresh',0.01,@isnumeric);
 
 %% Parse and check the parameters
 p.parse(saveDir, varargin{:});
@@ -54,6 +55,7 @@ subjectTable = readtable(p.Results.subjectTableFileName, opts);
 resultSet = {};
 
 parfor (ii = 1:length(subjectTable.AOSO_ID))
+%for (ii = 1:length(subjectTable.AOSO_ID))
 
     % Assemble the corneal curvature, spherical error, and axial length.
     % For some subjects there are missing measures so we model the default
@@ -83,7 +85,8 @@ parfor (ii = 1:length(subjectTable.AOSO_ID))
 
     % Define an empty matrix to hold the results
     mmPerDeg = nan(length(horizVals),length(vertVals));
-
+    angleErrorMap  = nan(length(horizVals),length(vertVals));
+    
     % Define the delta deg
     deltaDegEuclidean = 1;
     deltaAngles = [sqrt(deltaDegEuclidean/2) sqrt(deltaDegEuclidean/2) 0];
@@ -98,15 +101,18 @@ parfor (ii = 1:length(subjectTable.AOSO_ID))
             % side of the specified degree field position
             [~,X0,angleError0] = findRetinaFieldPoint( eye, degField - deltaAngles./2);
             [~,X1,angleError1] = findRetinaFieldPoint( eye, degField + deltaAngles./2);
+            % Calculate and store the maximum angle error
+            angleError = max([angleError0 angleError1]);
+            angleErrorMap(jj,kk) = angleError;            
             % If the ray trace was accurate, calculate and store the
             % distance
-            if angleError0 < 1e-3 && angleError1 < 1e-3
+            if angleError < 1e-3
                 % This is the minimal geodesic distance across the
                 % ellipsoidal surface (like the great circle on a sphere).
                 % Not using this because of too many failures across the
                 % umbilical point, which is within the sampled area
                 %{
-                distance = abs(quadric.panouGeodesicDistance(S,[],[],X0,X1));
+                    distance = abs(quadric.panouGeodesicDistance(S,[],[],X0,X1));
                 %}
                 % This is the Euclidean distance between the points
                 distance = sqrt(sum((X0-X1).^2));
@@ -116,6 +122,8 @@ parfor (ii = 1:length(subjectTable.AOSO_ID))
             end
         end
     end
+    % Remove outlier points from the map
+    mmPerDeg = removeMapOutliers(mmPerDeg,p.Results.outlierThresh);
     % Give some console update
     fprintf(['Done subject ' num2str(subjectTable.AOSO_ID(ii)) '\n']);
     % Store the map in a cell array that accumulates across the parfor
@@ -128,3 +136,42 @@ for ii = 1:length(subjectTable.AOSO_ID)
     mmPerDeg = resultSet{ii};
     save(outfile,'mmPerDeg');
 end
+
+end % Main
+
+function outMap = removeMapOutliers(inMap,thresh)
+
+% Create a convolution kernel that obtains the mean of the adjancent (not
+% diagonal) vertcies
+Z = ones(3,3);
+Z([1,3],[1,3]) = 0;
+Z(2,2)=0;
+
+% Copy the inMap to outMap
+outMap = inMap;
+
+% Into the while loop
+notDoneFlag = true;
+while notDoneFlag
+    
+    % Obtain a map of the local average around each point
+    localAverageMap=nanconv(outMap,Z,'edge');
+    
+    % Candidate outliers deviate from the local average
+    canidateOutlierMap = abs(inMap-localAverageMap);
+    canidateOutlierMap(isnan(outMap))=nan;
+    
+    % Find the biggest outlier
+    [maxDiff,idx]=max(canidateOutlierMap(:));
+    
+    % Is this outlier over our threshold, if so, remove the outlier point
+    % from the map. If not, we are done.
+    if maxDiff>thresh
+        outMap(idx)=nan;
+    else
+        notDoneFlag = false;
+    end
+end % while
+
+end % removeMapOutliers
+

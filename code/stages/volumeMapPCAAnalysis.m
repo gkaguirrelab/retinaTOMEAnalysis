@@ -1,4 +1,4 @@
-function thicknessPCAAnalysis(dataDir, varargin)
+function volumeMapPCAAnalysis(dataDir, varargin)
 % Do some analysis
 %
 % Description:
@@ -15,38 +15,41 @@ p.addRequired('dataDir',@ischar);
 % Optional analysis params
 p.addParameter('layerSetLabels',{'RGCIPL'},@iscell);
 p.addParameter('showPlots',true,@islogical);
+p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 
 %% Parse and check the parameters
 p.parse(dataDir, varargin{:});
 
-
 % Obtain a list of subjects
-rawSubjectList = dir(fullfile(dataDir,'*/*.mat'));
+rawSubjectList = dir(fullfile(dataDir,'1*'));
 nSubs = length(rawSubjectList);
+
+% Load the subject data table
+opts = detectImportOptions(p.Results.subjectTableFileName);
+subjectTable = readtable(p.Results.subjectTableFileName, opts);
+axialLength = subjectTable.Axial_Length_average;
+
 
 % Loop over layer sets
 for ii = 1:length(p.Results.layerSetLabels)
     
     % Loop over subjects and load the maps
-    for ss = 1:length(rawSubjectList)
-        fileName = fullfile(rawSubjectList(ss).folder,rawSubjectList(ss).name);
-        load(fileName,'averageMaps');
-        thisMap = averageMaps.(p.Results.layerSetLabels{ii});
+    for ss = 1:nSubs
+        fileName = fullfile(rawSubjectList(ss).folder,rawSubjectList(ss).name,[rawSubjectList(ss).name '_' p.Results.layerSetLabels{ii} '_volumeMap.mat']);
+        load(fileName,'volumeMap_mmCubedDegSquared');
+        thisMap = volumeMap_mmCubedDegSquared;
         if ss==1
             imageSize = size(thisMap);
             avgMapBySubject = nan(nSubs,imageSize(1),imageSize(2));
         end
         avgMapBySubject(ss,:,:)=thisMap;
     end
-    
-    % Get the mean thickness
-    meanThicknessBySubject = squeeze(nanmean(nanmean(avgMapBySubject,2),3));
-    
-    % Determine which points are not nans
+        
+    % Determine which points are not nans in any subject
     observedIdx = ~isnan(squeeze(sum(avgMapBySubject,1)));
     
     % Conduct a PCA analysis across subjects, averaged over eyes. First,
-    % Convert the non-nan portion of the image to a vector
+    % Convert the non-nan portion of the image to a vector.
     X = [];
     for ss=1:nSubs
         tmp = squeeze(avgMapBySubject(ss,:,:));
@@ -59,7 +62,15 @@ for ii = 1:length(p.Results.layerSetLabels)
     % Decide how many coefficients to keep; report variance explained
     explained = [nan; explained(2:end)./sum(explained(2:end))];
     nCoeff = 4;
-    outline=sprintf('Variance explained by first %d covariates: %2.2f \n',nCoeff,nansum(explained(1:nCoeff)));
+    outline=sprintf('Variance explained by first %d coefficients: %2.2f \n',nCoeff,nansum(explained(1:nCoeff)));    
+    fprintf(outline);
+    
+    % Report the mean values of the fitted coefficients
+    outline=sprintf('Mean thickness of first four coefficients for this population: [%2.4f, %2.4f, %2.4f, %2.4f]\n',...
+        mean(mean(score(:,1)*coeff(:,1)')),...
+        mean(mean(score(:,2)*coeff(:,2)')),...
+        mean(mean(score(:,3)*coeff(:,3)')),...
+        mean(mean(score(:,4)*coeff(:,4)')));
     fprintf(outline);
     
     % Obtain the fit to the data
@@ -103,6 +114,24 @@ for ii = 1:length(p.Results.layerSetLabels)
         axis equal
     end
     
+    % Plot the relationship between the scores and axial length 
+    if p.Results.showPlots
+        figure
+        for jj=1:nCoeff
+            subplot(2,2,jj);
+            plot(axialLength,score(:,jj),'ok')
+            corrVal = corr2(squeeze(score(:,jj)),axialLength);
+            title(['R = ' num2str(corrVal)]);
+        end
+    end
+    
+    % Obtain the residuals of the first component after removing the effect
+    % of axial length
+    X = [ones(nSubs,1) axialLength-mean(axialLength)];
+    B = X\score(:,1);
+    B(1)=0;
+    scoreOneResid = score(:,1) - X*B;
+    
     % Now show images of the first, second, and third PCA components
     coeffMap = nan(imageSize(1),imageSize(2));
     
@@ -122,6 +151,7 @@ for ii = 1:length(p.Results.layerSetLabels)
     if p.Results.showPlots
         figA = figure();
         figB = figure();
+        zMax = 0.01;
         for jj = 1:length(subjectIdx)
             subjectID = split(rawSubjectList(jj).name,'_');
             subjectID = subjectID{1};
@@ -130,10 +160,10 @@ for ii = 1:length(p.Results.layerSetLabels)
             subplot(length(subjectIdx),3,1+3*(jj-1))
             theMap = squeeze(avgMapBySubject(subjectIdx(jj),:,:));
             mesh(theMap);
-            caxis([0 125]);
+            caxis([0 zMax]);
             xlim([0 imageSize(1)]);
             ylim([0 imageSize(1)]);
-            zlim([0 150]);
+            zlim([0 zMax]);
             title(['Subject ' subjectID] )
             axis square
             
@@ -141,19 +171,19 @@ for ii = 1:length(p.Results.layerSetLabels)
             reconMap = nan(imageSize(1),imageSize(2));
             reconMap(observedIdx)=Xfit(subjectIdx(jj),:);
             mesh(reconMap);
-            caxis([0 125]);
+            caxis([0 zMax]);
             xlim([0 imageSize(1)]);
             ylim([0 imageSize(1)]);
-            zlim([0 150]);
+            zlim([0 zMax]);
             title('PCA reconstructed')
             axis square
 
             subplot(length(subjectIdx),3,3+3*(jj-1))
             mesh(reconMap-theMap);
-            caxis([-62.5 62.5]);
+            caxis([-zMax/2 zMax/2]);
             xlim([0 imageSize(1)]);
             ylim([0 imageSize(1)]);
-            zlim([-62.5 62.5]);
+            zlim([-zMax/2 zMax/2]);
             title('Error')
             axis square
 
@@ -161,7 +191,7 @@ for ii = 1:length(p.Results.layerSetLabels)
             plot(reconMap(imageSize(1)/2,:));
             hold on
             xlim([0 imageSize(2)]);
-            ylim([0 150]);
+            ylim([0 zMax]);
             title('Horizontal meridian')
             axis square
         end

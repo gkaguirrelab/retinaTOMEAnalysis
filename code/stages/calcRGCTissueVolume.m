@@ -12,17 +12,17 @@
 %   measured with laser interference fringes." Vision research 46.5 (2006):
 %   636-651.
 %
-%   Shown in Figure 3, there is a minimal, non-significant dependence upon
-%   foveal and periperal acuity as a function of spherical refractive
-%   error.
+%       Shown in Figure 3, there is a minimal, non-significant dependence
+%       upon foveal and periperal acuity as a function of spherical
+%       refractive error.
 %
 %   Atchison, David A., Katrina L. Schmid, and Nicola Pritchard. "Neural
 %   and optical limits to visual performance in myopia." Vision Research
 %   46.21 (2006): 3707-3722.
 %
-%   Table 1 shows a small, non-significant change in peripheral acuity with
-%   spherical refractive error as measured with laser interference in 121
-%   subjects.
+%       Table 1 shows a small, non-significant change in peripheral acuity
+%       with spherical refractive error as measured with laser interference
+%       in 121 subjects.
 %
 % These data are accounted for by a model of "retinal stretching" in which
 % there is common endowment of retinal ganglion cells across people, but

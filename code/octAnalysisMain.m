@@ -31,9 +31,6 @@ dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','2DThicknessMapsAllLayers_MinC
 saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
 makeLeftRightMontage(dataDir,saveDir)
 
-%% Conduct a PCA analysis of the thickness maps
-dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
-thicknessPCAAnalysis(dataDir)
 
 
 %% makeMmPerDegMaps
@@ -49,6 +46,16 @@ thicknessMapDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsB
 mmPerDegMapDir = fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps');
 saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','volumeMapsBySubject');
 makeVolumeMaps(thicknessMapDir,mmPerDegMapDir,saveDir);
+
+
+%% Conduct a PCA analysis of the volume maps
+dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','volumeMapsBySubject');
+volumeMapPCAAnalysis(dataDir)
+
+
+%% Relate axial length to thickness
+dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
+thicknessAxialLengthMap(dataDir)
 
 
 %% analyzeMaps

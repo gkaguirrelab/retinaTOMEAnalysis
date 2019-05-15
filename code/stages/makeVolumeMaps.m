@@ -16,25 +16,48 @@ p.addRequired('saveDir',@ischar);
 
 % Optional analysis params
 p.addParameter('degreesFOV',30,@isscalar);
-p.addParameter('showPlots',false,@islogical);
-p.addParameter('layerSetLabels',{'RGCIPL','RNFL','OPL','TotalRetina'},@iscell);
+p.addParameter('layerSetLabels',{'RGCIPL'},@iscell);
 
 %% Parse and check the parameters
 p.parse(thicknessMapDir, mmPerDegMapDir, saveDir, varargin{:});
 
+
+octRadialDegreesVisualExtent = p.Results.degreesFOV/2;
 
 %find all subjects
 subIDs = dir(fullfile(p.Results.thicknessMapDir,'1*'));
 
 % Loop over subjects
 for ii = 1:length(subIDs)
+
+    % Load average thickness maps
+    load(fullfile(p.Results.thicknessMapDir,subIDs(ii).name,[subIDs(ii).name '_averageMaps.mat']),'averageMaps');
+
+    % Load the mmPerDeg map
+    load(fullfile(p.Results.mmPerDegMapDir,[subIDs(ii).name '_mmPerDegMap.mat']),'mmPerDeg');
     
-    %load mmPerDeg Maps
-    LoadmmPerDeg=load(fullfile(p.Results.mmPerDegMapDir,[subIDs(ii).name '_mmPerDegMap.mat']));
-    mmPerDeg=LoadmmPerDeg.mmPerDeg;
-    
-    %load average thickness maps
-    LoadthicknessMap=load(fullfile(p.Results.thicknessMapDir,subIDs(ii).name,[subIDs(ii).name '_averageMaps.mat']));
+    % We will fit a thin plate spline to the mmPerDeg map to allow
+    % interpolation. First define the support in visual degrees for the
+    % mmPerDeg map
+    supportDegLowRes = linspace(-octRadialDegreesVisualExtent,octRadialDegreesVisualExtent,size(mmPerDeg,1));
+
+    % Silence a warning that occurs regarding nans in the maps
+    warningState = warning;
+    warning('off','curvefit:prepareFittingData:removingNaNAndInf');
+
+    % Prepare the surface anf perform the fit
+    [xo,yo,zo]=prepareSurfaceData(supportDegLowRes,supportDegLowRes,mmPerDeg);
+    mmPerDegFit = fit([xo, yo],zo,'thinplateinterp');
+
+    % Restore the warning state
+    warning(warningState);
+
+    % Create an interpolated mmPerDeg
+    dimX = size(averageMaps.(p.Results.layerSetLabels{1}),1);
+    dimY = size(averageMaps.(p.Results.layerSetLabels{1}),2);
+    supportDegHiRes = linspace(-octRadialDegreesVisualExtent,octRadialDegreesVisualExtent,dimX);
+    [xi,yi]=meshgrid(supportDegHiRes,supportDegHiRes);
+    mmPerDegHiRes = mmPerDegFit(xi,yi);
     
     % Create a directory for the output for this subject
     outDir = fullfile(p.Results.saveDir, subIDs(ii).name);
@@ -43,46 +66,27 @@ for ii = 1:length(subIDs)
     end
     
     % Loop over the layer sets that we wish to process
-    for L = 1:length(p.Results.layerSetLabels)
-        thicknessMicronMap = LoadthicknessMap.averageMaps.(p.Results.layerSetLabels{L});
-        savename = fullfile(p.Results.saveDir, subIDs(ii).name, [subIDs(ii).name '_' p.Results.layerSetLabels{L} '_volumeMap.mat']);
+    for jj = 1:length(p.Results.layerSetLabels)
         
-        XN = size(thicknessMicronMap,1);
-        YN = size(thicknessMicronMap,2);
-        
-        %fill in nans
-        mmPerDegInterp = fillmissing(mmPerDeg,'linear');
-        
-        %re-orient image to OD clinical view
-        mmPerDegInterp_rot = fliplr(mmPerDegInterp');
-        
-        %resize to same size as slo
-        mmPerDegMapInterp_rot_resize = imresize(mmPerDegInterp_rot,[XN YN]);
+        % Obtain the thickness map for this layer set
+        thicknessMicronMap = averageMaps.(p.Results.layerSetLabels{jj});
+                
+        % Re-orient the mmPerDeg map to the OD clinical view
+        mmPerDegHiResRot = fliplr(mmPerDegHiRes');
         
         % Calculate the degrees per pixel
-        degreesPerPixel = p.Results.degreesFOV / XN;
+        degreesPerPixel = p.Results.degreesFOV / dimX;
         
-        %convert thickness map to volume map with thickness(mm)*degree^2
-        volumeMap_mmCubedDegSquared = (thicknessMicronMap./1000).*((mmPerDegMapInterp_rot_resize*degreesPerPixel).^2);
+        % Convert thickness map to volume map with thickness(mm)*degree^2
+        % The value at each point in the resulting map is the point-wise
+        % estimate of the volume (in mm) of retinal tissue per deg^2 of
+        % visual field.
+        volumeMap_mmCubedDegSquared = (thicknessMicronMap./1000).*(mmPerDegHiResRot.^2);
         
-        
+        % Save the volume map
+        savename = fullfile(p.Results.saveDir, subIDs(ii).name, [subIDs(ii).name '_' p.Results.layerSetLabels{jj} '_volumeMap.mat']);
         save(savename,'volumeMap_mmCubedDegSquared');
         
     end
-
-    if p.Results.showPlots
-    figure(1)
-    imshow(mmPerDegMapInterp_rot_resize)
-    caxis([min(mmPerDegMapInterp_rot_resize(:)) max(mmPerDegMapInterp_rot_resize(:))])
-    colorbar
-    figure(2)
-    imshow(volumeMap_mmDegSquared)
-    caxis([min(volumeMap_mmDegSquared(:)) max(volumeMap_mmDegSquared(:))])
-    colorbar
-    figure(3)
-    imshow(volumeMap_mmCubed)
-    caxis([min(volumeMap_mmCubed(:)) max(volumeMap_mmCubed(:))])
-    colorbar
-    end
-    
+        
 end
