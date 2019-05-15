@@ -1,3 +1,4 @@
+function calcRGCTissueVolume(thicknessMapDir, volumeMapDir, varargin)
 % Calc RGC tissue volume
 
 % Best corrected peripheral acuity varies minimally with spherical
@@ -73,8 +74,101 @@
     fprintf('Retinal mm per deg visual field at the viterous chamber apex = (%2.3f * axialLength) %2.3f \n',vals(1),vals(2));
 %}
 
+
+
+%% Parse vargin for options passed here
+p = inputParser;
+
+% Required
+p.addRequired('thicknessMapDir',@ischar);
+
+% Optional analysis params
+p.addParameter('degreesFOV',30,@isscalar);
+p.addParameter('layerSetLabels',{'RGCIPL'},@iscell);
+p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
+p.addParameter('anatMeasuresFileName',fullfile(getpref('retinaTOMEAnalysis','projectBaseDir'),'data','visualPathwayAnatMeasures.xlsx'),@ischar);
+
+%% Parse and check the parameters
+p.parse(thicknessMapDir, varargin{:});
+
+% Obtain a list of subjects
+rawSubjectList = dir(fullfile(thicknessMapDir,'1*'));
+nSubs = length(rawSubjectList);
+
+nSets = length(p.Results.layerSetLabels);
+
+% Load the subject data table
+opts = detectImportOptions(p.Results.subjectTableFileName);
+subjectTable = readtable(p.Results.subjectTableFileName, opts);
+axialLength = subjectTable.Axial_Length_average;
+
+% Load the anat measures
+opts = detectImportOptions(p.Results.anatMeasuresFileName);
+anatMeasuresTable = readtable(p.Results.anatMeasuresFileName, opts);
+
+% Join the anat measures to the subject data table
+fullTable = join(anatMeasuresTable,subjectTable,'Keys','AOSO_ID');
+
 % This is the mmPerDeg at the ellipsoidal pole of the vitreous chamber
 mmPerDeg = @(axialLength) (0.0165.*axialLength)-0.1070;
 
-correctedThickness = (thick-45).*mmPerDeg(length).^2;
+%find all subjects
+subIDs = dir(fullfile(p.Results.thicknessMapDir,'1*'));
 
+% Load the overlap file
+filename = fullfile( subIDs(1).folder, 'overlapMaps.mat');
+load(filename,'overlapMaps');
+
+octMeasuresTable = table('Size',[nSubs,nSets+1],'VariableTypes',repmat({'double'},1,nSets+1),'VariableNames',['AOSO_ID' p.Results.layerSetLabels]);
+
+% Loop over layer sets
+for ii = 1:nSets
+    
+    % Loop over subjects
+    for jj = 1:nSubs
+        
+        % Load average thickness maps
+        filename = fullfile(p.Results.thicknessMapDir,subIDs(jj).name,[subIDs(jj).name '_averageMaps.mat']);
+        load(filename,'averageMaps');
+        
+        % Obtain the map for this layer set, and apply the overlap trim
+        thisMap = averageMaps.(p.Results.layerSetLabels{ii});
+        thisMap(isnan(overlapMaps.(p.Results.layerSetLabels{ii})))=nan;
+        
+        % Obtain the correctedThickness
+        correctedThickness(jj) = (nanmean(nanmean(thisMap))-45).*mmPerDeg(axialLength(jj)).^2;
+        
+        % Add this to the table
+        octMeasuresTable.AOSO_ID(jj) = str2num(subIDs(jj).name);
+        octMeasuresTable.(p.Results.layerSetLabels{ii})(jj) = correctedThickness(jj);        
+        
+    end
+    
+end
+
+% Add the OCT measures to the full table
+fullTableWithOCT = join(fullTable,octMeasuresTable,'Keys','AOSO_ID');
+
+corr(fullTableWithOCT.Axial_Length_average,fullTableWithOCT.RGCIPL,'Type','Spearman')
+
+
+corr(fullTableWithOCT.Optic_Chiasm,fullTableWithOCT.RGCIPL,'Type','Spearman')
+figure
+plot(fullTableWithOCT.RGCIPL,fullTableWithOCT.Optic_Chiasm,'or')
+
+corr(fullTableWithOCT.LGNJacobian,fullTableWithOCT.RGCIPL,'Type','Spearman')
+figure
+plot(fullTableWithOCT.RGCIPL,fullTableWithOCT.LGNJacobian,'or')
+
+v1AreaRelative = (fullTableWithOCT.lh_lh_v1_noah_template_label_area+fullTableWithOCT.rh_rh_v1_noah_template_label_area)./(fullTableWithOCT.lh_WhiteSurfArea_area+fullTableWithOCT.rh_WhiteSurfArea_area);
+corr(v1AreaRelative,fullTableWithOCT.RGCIPL,'Type','Spearman')
+figure
+plot(fullTableWithOCT.RGCIPL,v1AreaRelative,'or')
+
+v1ThickRelative = (fullTableWithOCT.lh_lh_v1_noah_template_label_thickness+fullTableWithOCT.rh_rh_v1_noah_template_label_thickness)./(fullTableWithOCT.lh_lh_cortex_label_thickness+fullTableWithOCT.rh_rh_cortex_label_thickness);
+corr(v1ThickRelative,fullTableWithOCT.RGCIPL,'Type','Spearman')
+figure
+plot(fullTableWithOCT.RGCIPL,v1ThickRelative,'or')
+
+foo=1;
+end
