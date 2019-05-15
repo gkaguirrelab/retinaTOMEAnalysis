@@ -16,12 +16,17 @@ p.addRequired('dataDir',@ischar);
 p.addParameter('layerSetLabels',{'RGCIPL'},@iscell);
 p.addParameter('showPlots',true,@islogical);
 p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
+p.addParameter('anatMeasuresFileName',fullfile(getpref('retinaTOMEAnalysis','projectBaseDir'),'data','visualPathwayAnatMeasures.xlsx'),@ischar);
+p.addParameter('nCoeff',4,@isscalar);
+p.addParameter('octRadialDegreesVisualExtent',15,@isscalar);
+
 
 %% Parse and check the parameters
 p.parse(dataDir, varargin{:});
 
 % Obtain a list of subjects
-rawSubjectList = dir(fullfile(dataDir,'1*'));
+rawSubjectList = dir(fullfile(dataDir,'*/*.mat'));
+rawDirList = dir(fullfile(dataDir,'1*'));
 nSubs = length(rawSubjectList);
 
 % Load the subject data table
@@ -29,20 +34,41 @@ opts = detectImportOptions(p.Results.subjectTableFileName);
 subjectTable = readtable(p.Results.subjectTableFileName, opts);
 axialLength = subjectTable.Axial_Length_average;
 
+% Load the anat measures
+opts = detectImportOptions(p.Results.anatMeasuresFileName);
+anatMeasuresTable = readtable(p.Results.anatMeasuresFileName, opts);
+
+% The number of PCA coefficients we will retain
+nCoeff = p.Results.nCoeff;
+variableNames = {'AOSO_ID','PCA1_resid'};
+for kk = 1:nCoeff
+    variableNames = [variableNames {['PCA' num2str(kk)]}];
+end
+
+% This is the mmPerDeg at the ellipsoidal pole of the vitreous chamber
+mmPerDeg = @(axialLength) (0.0165.*axialLength)-0.1070;
 
 % Loop over layer sets
 for ii = 1:length(p.Results.layerSetLabels)
     
+    % Create a table to hold the PCA results
+    pcaResultsTable = table('Size',[nSubs,nCoeff+2],'VariableTypes',repmat({'double'},1,nCoeff+2),'VariableNames',variableNames);
+    
     % Loop over subjects and load the maps
     for ss = 1:nSubs
-        fileName = fullfile(rawSubjectList(ss).folder,rawSubjectList(ss).name,[rawSubjectList(ss).name '_' p.Results.layerSetLabels{ii} '_volumeMap.mat']);
-        load(fileName,'volumeMap_mmCubedDegSquared');
-        thisMap = volumeMap_mmCubedDegSquared;
+        fileName = fullfile(rawSubjectList(ss).folder,rawSubjectList(ss).name);
+        load(fileName,'averageMaps');
+        thisMap = averageMaps.(p.Results.layerSetLabels{ii});
         if ss==1
             imageSize = size(thisMap);
             avgMapBySubject = nan(nSubs,imageSize(1),imageSize(2));
         end
+        % Convert the map from thickness to volume per degree^2
+        thisMap = thisMap .* mmPerDeg(axialLength(ss))^2;
         avgMapBySubject(ss,:,:)=thisMap;
+
+        % Add this ID to the table
+        pcaResultsTable.AOSO_ID(ss) = str2num(rawDirList(ss).name);
     end
         
     % Determine which points are not nans in any subject
@@ -59,9 +85,18 @@ for ii = 1:length(p.Results.layerSetLabels)
     % Calc the PCA
     [coeff,score,~,~,explained,mu] = pca(X,'Centered',false);
     
-    % Decide how many coefficients to keep; report variance explained
+    % To simplify subsequent interpretation, reverse the sign of the
+    % second PCA component
+    score(:,2) = -score(:,2);
+    coeff(:,2) = -coeff(:,2);
+    
+    % Store the results in the data table
+    for kk=1:nCoeff
+        pcaResultsTable.(['PCA' num2str(kk)]) = score(:,kk);        
+    end
+    
+    % Report variance explained
     explained = [nan; explained(2:end)./sum(explained(2:end))];
-    nCoeff = 4;
     outline=sprintf('Variance explained by first %d coefficients: %2.2f \n',nCoeff,nansum(explained(1:nCoeff)));    
     fprintf(outline);
     
@@ -87,13 +122,13 @@ for ii = 1:length(p.Results.layerSetLabels)
     rankLowCoeff2(idxLowCoeff)=1:length(idxLowCoeff);
     [~,idxHighCoeff] = sort(score(:,2),'descend');
     rankHighCoeff2(idxHighCoeff)=1:length(idxHighCoeff);
-    [~,idxLowCoeff] = sort(-score(:,3),'ascend');
+    [~,idxLowCoeff] = sort(score(:,3),'ascend');
     rankLowCoeff3(idxLowCoeff)=1:length(idxLowCoeff);
-    [~,idxHighCoeff] = sort(-score(:,3),'descend');
+    [~,idxHighCoeff] = sort(score(:,3),'descend');
     rankHighCoeff3(idxHighCoeff)=1:length(idxHighCoeff);
     
-    rankThickLow = mean([rankThickOrder; rankLowCoeff2]);
-    rankThickHigh = mean([rankThickOrder; rankHighCoeff2]);
+    rankThickLow = mean([rankThickOrder; rankLowCoeff2; rankLowCoeff3]);
+    rankThickHigh = mean([rankThickOrder; rankHighCoeff2; rankHighCoeff3]);
     [~,subjectIdx(1)] = min(rankThickLow);
     [~,subjectIdx(2)] = min(rankThickHigh);
     
@@ -130,8 +165,9 @@ for ii = 1:length(p.Results.layerSetLabels)
     X = [ones(nSubs,1) axialLength-mean(axialLength)];
     B = X\score(:,1);
     B(1)=0;
-    scoreOneResid = score(:,1) - X*B;
-    
+    PCA1_resid = score(:,1) - X*B;
+    pcaResultsTable.PCA1_resid = PCA1_resid;        
+
     % Now show images of the first, second, and third PCA components
     coeffMap = nan(imageSize(1),imageSize(2));
     
@@ -144,6 +180,28 @@ for ii = 1:length(p.Results.layerSetLabels)
             xlim([0 imageSize(1)]);
             ylim([0 imageSize(1)]);
             axis square
+            title('PCA coefficients (raw)')
+        end
+        figure
+        for jj=1:nCoeff
+            subplot(2,2,jj);
+            coeffMap(observedIdx)=coeff(:,jj);
+            
+            
+            scaleDown = 12;
+            supportDeg = linspace(-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent,imageSize(1)/scaleDown);
+            downSampMap = coeffMap(rgcIplThicknessMap,1/scaleDown);
+            [xo,yo,zo]=prepareSurfaceData(supportDeg,supportDeg,downSampMap);
+            sf = fit([xo, yo],zo,'thinplateinterp');
+            supportDeg = linspace(-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent,imageSize(1));
+            [xi,yi]=meshgrid(supportDeg,supportDeg);
+            inRangeIdx = sqrt(xi.^2+yi.^2)<=octRadialDegreesVisualExtent;
+            fitCoeffMap = sf(xi(inRangeIdx),yi(inRangeIdx));            
+            mesh(fitCoeffMap);
+            xlim([0 imageSize(1)]);
+            ylim([0 imageSize(1)]);
+            axis square
+            title('PCA coefficients (raw)')
         end
     end
     
@@ -151,7 +209,7 @@ for ii = 1:length(p.Results.layerSetLabels)
     if p.Results.showPlots
         figA = figure();
         figB = figure();
-        zMax = 0.01;
+        zMax = 10;
         for jj = 1:length(subjectIdx)
             subjectID = split(rawSubjectList(jj).name,'_');
             subjectID = subjectID{1};
@@ -197,4 +255,24 @@ for ii = 1:length(p.Results.layerSetLabels)
         end
     end
     
+    % Examine the correlation of PCA scores with anatomical measures
+    
+    % Join the anat measures to the subject data table, and then to the PCA
+    % scores pcaResultsTable
+    comboTable = join(pcaResultsTable,subjectTable,'Keys','AOSO_ID');
+    comboTable = join(anatMeasuresTable,comboTable,'Keys','AOSO_ID');
+
+    chiasmRelative = comboTable.Optic_Chiasm./comboTable.SupraTentorialVol;
+    v1AreaRelative = (comboTable.lh_lh_v1_noah_template_label_area+comboTable.rh_rh_v1_noah_template_label_area)./(comboTable.lh_WhiteSurfArea_area+comboTable.rh_WhiteSurfArea_area);
+    v1ThickRelative = (comboTable.lh_lh_v1_noah_template_label_thickness+comboTable.rh_rh_v1_noah_template_label_thickness)./(comboTable.lh_lh_cortex_label_thickness+comboTable.rh_rh_cortex_label_thickness);
+
+    X = [comboTable.PCA1 comboTable.PCA2 -comboTable.PCA2.^2 comboTable.PCA3 -comboTable.PCA3.^2 comboTable.Axial_Length_average];
+    X = X-mean(X);
+    
+    lm = fitlm(X,comboTable.Optic_Chiasm)    
+    lm = fitlm(X,comboTable.LGNJacobian)    
+    lm = fitlm(X,v1AreaRelative)
+    lm = fitlm(X,v1ThickRelative)
+
+    fopo=1;
 end

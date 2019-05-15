@@ -48,9 +48,9 @@ saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','volumeMapsBySubject');
 makeVolumeMaps(thicknessMapDir,mmPerDegMapDir,saveDir);
 
 
-%% Conduct a PCA analysis of the volume maps
-dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','volumeMapsBySubject');
-volumeMapPCAAnalysis(dataDir)
+%% Conduct a PCA analysis of the thickness maps
+dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
+thicknessMapPCAAnalysis(dataDir)
 
 
 %% Relate axial length to thickness
