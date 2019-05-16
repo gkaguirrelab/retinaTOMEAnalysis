@@ -123,10 +123,12 @@ for ii = 1:length(axesHandle)
     toRemove = setxor(contents, toKeep);
     set(toRemove, 'visible', 'off');
 end
-if ~isa(axesHandle,'matlab.graphics.axis.Axes')
+if length(axesHandle)>1
     for ii = 1:length(axesHandle)
         set(axesHandle(ii),'position',axesPosition{ii}); % Fix: restore original axes size
     end
+else
+    set(axesHandle,'position',axesPosition); % Fix: restore original axes size
 end
 
 % Remove all annotations from raster figure

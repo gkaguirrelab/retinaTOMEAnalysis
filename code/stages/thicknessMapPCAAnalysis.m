@@ -19,7 +19,7 @@ p.addParameter('figSaveDir','/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/_Pape
 p.addParameter('makeFitMaps',false,@islogical);
 p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 p.addParameter('anatMeasuresFileName',fullfile(getpref('retinaTOMEAnalysis','projectBaseDir'),'data','visualPathwayAnatMeasures.xlsx'),@ischar);
-p.addParameter('nCoeff',5,@isscalar);
+p.addParameter('nCoeff',4,@isscalar);
 p.addParameter('octRadialDegreesVisualExtent',15,@isscalar);
 
 
@@ -58,27 +58,52 @@ for ii = 1:length(p.Results.layerSetLabels)
     
     % Loop over subjects and load the maps
     for ss = 1:nSubs
-%         fileName = fullfile(rawDirList(ss).folder,rawDirList(ss).name,[rawDirList(ss).name '_' p.Results.layerSetLabels{ii} '_volumeMap.mat']);
-%         load(fileName,'volumeMap_mmCubedDegSquared');
-%         thisMap = volumeMap_mmCubedDegSquared;
-       fileName = fullfile(rawSubjectList(ss).folder,rawSubjectList(ss).name);
-       load(fileName,'averageMaps');
-       thisMap = averageMaps.(p.Results.layerSetLabels{ii});
-       % Convert to mm and then to cubic mm of tissue per degree
-       thisMap = thisMap./1000 .* mmPerDeg(axialLength(ss))^2;
+        fileName = fullfile(rawSubjectList(ss).folder,rawSubjectList(ss).name);
+        load(fileName,'averageMaps');
+        thisMap = averageMaps.(p.Results.layerSetLabels{ii});
+        % Convert from microns to mm
+        thisMap = thisMap./1000;
+        % If this is the first subject, set up some variables
         if ss==1
             imageSize = size(thisMap);
             avgMapBySubject = nan(nSubs,imageSize(1),imageSize(2));
+            rawMapBySubject = nan(nSubs,imageSize(1),imageSize(2));
         end
-        % Convert the map from thickness to volume per degree^2
+        % Store the raw map
+        rawMapBySubject(ss,:,:)=thisMap;
+        % Convert to cubic mm of tissue per degree
+        thisMap = thisMap .* mmPerDeg(axialLength(ss))^2;
+        % Store the map
         avgMapBySubject(ss,:,:)=thisMap;
-
         % Add this ID to the table
-        pcaResultsTable.AOSO_ID(ss) = str2num(rawDirList(ss).name);
+        pcaResultsTable.AOSO_ID(ss) = str2double(rawDirList(ss).name);
     end
-        
+    
     % Determine which points are not nans in any subject
     observedIdx = ~isnan(squeeze(sum(avgMapBySubject,1)));
+    
+    % Determine the relationship between mean thickness and axial length
+    rawVecBySubject = reshape(rawMapBySubject,50,prod(imageSize));
+    meanThickBySubject = mean(rawVecBySubject(:,observedIdx(:)),2);
+    if p.Results.showPlots
+        figure
+        plot(axialLength,meanThickBySubject,'.k');
+        hold on
+        pFit = polyfit(axialLength,meanThickBySubject,1);
+        yfit = pFit(1)*axialLength+pFit(2);
+        plot(axialLength,yfit,'r-');
+        xlabel('axial length [mm]');
+        xlim([20 28]);
+        ylabel('mean thickness [microns]');
+        ylim([0 0.075]);
+        rVal = corr2(axialLength,meanThickBySubject);
+        title(['Pearson r = ' num2str(rVal)]);
+        if ~isempty(p.Results.figSaveDir)
+            filename = fullfile(p.Results.figSaveDir,'meanThickByAxialLength.pdf');
+            print(gcf,filename,'-dpdf');
+        end
+    end
+    
     
     % Conduct a PCA analysis across subjects, averaged over eyes. First,
     % Convert the non-nan portion of the image to a vector.
@@ -98,12 +123,65 @@ for ii = 1:length(p.Results.layerSetLabels)
     
     % Store the results in the data table
     for kk=1:nCoeff
-        pcaResultsTable.(['PCA' num2str(kk)]) = score(:,kk);        
+        pcaResultsTable.(['PCA' num2str(kk)]) = score(:,kk);
     end
+    
+    % Join the anat measures to the subject data table, and then to the PCA
+    % scores pcaResultsTable
+    comboTable = join(pcaResultsTable,subjectTable,'Keys','AOSO_ID');
+    comboTable = join(anatMeasuresTable,comboTable,'Keys','AOSO_ID');
+    
+    % Derive some anatomical measures
+    brainMeasureNames = {'chiasmAbsolute','lgnRelative','v1AreaRelative','v1AreaAbsolute','v1ThickRelative','v1ThickAbsolute'};
+    chiasmAbsolute = comboTable.Optic_Chiasm;
+    lgnRelative = comboTable.LGNJacobian;
+    v1AreaRelative = 100.*((comboTable.lh_lh_v1_noah_template_label_area+comboTable.rh_rh_v1_noah_template_label_area)./(comboTable.lh_WhiteSurfArea_area+comboTable.rh_WhiteSurfArea_area));
+    v1AreaAbsolute = comboTable.lh_lh_v1_noah_template_label_area+comboTable.rh_rh_v1_noah_template_label_area;
+    v1ThickRelative = 100.*((comboTable.lh_lh_v1_noah_template_label_thickness+comboTable.rh_rh_v1_noah_template_label_thickness)./(comboTable.lh_lh_cortex_label_thickness+comboTable.rh_rh_cortex_label_thickness));
+    v1ThickAbsolute = (comboTable.lh_lh_v1_noah_template_label_thickness+comboTable.rh_rh_v1_noah_template_label_thickness)./2;
+    
+    % Create a design matrix composed of the PCA scores.
+    X = [comboTable.PCA1 comboTable.PCA2 comboTable.PCA3 comboTable.Axial_Length_average];
+    X = X-mean(X);
+    
+    % Examine the relation between PCA scores and brain measures.
+    plotChoices = [1 3];
+    plotChoicesYLabels = {'optic chiasm volume [mm^3]','V1 relative area [%]'};
+    plotChoicesYLims = {[100 500],[2 4]};
+    plotChoicesSymbols = {'x','o'};
+    subjectSets = zeros(length(plotChoices),2);
+    fprintf('\nRobust linear regression, OCT PCA 3 components and axial length, upon brain measures:\n\n');
+    for kk = 1:length(brainMeasureNames)
+        thisVar = brainMeasureNames{kk};
+        outline=['   ' thisVar ' -  '];
+        lm = fitlm(X,eval(thisVar),'RobustOpts','on');
+        outline = [outline 'p-value: ' num2str(lm.coefTest) '  '];
+        outline = [outline 'adjusted R^2: ' num2str(lm.Rsquared.Adjusted) '  '];
+        outline = [outline 'coeff p-vals: ' num2str(lm.Coefficients.pValue(2:end)') '  '];
+        fprintf([outline '\n']);
+        if any(plotChoices==kk)
+            % Select two subjects who are the extreme ends of the fitted
+            % values for this relationship
+            [~,subjectSets(plotChoices==kk,1)]=min(lm.Fitted);
+            [~,subjectSets(plotChoices==kk,2)]=max(lm.Fitted);
+            % Plot the linear model plot
+            if p.Results.showPlots
+                figure
+                lm.plot
+                ylabel(plotChoicesYLabels{plotChoices==kk});
+                ylim(plotChoicesYLims{plotChoices==kk});
+                if ~isempty(p.Results.figSaveDir)
+                    filename = fullfile(p.Results.figSaveDir,['robustRegression_' thisVar '.pdf']);
+                    print(gcf,filename,'-dpdf');
+                end
+            end
+        end
+    end
+    fprintf('\n');
     
     % Report variance explained
     explained = [nan; explained(2:end)./sum(explained(2:end))];
-    outline=sprintf('Variance explained by first %d coefficients: %2.2f \n',nCoeff,nansum(explained(1:nCoeff)));    
+    outline=sprintf('Variance explained by first %d coefficients: %2.2f \n',nCoeff,nansum(explained(1:nCoeff)));
     fprintf(outline);
     
     % Report the mean values of the fitted coefficients
@@ -116,35 +194,13 @@ for ii = 1:length(p.Results.layerSetLabels)
     
     % Obtain the fit to the data
     Xfit = score(:,1:nCoeff)*coeff(:,1:nCoeff)'+(repmat(mu,nSubs,1));
-    
-    % Find the two subjects with the values close to the median for the
-    % first coefficient, but maximally different from each other on the
-    % second coefficient
-    medianThickness = median(score(:,1));
-    [~,idxThickOrder] = sort(abs(score(:,1)-medianThickness),'ascend');
-    rankThickOrder(idxThickOrder)=1:length(idxThickOrder);
-
-    [~,idxLowCoeff] = sort(score(:,2),'ascend');
-    rankLowCoeff2(idxLowCoeff)=1:length(idxLowCoeff);
-    [~,idxHighCoeff] = sort(score(:,2),'descend');
-    rankHighCoeff2(idxHighCoeff)=1:length(idxHighCoeff);
-    [~,idxLowCoeff] = sort(score(:,3),'ascend');
-    rankLowCoeff3(idxLowCoeff)=1:length(idxLowCoeff);
-    [~,idxHighCoeff] = sort(score(:,3),'descend');
-    rankHighCoeff3(idxHighCoeff)=1:length(idxHighCoeff);
-    
-    rankThickLow = mean([rankThickOrder; rankLowCoeff2; rankLowCoeff3]);
-    rankThickHigh = mean([rankThickOrder; rankHighCoeff2; rankHighCoeff3]);
-    [~,subjectIdx(1)] = min(rankThickLow);
-    [~,subjectIdx(2)] = min(rankThickHigh);
-    
-    
+           
     % Show a plot of the explanatory power of the components
     if p.Results.showPlots
         figure
         plot(explained)
         hold on
-        plot(explained,'or')
+        plot(explained,'.r')
         if ~isempty(p.Results.figSaveDir)
             filename = fullfile(p.Results.figSaveDir,'varianceExplained.pdf');
             print(gcf,filename,'-dpdf');
@@ -154,11 +210,17 @@ for ii = 1:length(p.Results.layerSetLabels)
     % Create a 3D plot of the scores
     if p.Results.showPlots
         figure
-        plot3(score(:,1),score(:,2),score(:,3),'*k')
+        plot3(score(:,1),score(:,2),score(:,3),'.k')
         hold on
-        plot3(score(subjectIdx(1),1),score(subjectIdx(1),2),score(subjectIdx(1),3),'*r')
-        plot3(score(subjectIdx(2),1),score(subjectIdx(2),2),score(subjectIdx(2),3),'*b')
-        axis equal
+        for xx=1:size(subjectSets,1)
+            plot3(score(subjectSets(xx,:),1),score(subjectSets(xx,:),2),score(subjectSets(xx,:),3),'-k')
+            plot3(score(subjectSets(xx,1),1),score(subjectSets(xx,1),2),score(subjectSets(xx,1),3),[plotChoicesSymbols{xx} 'r'])
+            plot3(score(subjectSets(xx,2),1),score(subjectSets(xx,2),2),score(subjectSets(xx,2),3),[plotChoicesSymbols{xx} 'b'])
+        end
+        axis square
+        xlabel('PCA1');
+        xlabel('PCA2');
+        xlabel('PCA3');
         if ~isempty(p.Results.figSaveDir)
             filename = fullfile(p.Results.figSaveDir,'subjectScores.pdf');
             print(gcf,filename,'-dpdf');
@@ -170,7 +232,7 @@ for ii = 1:length(p.Results.layerSetLabels)
         figure
         for jj=1:nCoeff
             subplot(2,2,jj);
-            plot(axialLength,score(:,jj),'ok')
+            plot(axialLength,score(:,jj),'.k')
             corrVal = corr2(squeeze(score(:,jj)),axialLength);
             title(['R = ' num2str(corrVal)]);
         end
@@ -214,7 +276,7 @@ for ii = 1:length(p.Results.layerSetLabels)
         end
     end
     
-    % Now show images of the first, second, and third PCA components
+    % Now show images of the PCA components
     coeffMap = nan(imageSize(1),imageSize(2));
     
     if p.Results.showPlots
@@ -239,84 +301,70 @@ for ii = 1:length(p.Results.layerSetLabels)
     
     % Show some PCA reconstructed OCT scans vs. the actual data
     if p.Results.showPlots
-        figA = figure();
-        figB = figure();
         zMax = 0.01;
-            supportDeg = linspace(-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent,imageSize(1));
-            [xMesh,yMesh] = meshgrid(supportDeg,supportDeg);
-
-        for jj = 1:length(subjectIdx)
-            subjectID = rawDirList(jj).name;
+        supportDeg = linspace(-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent,imageSize(1));
+        [xMesh,yMesh] = meshgrid(supportDeg,supportDeg);
+        
+        for xx = 1:size(subjectSets,1)
+            figA = figure();
+            figB = figure();
             
-            figure(figA);
-            subplot(length(subjectIdx),3,1+3*(jj-1))
-            theMap = squeeze(avgMapBySubject(subjectIdx(jj),:,:));
-            mesh(xMesh,yMesh,theMap);
-            caxis([0 zMax]);
-            xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
-            ylim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
-            zlim([0 zMax]);
-            title(['Subject ' subjectID] )
-            axis square
-            
-            subplot(length(subjectIdx),3,2+3*(jj-1))
-            reconMap = nan(imageSize(1),imageSize(2));
-            reconMap(:)=XfitFit(subjectIdx(jj),:);
-            mesh(xMesh,yMesh,reconMap);
-            caxis([0 zMax]);
-            xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
-            ylim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
-            zlim([0 zMax]);
-            title('PCA reconstructed')
-            axis square
-
-            subplot(length(subjectIdx),3,3+3*(jj-1))
-            mesh(xMesh,yMesh,reconMap-theMap);
-            caxis([-zMax/2 zMax/2]);
-            xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
-            ylim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
-            zlim([-zMax/2 zMax/2]);
-            title('Error')
-            axis square
-            
-            figure(figB);
-            plot(supportDeg,reconMap(imageSize(1)/2,:));
-            hold on
-            xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
-            ylim([0 zMax]);
-            title('Horizontal meridian')
-            axis square
+            for jj = 1:size(subjectSets,2)
+                subjectID = rawDirList(subjectSets(xx,jj)).name;
+                
+                figure(figA);
+                subplot(size(subjectSets,2),3,1+3*(jj-1))
+                theMap = squeeze(avgMapBySubject(subjectSets(xx,jj),:,:));
+                mesh(xMesh,yMesh,theMap);
+                caxis([0 zMax]);
+                xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+                ylim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+                zlim([0 zMax]);
+                zlabel('tissue volume [mm3/deg2]');
+                title(['Subject ' subjectID] )
+                axis square
+                
+                subplot(size(subjectSets,2),3,2+3*(jj-1))
+                reconMap = nan(imageSize(1),imageSize(2));
+                reconMap(:)=XfitFit(subjectIdx(jj),:);
+                mesh(xMesh,yMesh,reconMap);
+                caxis([0 zMax]);
+                xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+                ylim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+                zlim([0 zMax]);
+                zlabel('tissue volume [mm3/deg2]');
+                title('PCA reconstructed')
+                axis square
+                
+                subplot(size(subjectSets,2),3,3+3*(jj-1))
+                mesh(xMesh,yMesh,reconMap-theMap);
+                caxis([-zMax/2 zMax/2]);
+                xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+                ylim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+                zlabel('tissue volume [mm3/deg2]');
+                zlim([-zMax/2 zMax/2]);
+                title('Error')
+                axis square
+                
+                figure(figB);
+                plot(supportDeg,reconMap(imageSize(1)/2,:));
+                hold on
+                xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+                ylim([0 zMax]);
+                zlabel('tissue volume [mm3/deg2]');
+                title('Horizontal meridian')
+                axis square
+            end
+            if ~isempty(p.Results.figSaveDir)
+                filename = fullfile(p.Results.figSaveDir,['pcaDataReconMap_MaxMinSubs_' brainMeasureNames(plotChoices(xx))]);
+                vecrast(figA, filename, 600, 'top', 'pdf')
+                filename = fullfile(p.Results.figSaveDir,['pcaDataReconMeridian_' brainMeasureNames(plotChoices(xx)) '.pdf']);
+                print(figB,filename,'-dpdf');
+            end
         end
-        if ~isempty(p.Results.figSaveDir)
-            filename = fullfile(p.Results.figSaveDir,'pcaDataReconMap');
-            vecrast(figA, filename, 600, 'top', 'pdf')
-            filename = fullfile(p.Results.figSaveDir,'pcaDataReconMeridian.pdf');
-            print(figB,filename,'-dpdf');
-        end
-
     end
     
-    % Examine the correlation of PCA scores with anatomical measures
-    
-    % Join the anat measures to the subject data table, and then to the PCA
-    % scores pcaResultsTable
-    comboTable = join(pcaResultsTable,subjectTable,'Keys','AOSO_ID');
-    comboTable = join(anatMeasuresTable,comboTable,'Keys','AOSO_ID');
-
-    chiasmRelative = comboTable.Optic_Chiasm./comboTable.SupraTentorialVol;
-    v1AreaRelative = (comboTable.lh_lh_v1_noah_template_label_area+comboTable.rh_rh_v1_noah_template_label_area)./(comboTable.lh_WhiteSurfArea_area+comboTable.rh_WhiteSurfArea_area);
-    v1ThickRelative = (comboTable.lh_lh_v1_noah_template_label_thickness+comboTable.rh_rh_v1_noah_template_label_thickness)./(comboTable.lh_lh_cortex_label_thickness+comboTable.rh_rh_cortex_label_thickness);
-
-    X = [comboTable.PCA1 comboTable.PCA2 -comboTable.PCA2.^2 comboTable.PCA3 -comboTable.PCA3.^2 comboTable.Axial_Length_average];
-    X = X-mean(X);
-    
-    lm = fitlm(X,comboTable.Optic_Chiasm)    
-    lm = fitlm(X,comboTable.LGNJacobian)    
-    lm = fitlm(X,v1AreaRelative)
-    lm = fitlm(X,v1ThickRelative)
-
-    fopo=1;
-end
+end % Loop over layer sets
 
 end % Main function
 
