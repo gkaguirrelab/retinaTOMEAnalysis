@@ -2,11 +2,10 @@
 % This is the mmPerDeg at the ellipsoidal pole of the vitreous chamber
 mmPerDeg = @(axialLength) (0.0165.*axialLength)-0.1070;
 
-
-sceneGeometry = createSceneGeometry('axialLength',21.79,'sphericalAmetropia',3.875);
+sceneGeometry = createSceneGeometry('axialLength',27.57,'sphericalAmetropia',-10.25);
 a0 = [5.45 2.5 0];
 theta = linspace(0,2*pi,20);
-radius=15;%just an example
+radius=15;
 for ii=1:length(theta)
     x=radius*cos(theta(ii));
     y=radius*sin(theta(ii));
@@ -17,7 +16,7 @@ G = findRetinaFieldPoint( sceneGeometry.eye, a0);
 plotOpticalSystem('surfaceSet',sceneGeometry.refraction.retinaToCamera,'addLighting',true,'rayPath',rayPath,'outputRay',outputRay);
 plot3(X(:,1),X(:,2),X(:,3),'.r');
 
-sceneGeometry = createSceneGeometry('axialLength',27.57,'sphericalAmetropia',-10.25);
+sceneGeometry = createSceneGeometry('axialLength',21.79,'sphericalAmetropia',3.875);
 for ii=1:length(theta)
     x=radius*cos(theta(ii));
     y=radius*sin(theta(ii));

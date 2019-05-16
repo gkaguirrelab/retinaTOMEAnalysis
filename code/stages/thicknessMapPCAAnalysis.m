@@ -171,7 +171,7 @@ for ii = 1:length(p.Results.layerSetLabels)
             % Plot the linear model plot
             if p.Results.showPlots
                 figure
-                lm.plot
+                lm.plot('Marker','.');
                 hold on
 %                plot(lm.Fitted(subjectSets(plotChoices==kk,1)),thisVar(subjectSets(plotChoices==kk,1)),'or')
 %                plot(lm.Fitted(subjectSets(plotChoices==kk,2)),thisVar(subjectSets(plotChoices==kk,2)),'ob')
