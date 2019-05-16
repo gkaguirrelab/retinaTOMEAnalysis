@@ -15,9 +15,11 @@ p.addRequired('dataDir',@ischar);
 % Optional analysis params
 p.addParameter('layerSetLabels',{'RGCIPL'},@iscell);
 p.addParameter('showPlots',true,@islogical);
+p.addParameter('figSaveDir','/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/_Papers/Aguirre_2019_rgcCorticalAnatomy/VSS2019/raw figures/pca',@ischar);
+p.addParameter('makeFitMaps',false,@islogical);
 p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 p.addParameter('anatMeasuresFileName',fullfile(getpref('retinaTOMEAnalysis','projectBaseDir'),'data','visualPathwayAnatMeasures.xlsx'),@ischar);
-p.addParameter('nCoeff',4,@isscalar);
+p.addParameter('nCoeff',5,@isscalar);
 p.addParameter('octRadialDegreesVisualExtent',15,@isscalar);
 
 
@@ -27,7 +29,7 @@ p.parse(dataDir, varargin{:});
 % Obtain a list of subjects
 rawSubjectList = dir(fullfile(dataDir,'*/*.mat'));
 rawDirList = dir(fullfile(dataDir,'1*'));
-nSubs = length(rawSubjectList);
+nSubs = length(rawDirList);
 
 % Load the subject data table
 opts = detectImportOptions(p.Results.subjectTableFileName);
@@ -40,7 +42,7 @@ anatMeasuresTable = readtable(p.Results.anatMeasuresFileName, opts);
 
 % The number of PCA coefficients we will retain
 nCoeff = p.Results.nCoeff;
-variableNames = {'AOSO_ID','PCA1_resid'};
+variableNames = {'AOSO_ID'};
 for kk = 1:nCoeff
     variableNames = [variableNames {['PCA' num2str(kk)]}];
 end
@@ -52,19 +54,23 @@ mmPerDeg = @(axialLength) (0.0165.*axialLength)-0.1070;
 for ii = 1:length(p.Results.layerSetLabels)
     
     % Create a table to hold the PCA results
-    pcaResultsTable = table('Size',[nSubs,nCoeff+2],'VariableTypes',repmat({'double'},1,nCoeff+2),'VariableNames',variableNames);
+    pcaResultsTable = table('Size',[nSubs,nCoeff+1],'VariableTypes',repmat({'double'},1,nCoeff+1),'VariableNames',variableNames);
     
     % Loop over subjects and load the maps
     for ss = 1:nSubs
-        fileName = fullfile(rawSubjectList(ss).folder,rawSubjectList(ss).name);
-        load(fileName,'averageMaps');
-        thisMap = averageMaps.(p.Results.layerSetLabels{ii});
+%         fileName = fullfile(rawDirList(ss).folder,rawDirList(ss).name,[rawDirList(ss).name '_' p.Results.layerSetLabels{ii} '_volumeMap.mat']);
+%         load(fileName,'volumeMap_mmCubedDegSquared');
+%         thisMap = volumeMap_mmCubedDegSquared;
+       fileName = fullfile(rawSubjectList(ss).folder,rawSubjectList(ss).name);
+       load(fileName,'averageMaps');
+       thisMap = averageMaps.(p.Results.layerSetLabels{ii});
+       % Convert to mm and then to cubic mm of tissue per degree
+       thisMap = thisMap./1000 .* mmPerDeg(axialLength(ss))^2;
         if ss==1
             imageSize = size(thisMap);
             avgMapBySubject = nan(nSubs,imageSize(1),imageSize(2));
         end
         % Convert the map from thickness to volume per degree^2
-        thisMap = thisMap .* mmPerDeg(axialLength(ss))^2;
         avgMapBySubject(ss,:,:)=thisMap;
 
         % Add this ID to the table
@@ -137,6 +143,12 @@ for ii = 1:length(p.Results.layerSetLabels)
     if p.Results.showPlots
         figure
         plot(explained)
+        hold on
+        plot(explained,'or')
+        if ~isempty(p.Results.figSaveDir)
+            filename = fullfile(p.Results.figSaveDir,'varianceExplained.pdf');
+            print(gcf,filename,'-dpdf');
+        end
     end
     
     % Create a 3D plot of the scores
@@ -147,9 +159,13 @@ for ii = 1:length(p.Results.layerSetLabels)
         plot3(score(subjectIdx(1),1),score(subjectIdx(1),2),score(subjectIdx(1),3),'*r')
         plot3(score(subjectIdx(2),1),score(subjectIdx(2),2),score(subjectIdx(2),3),'*b')
         axis equal
+        if ~isempty(p.Results.figSaveDir)
+            filename = fullfile(p.Results.figSaveDir,'subjectScores.pdf');
+            print(gcf,filename,'-dpdf');
+        end
     end
     
-    % Plot the relationship between the scores and axial length 
+    % Plot the relationship between the scores and axial length
     if p.Results.showPlots
         figure
         for jj=1:nCoeff
@@ -158,16 +174,46 @@ for ii = 1:length(p.Results.layerSetLabels)
             corrVal = corr2(squeeze(score(:,jj)),axialLength);
             title(['R = ' num2str(corrVal)]);
         end
+        if ~isempty(p.Results.figSaveDir)
+            filename = fullfile(p.Results.figSaveDir,'scoresVsAxialLength.pdf');
+            print(gcf,filename,'-dpdf');
+        end
     end
     
-    % Obtain the residuals of the first component after removing the effect
-    % of axial length
-    X = [ones(nSubs,1) axialLength-mean(axialLength)];
-    B = X\score(:,1);
-    B(1)=0;
-    PCA1_resid = score(:,1) - X*B;
-    pcaResultsTable.PCA1_resid = PCA1_resid;        
-
+    % Create interpolated versions of the PCA coefficient maps
+    filename = fullfile(p.Results.figSaveDir,'pcaCoeffMapsFit.mat');
+    if exist(filename,'file')
+        load(filename,'fitCoeffMaps','fitCoeff')
+    else
+        for jj = 1:nCoeff
+            coeffMap = nan(imageSize(1),imageSize(2));
+            coeffMap(observedIdx)=coeff(:,jj);
+            fitMap = thinSplineFitMap(coeffMap, p.Results.octRadialDegreesVisualExtent);
+            fitCoeff(:,jj) = fitMap(:);
+            fitCoeffMaps(jj,:,:)=fitMap;
+        end
+        save(filename,'fitCoeffMaps','fitCoeff')
+    end
+    XfitFit = score(:,1:nCoeff)*fitCoeff(:,1:nCoeff)';
+    if p.Results.showPlots
+        figure
+        for jj=1:nCoeff
+            subplot(2,2,jj);
+            supportDeg = linspace(-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent,imageSize(1));
+            [xMesh,yMesh] = meshgrid(supportDeg,supportDeg);
+            mesh(xMesh,yMesh,squeeze(fitCoeffMaps(jj,:,:)));
+            xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+            ylim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+            axis square
+            title('PCA coefficients (fit)')
+            set(gca,'color','none')
+        end
+        if ~isempty(p.Results.figSaveDir)
+            filename = fullfile(p.Results.figSaveDir,'pcaCoeffMapsFit');
+            vecrast(gcf, filename, 600, 'top', 'pdf')
+        end
+    end
+    
     % Now show images of the first, second, and third PCA components
     coeffMap = nan(imageSize(1),imageSize(2));
     
@@ -175,33 +221,19 @@ for ii = 1:length(p.Results.layerSetLabels)
         figure
         for jj=1:nCoeff
             subplot(2,2,jj);
-            coeffMap(observedIdx)=coeff(:,jj);
-            mesh(coeffMap);
-            xlim([0 imageSize(1)]);
-            ylim([0 imageSize(1)]);
-            axis square
-            title('PCA coefficients (raw)')
-        end
-        figure
-        for jj=1:nCoeff
-            subplot(2,2,jj);
-            coeffMap(observedIdx)=coeff(:,jj);
-            
-            
-            scaleDown = 12;
-            supportDeg = linspace(-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent,imageSize(1)/scaleDown);
-            downSampMap = coeffMap(rgcIplThicknessMap,1/scaleDown);
-            [xo,yo,zo]=prepareSurfaceData(supportDeg,supportDeg,downSampMap);
-            sf = fit([xo, yo],zo,'thinplateinterp');
             supportDeg = linspace(-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent,imageSize(1));
-            [xi,yi]=meshgrid(supportDeg,supportDeg);
-            inRangeIdx = sqrt(xi.^2+yi.^2)<=octRadialDegreesVisualExtent;
-            fitCoeffMap = sf(xi(inRangeIdx),yi(inRangeIdx));            
-            mesh(fitCoeffMap);
-            xlim([0 imageSize(1)]);
-            ylim([0 imageSize(1)]);
+            [xMesh,yMesh] = meshgrid(supportDeg,supportDeg);
+            coeffMap(observedIdx)=coeff(:,jj);
+            mesh(xMesh,yMesh,coeffMap);
+            xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+            ylim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
             axis square
             title('PCA coefficients (raw)')
+            set(gca,'color','none')
+        end
+        if ~isempty(p.Results.figSaveDir)
+            filename = fullfile(p.Results.figSaveDir,'pcaCoeffMapsRaw');
+            vecrast(gcf, filename, 600, 'top', 'pdf')
         end
     end
     
@@ -209,50 +241,59 @@ for ii = 1:length(p.Results.layerSetLabels)
     if p.Results.showPlots
         figA = figure();
         figB = figure();
-        zMax = 10;
+        zMax = 0.01;
+            supportDeg = linspace(-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent,imageSize(1));
+            [xMesh,yMesh] = meshgrid(supportDeg,supportDeg);
+
         for jj = 1:length(subjectIdx)
-            subjectID = split(rawSubjectList(jj).name,'_');
-            subjectID = subjectID{1};
+            subjectID = rawDirList(jj).name;
             
             figure(figA);
             subplot(length(subjectIdx),3,1+3*(jj-1))
             theMap = squeeze(avgMapBySubject(subjectIdx(jj),:,:));
-            mesh(theMap);
+            mesh(xMesh,yMesh,theMap);
             caxis([0 zMax]);
-            xlim([0 imageSize(1)]);
-            ylim([0 imageSize(1)]);
+            xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+            ylim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
             zlim([0 zMax]);
             title(['Subject ' subjectID] )
             axis square
             
             subplot(length(subjectIdx),3,2+3*(jj-1))
             reconMap = nan(imageSize(1),imageSize(2));
-            reconMap(observedIdx)=Xfit(subjectIdx(jj),:);
-            mesh(reconMap);
+            reconMap(:)=XfitFit(subjectIdx(jj),:);
+            mesh(xMesh,yMesh,reconMap);
             caxis([0 zMax]);
-            xlim([0 imageSize(1)]);
-            ylim([0 imageSize(1)]);
+            xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+            ylim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
             zlim([0 zMax]);
             title('PCA reconstructed')
             axis square
 
             subplot(length(subjectIdx),3,3+3*(jj-1))
-            mesh(reconMap-theMap);
+            mesh(xMesh,yMesh,reconMap-theMap);
             caxis([-zMax/2 zMax/2]);
-            xlim([0 imageSize(1)]);
-            ylim([0 imageSize(1)]);
+            xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
+            ylim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
             zlim([-zMax/2 zMax/2]);
             title('Error')
             axis square
-
+            
             figure(figB);
-            plot(reconMap(imageSize(1)/2,:));
+            plot(supportDeg,reconMap(imageSize(1)/2,:));
             hold on
-            xlim([0 imageSize(2)]);
+            xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
             ylim([0 zMax]);
             title('Horizontal meridian')
             axis square
         end
+        if ~isempty(p.Results.figSaveDir)
+            filename = fullfile(p.Results.figSaveDir,'pcaDataReconMap');
+            vecrast(figA, filename, 600, 'top', 'pdf')
+            filename = fullfile(p.Results.figSaveDir,'pcaDataReconMeridian.pdf');
+            print(figB,filename,'-dpdf');
+        end
+
     end
     
     % Examine the correlation of PCA scores with anatomical measures
@@ -275,4 +316,36 @@ for ii = 1:length(p.Results.layerSetLabels)
     lm = fitlm(X,v1ThickRelative)
 
     fopo=1;
+end
+
+end % Main function
+
+
+function fitMap = thinSplineFitMap(rawMap, radialDegrees)
+
+% Downsample the rawMap by a factor of 12
+scaleDown = 12;
+imageSize = size(rawMap);
+supportDeg = linspace(-radialDegrees,radialDegrees,imageSize(1)/scaleDown);
+downSampMap = imresize(rawMap,1/scaleDown);
+
+% Silence a warning that occurs regarding nans in the maps
+warningState = warning;
+warning('off','curvefit:prepareFittingData:removingNaNAndInf');
+
+% Prepare the surface and perform the fit
+[xo,yo,zo]=prepareSurfaceData(supportDeg,supportDeg,downSampMap);
+sf = fit([xo, yo],zo,'thinplateinterp');
+
+% Restore the warning state
+warning(warningState);
+
+% Create the interpolated map just within the radius
+supportDeg = linspace(-radialDegrees,radialDegrees,imageSize(1));
+[xi,yi]=meshgrid(supportDeg,supportDeg);
+inRangeIdx = sqrt(xi.^2+yi.^2)<=radialDegrees;
+fitCoeffVals = sf(xi(inRangeIdx),yi(inRangeIdx));
+fitMap = nan(imageSize(1),imageSize(2));
+fitMap(inRangeIdx)=fitCoeffVals;
+
 end
