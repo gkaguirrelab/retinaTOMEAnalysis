@@ -52,16 +52,3 @@ makeVolumeMaps(thicknessMapDir,mmPerDegMapDir,saveDir);
 dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
 thicknessMapPCAAnalysis(dataDir)
 
-
-%% Relate axial length to thickness
-dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
-thicknessAxialLengthMap(dataDir)
-
-
-%% analyzeMaps
-% Examine the relationship between thickness, volume, and biometric values.
-thicknessMapDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
-volumeMapDir = fullfile(dropboxBaseDir,'AOSO_analysis','volumeMapsBySubject');
-saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','thicknessVsVolumeComparison');
-analyzeMaps(thicknessMapDir,volumeMapDir,saveDir);
-

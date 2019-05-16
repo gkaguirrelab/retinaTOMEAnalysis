@@ -148,30 +148,37 @@ for ii = 1:length(p.Results.layerSetLabels)
     plotChoices = [1 3];
     plotChoicesYLabels = {'optic chiasm volume [mm^3]','V1 relative area [%]'};
     plotChoicesYLims = {[100 500],[2 4]};
+    plotChoicesZMax = {0.015,0.010};
     plotChoicesSymbols = {'x','o'};
     subjectSets = zeros(length(plotChoices),2);
     fprintf('\nRobust linear regression, OCT PCA 3 components and axial length, upon brain measures:\n\n');
     for kk = 1:length(brainMeasureNames)
-        thisVar = brainMeasureNames{kk};
-        outline=['   ' thisVar ' -  '];
-        lm = fitlm(X,eval(thisVar),'RobustOpts','on');
+        thisVarName = brainMeasureNames{kk};
+        thisVar = eval(thisVarName);
+        outline=['   ' thisVarName ' -  '];
+        lm = fitlm(X,thisVar,'RobustOpts','on');
         outline = [outline 'p-value: ' num2str(lm.coefTest) '  '];
         outline = [outline 'adjusted R^2: ' num2str(lm.Rsquared.Adjusted) '  '];
         outline = [outline 'coeff p-vals: ' num2str(lm.Coefficients.pValue(2:end)') '  '];
         fprintf([outline '\n']);
         if any(plotChoices==kk)
+            subjectSets(1,:) = [14 2];
+            subjectSets(2,:) = [36 7];
             % Select two subjects who are the extreme ends of the fitted
             % values for this relationship
-            [~,subjectSets(plotChoices==kk,1)]=min(lm.Fitted);
-            [~,subjectSets(plotChoices==kk,2)]=max(lm.Fitted);
+%            [~,subjectSets(plotChoices==kk,1)]=min(lm.Fitted);
+%            [~,subjectSets(plotChoices==kk,2)]=max(lm.Fitted);
             % Plot the linear model plot
             if p.Results.showPlots
                 figure
                 lm.plot
+                hold on
+%                plot(lm.Fitted(subjectSets(plotChoices==kk,1)),thisVar(subjectSets(plotChoices==kk,1)),'or')
+%                plot(lm.Fitted(subjectSets(plotChoices==kk,2)),thisVar(subjectSets(plotChoices==kk,2)),'ob')
                 ylabel(plotChoicesYLabels{plotChoices==kk});
                 ylim(plotChoicesYLims{plotChoices==kk});
                 if ~isempty(p.Results.figSaveDir)
-                    filename = fullfile(p.Results.figSaveDir,['robustRegression_' thisVar '.pdf']);
+                    filename = fullfile(p.Results.figSaveDir,['robustRegression_' thisVarName '.pdf']);
                     print(gcf,filename,'-dpdf');
                 end
             end
@@ -219,8 +226,8 @@ for ii = 1:length(p.Results.layerSetLabels)
         end
         axis square
         xlabel('PCA1');
-        xlabel('PCA2');
-        xlabel('PCA3');
+        ylabel('PCA2');
+        zlabel('PCA3');
         if ~isempty(p.Results.figSaveDir)
             filename = fullfile(p.Results.figSaveDir,'subjectScores.pdf');
             print(gcf,filename,'-dpdf');
@@ -277,8 +284,7 @@ for ii = 1:length(p.Results.layerSetLabels)
     end
     
     % Now show images of the PCA components
-    coeffMap = nan(imageSize(1),imageSize(2));
-    
+    coeffMap = nan(imageSize(1),imageSize(2));    
     if p.Results.showPlots
         figure
         for jj=1:nCoeff
@@ -301,13 +307,15 @@ for ii = 1:length(p.Results.layerSetLabels)
     
     % Show some PCA reconstructed OCT scans vs. the actual data
     if p.Results.showPlots
-        zMax = 0.01;
         supportDeg = linspace(-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent,imageSize(1));
         [xMesh,yMesh] = meshgrid(supportDeg,supportDeg);
         
         for xx = 1:size(subjectSets,1)
+            
             figA = figure();
             figB = figure();
+
+            zMax = plotChoicesZMax{xx};
             
             for jj = 1:size(subjectSets,2)
                 subjectID = rawDirList(subjectSets(xx,jj)).name;
@@ -326,7 +334,7 @@ for ii = 1:length(p.Results.layerSetLabels)
                 
                 subplot(size(subjectSets,2),3,2+3*(jj-1))
                 reconMap = nan(imageSize(1),imageSize(2));
-                reconMap(:)=XfitFit(subjectIdx(jj),:);
+                reconMap(:)=XfitFit(subjectSets(xx,jj),:);
                 mesh(xMesh,yMesh,reconMap);
                 caxis([0 zMax]);
                 xlim([-p.Results.octRadialDegreesVisualExtent,p.Results.octRadialDegreesVisualExtent]);
@@ -356,10 +364,12 @@ for ii = 1:length(p.Results.layerSetLabels)
                 axis square
             end
             if ~isempty(p.Results.figSaveDir)
-                filename = fullfile(p.Results.figSaveDir,['pcaDataReconMap_MaxMinSubs_' brainMeasureNames(plotChoices(xx))]);
+                filename = fullfile(p.Results.figSaveDir,['pcaDataReconMap_MaxMinSubs_' brainMeasureNames{plotChoices(xx)}]);
                 vecrast(figA, filename, 600, 'top', 'pdf')
-                filename = fullfile(p.Results.figSaveDir,['pcaDataReconMeridian_' brainMeasureNames(plotChoices(xx)) '.pdf']);
+                filename = fullfile(p.Results.figSaveDir,['pcaDataReconMeridian_' brainMeasureNames{plotChoices(xx)} '.pdf']);
                 print(figB,filename,'-dpdf');
+                close(figA);
+                close(figB);
             end
         end
     end
