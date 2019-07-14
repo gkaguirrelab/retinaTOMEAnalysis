@@ -54,7 +54,7 @@ for n = 1:length(allSegs)
     CC=bwconncomp(SegAvg_bw);
     
     %we expect exactly 3 connect components separated by the fovea and
-    %optic disk, return error if more or less pieces are found
+    %optic disk, return error if more or fewer pieces are found
     if(CC.NumObjects ~= 3)
         disp(['Error:' fullfile(currPath,'ManualBoundaries.mat') ' incorrect number of segments, skipping.'])
         continue;

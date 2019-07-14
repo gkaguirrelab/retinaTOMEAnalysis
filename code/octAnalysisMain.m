@@ -52,18 +52,20 @@ makeVolumeMaps(thicknessMapDir,mmPerDegMapDir,saveDir);
 dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
 thicknessMapPCAAnalysis(dataDir)
 
-%% Montage Horizontal Extended OCT Scans
 
+%% CODE TO PROCESS HORIZONTAL LINE SCANS
+
+%% Montage Horizontal Extended OCT Scans
 dataDir = fullfile(dropboxBaseDir,'AOSO_data','connectomeRetinaData');
 saveDir =fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData');
 scanInfoFile =fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','ExtendedOCTDataDescriptions.xlsx');
 montageExtendedOCT(dataDir,scanInfoFile,saveDir)
 
-
-%% Smooth the manual segmentations of 
+%% Smooth the manual segmentations 
 dataDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData');
 smoothManualSegGCIPExtOCT(dataDir)
 
 %% Analyze GC IP layers in the extended OCT 
 dataDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData');
 analyzeGCIPExtendedOCT(dataDir)
+

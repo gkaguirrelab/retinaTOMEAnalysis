@@ -48,9 +48,17 @@ switch hostname
             'Dropbox (Aguirre-Brainard Lab)');
 end
 
-
 %% Set preferences for project output
-
 setpref(projectName,'dropboxBaseDir',dropboxBaseDir); % main directory path 
 setpref(projectName,'projectBaseDir',projectBaseDir); % main directory path 
+
+%% Set the vlfeatroot
+% vlfeat is a compiled library of vision algorithms. Download the latest
+% version from vlfeat.org. Unpack within userpath/src/. Update the version
+% ID in the vlfeatroot variable below.
+VLFEATROOT = fullfile(userpath(),'src','vlfeat-0.9.21');
+run(fullfile(VLFEATROOT,'toolbox','vl_setup'));
+fprintf('vlfeat version: ');
+vl_version
+
 end
