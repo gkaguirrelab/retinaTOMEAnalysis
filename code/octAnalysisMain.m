@@ -68,3 +68,4 @@ smoothManualSegGCIPExtOCT(dataDir)
 %% Analyze GC IP layers in the extended OCT 
 dataDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData');
 analyzeGCIPExtendedOCT(dataDir)
+
