@@ -7,7 +7,7 @@ function Dist = boundaryDist(B1, B2, DistType)
 %Dist - returns the distance at each location in B1 to B2
 
 if (DistType == 0)
-    [Idx,Dist] = knnsearch(Surf2(:,1), Surf1(:,1));%find closes vertical x location
+    [Idx,Dist] = knnsearch(B2(:,1), B1(:,1));%find closes vertical x location
     Dist = abs(B1(:,2) - B2(Idx,2));
 elseif (DistType == 1)
     [Idx,Dist] = knnsearch(B2, B1);%we just use NN in this case

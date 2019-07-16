@@ -14,7 +14,7 @@ for n = 1:length(allSegs)
     %check if already processed
     if(isfile(fullfile(currPath,'ManualBoundaries.mat')))
         disp([fullfile(currPath,'ManualBoundaries.mat') ' found, skipping.'])
-        continue;
+  %      continue;
     end
     
     %load the segmentation .nii
@@ -93,10 +93,17 @@ for n = 1:length(allSegs)
                 Bot = [Bot ; x by];
             end
         end
+        
+        %Pad ends
+        padSize = 50;
+        TopPadded = padEnds(Top,padSize);
+        MidPadded = padEnds(Mid,padSize);
+        BotPadded = padEnds(Bot,padSize);
         %fit and Calculate a smoothed version of tehse boundaries
-        [TopP, TopS, TopMu] = polyfit(Top(:,1),Top(:,2),5);
-        [MidP, MidS, MidMu] = polyfit(Mid(:,1),Mid(:,2),5);
-        [BotP, BotS, BotMu] = polyfit(Bot(:,1),Bot(:,2),5);
+        PolyLevel = 15;
+        [TopP, TopS, TopMu] = polyfit(TopPadded(:,1),TopPadded(:,2),PolyLevel);
+        [MidP, MidS, MidMu] = polyfit(MidPadded(:,1),MidPadded(:,2),PolyLevel);
+        [BotP, BotS, BotMu] = polyfit(BotPadded(:,1),BotPadded(:,2),PolyLevel);
         
         TopYSmooth= polyval(TopP,Top(:,1),TopS, TopMu);
         MidYSmooth= polyval(MidP,Mid(:,1),MidS, MidMu);
@@ -149,6 +156,6 @@ for n = 1:length(allSegs)
     end
     %save the overlay images and the boundary data
     imwrite(overlay,fullfile(currPath,'AvgAll_Trans_wManual.tif'),'tif')
-    imwrite(overlaySmooth,fullfile(currPath,'AvgAll_Trans_wManualSmooth.tif'),'tif')
+    imwrite(overlaySmooth,fullfile(currPath,['AvgAll_Trans_wManualSmooth_Padded_p' num2str(PolyLevel) '.tif']),'tif')
     save(fullfile(currPath,'ManualBoundaries.mat'),'boundaries','boundariesSmooth','currSeg')
 end

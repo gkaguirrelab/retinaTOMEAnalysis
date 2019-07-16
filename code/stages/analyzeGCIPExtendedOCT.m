@@ -1,4 +1,4 @@
-function AnalyzeGCIPExtendedOCT(dataDir)
+function analyzeGCIPExtendedOCT(dataDir)
 %Purpose does some preliminary data analysis of the extended OCT
 %segmentations
 %find all the manual boundaries in the directories
