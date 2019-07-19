@@ -1,6 +1,17 @@
 function calcExtOCTGCIPThickness(dataDir)
-%calculate the thickness of the GC and IP layers for the extended OCT 
+%Calculate the thickness of the GC and IP layers for the extended OCT 
 %with respect to a constant X support
+%The function produces .mat file in the same directory as the data with the
+%following variables:
+% XPos_Pixels[1xP] - The location of the measurements (which is now the same for all subjects, so a single vector)
+% XPos_Degs[1xP] - Same as above, but in units of degrees
+% GCthicknessValuesAtXPos[Nx2xP] - GC thickness values (Dims: 1-Subject, 2-OD/OS, 3-Layer Thickness Values)
+% IPthicknessValuesAtXPos[Nx2xP] - IP thickness values (Dims: 1-Subject, 2-OD/OS, 3-Layer Thickness Values)
+%
+% Other relevant variables:
+% dataAvailable[Nx2] - flag of whether the data is available for the subject (DIM1) and eye (DIM2, {OD,OS}).
+% degPerPixel[1] - static conversion ratio between deg/pixel, according to the machine.
+% subIDs[Nx1] - subject IDs, ordered the same as the first dimension of the thickness variables
 allFiles = dir(fullfile(dataDir,'1*'));
 
 N = length(allFiles);
