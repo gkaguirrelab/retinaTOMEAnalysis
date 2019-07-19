@@ -55,7 +55,7 @@ xlabel('Location (Degrees)')
 ylabel('Ratio')
 
 figure(6)
-plot(XPos_Degs,[mean(prcntGC,1); mean(prcentIP,1)]);
+plot(XPos_Degs,[nanmean(prcntGC,1); nanmean(prcentIP,1)]);
 title('Mean GC/(GC+IP) and IP/(GC+IP) ratio (N = 26)')
 legend({'GC','IP'},'Location','best');
 xlabel('Location (Degrees)')
