@@ -99,7 +99,7 @@ for n = 1:length(allSegs)
         TopPadded = padEnds(Top,padSize);
         MidPadded = padEnds(Mid,padSize);
         BotPadded = padEnds(Bot,padSize);
-        %fit and Calculate a smoothed version of tehse boundaries
+        %fit and Calculate a smoothed version of these boundaries
         PolyLevel = 15;
         [TopP, TopS, TopMu] = polyfit(TopPadded(:,1),TopPadded(:,2),PolyLevel);
         [MidP, MidS, MidMu] = polyfit(MidPadded(:,1),MidPadded(:,2),PolyLevel);

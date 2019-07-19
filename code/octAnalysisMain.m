@@ -65,7 +65,11 @@ montageExtendedOCT(dataDir,scanInfoFile,saveDir)
 dataDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData');
 smoothManualSegGCIPExtOCT(dataDir)
 
-%% Analyze GC IP layers in the extended OCT 
+%% Caclulate IP and GC Thickness Values
 dataDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData');
-analyzeGCIPExtendedOCT(dataDir)
+calcExtOCTGCIPThickness(dataDir)
+
+%% Analyze GC IP layers in the extended OCT 
+GCIPthicknessFile = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','GCIP_thicknessesByDeg_7_18_2019.mat');
+analyzeGCIPExtendedOCT(GCIPthicknessFile)
 
