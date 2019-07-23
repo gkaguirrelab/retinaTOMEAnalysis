@@ -81,9 +81,9 @@ if p.Results.showPlots
     figure
     plot(thickOD,thickOS,'xr');
     axis square
-    xlabel('median GC+IP thickness [microns] OD');
-    xlabel('median GC+IP thickness [microns] OS');
-    title(['Individual variation in median GC/[GC+IP] thickness, r=',num2str(corr(thickOD',thickOS'))])
+    xlabel('median GC+IP thickness [pixels] OD');
+    ylabel('median GC+IP thickness [pixels] OS');
+    title(['Individual variation in median GC+IP thickness, r=',num2str(corr(thickOD',thickOS'))])
     refline([1 0]);
 end
 
@@ -94,7 +94,7 @@ if p.Results.showPlots
     plot(ratioOD,ratioOS,'xr');
     axis square
     xlabel('median GC/(GC+IP) ratio OD');
-    ylabel('median GC/(GC+IP) ratio OD');
+    ylabel('median GC/(GC+IP) ratio OS');
     title(['Individual variation in median GC/[GC+IP] thickness, r=',num2str(corr(ratioOD',ratioOS'))])
     refline([1 0]);
 end
@@ -193,7 +193,7 @@ if p.Results.showPlots
     axis square
     xlabel('Axial length [mm]');
     ylabel('median GC/(GC+IP) ratio');
-    title(['Axial length vs. median GC+IP thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.medianRatio))])
+    title(['Axial length vs. median ratio, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.medianRatio))])
 end
 
 
