@@ -213,23 +213,23 @@ end
 %% Relate GC+IP thickness and ratio to axial length
 
 % Create a table of median thickness and axial length
-dataTable = cell2table([num2cell(str2double(subList)'),num2cell(nanmedian(thickVec)'),num2cell(nanmedian(ratioVec)'),num2cell(nanmedian(gcVolumePerDegSq)')],'VariableNames',{'AOSO_ID','gcipMedianThick','medianRatio','gcVolumePerDegSq'});
+dataTable = cell2table([num2cell(str2double(subList)'),num2cell(nanmedian(gcVec)'),num2cell(nanmedian(thickVec)'),num2cell(nanmedian(ratioVec)'),num2cell(nanmedian(gcVolumePerDegSq)')],'VariableNames',{'AOSO_ID','gcMedianThick','gcipMedianThick','medianRatio','gcVolumePerDegSq'});
 
 % Join the data table with the subject biometry and demographics table,
 % using the AOSO_ID as the key variable
 comboTable = join(dataTable,subjectTable,'Keys','AOSO_ID');
 
-% Plot GC+IP thickness vs axial length.
+% Plot GC thickness vs axial length.
 if p.Results.showPlots
     figure
-    plot(comboTable.Axial_Length_average,comboTable.gcipMedianThick,'xr');
+    plot(comboTable.Axial_Length_average,comboTable.gcMedianThick,'xr');
     hold on
-    c = polyfit(comboTable.Axial_Length_average,comboTable.gcipMedianThick,1);
+    c = polyfit(comboTable.Axial_Length_average,comboTable.gcMedianThick,1);
     plot(comboTable.Axial_Length_average,polyval(c,comboTable.Axial_Length_average),'--b')
     axis square
     xlabel('Axial length [mm]');
-    ylabel('median GC+IP thickness [microns]');
-    title(['Axial length vs. median GC+IP thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcipMedianThick))])
+    ylabel('median GC thickness [microns]');
+    title(['Axial length vs. median GC thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcMedianThick))])
 end
 
 % Plot ratio vs axial length.
