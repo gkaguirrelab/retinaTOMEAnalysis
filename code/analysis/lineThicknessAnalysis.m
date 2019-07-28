@@ -28,7 +28,6 @@ p.parse(GCIPthicknessFile, varargin{:});
 % Load the subject data table
 opts = detectImportOptions(p.Results.subjectTableFileName);
 subjectTable = readtable(p.Results.subjectTableFileName, opts);
-axialLength = subjectTable.Axial_Length_average;
 
 % Load the data file
 GCIPthicknessFile =    '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis/OCTExplorerExtendedHorizontalData/GCIP_thicknessesByDeg_7_18_2019.mat';
@@ -36,6 +35,7 @@ load(GCIPthicknessFile)
 
 subList = {};
 thickVec = [];
+gcVec = [];
 ratioVec = [];
 ratioOD = [];
 ratioOS = [];
@@ -54,17 +54,17 @@ for ii = 1:50
             ~all(isnan(squeeze(GCthicknessValuesAtXPos(ii,2,:))))
         gcVecOD = squeeze(GCthicknessValuesAtXPos(ii,1,:));
         gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos(ii,2,:)));
-        gcVec = mean([gcVecOD,gcVecOS],2,'includenan');
+        gcVec(:,end+1) = mean([gcVecOD,gcVecOS],2,'includenan');
         ipVecOD = squeeze(IPthicknessValuesAtXPos(ii,1,:));
         ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos(ii,2,:)));
         ipVec = mean([ipVecOD,ipVecOS],2,'includenan');
-        
+
         thickVecOD = sum([gcVecOD,ipVecOD],2,'includenan');
         thickVecOS = sum([gcVecOS,ipVecOS],2,'includenan');
-        thickVec(:,end+1) = sum([gcVec,ipVec],2,'includenan');
+        thickVec(:,end+1) = sum([gcVec(:,end),ipVec],2,'includenan');
         ratioVecOD = gcVecOD./thickVecOD;
         ratioVecOS = gcVecOS./thickVecOS;
-        ratioVec(:,end+1) = gcVec./thickVec(:,end);
+        ratioVec(:,end+1) = gcVec(:,end)./thickVec(:,end);
         subList(end+1) = {subIDs(ii,:)};
         
         % Save some values from the left and right eye for diagnostic plots
@@ -74,6 +74,21 @@ for ii = 1:50
         ratioOS(end+1) = nanmedian(ratioVecOS);
     end
 end
+
+% Make some vectors of mean thickness and ratio
+subCountPerPoint = sum(~isnan(thickVec),2);
+meanThickVec = nanmean(thickVec,2);
+meanGCVec = nanmean(gcVec,2);
+meanRatioVec = nanmean(ratioVec,2);
+semThickVec = nanstd(thickVec,1,2)./sqrt(subCountPerPoint);
+semRatioVec = nanstd(ratioVec,1,2)./sqrt(subCountPerPoint);
+badIdx = subCountPerPoint<(length(subList)/2);
+meanThickVec(badIdx)=nan;
+meanGCVec(badIdx)=nan;
+meanRatioVec(badIdx)=nan;
+semThickVec(badIdx)=nan;
+semRatioVec(badIdx)=nan;
+
 
 % Present a plot that demonstrates that there is individual variation in
 % the thickness of the GC+IP layer.
@@ -99,12 +114,24 @@ if p.Results.showPlots
     refline([1 0]);
 end
 
-% Plot the thickness functions
+
+% Plot the GC thickness functions
+if p.Results.showPlots
+    figure
+    plot(XPos_Degs,gcVec,'-r');
+    hold on
+    plot(XPos_Degs,meanGCVec,'-k','LineWidth',4);
+    xlabel('Eccentricity [deg visual angle]');
+    ylabel('Thickness [microns]');
+    title(['GC thickness profiles for each subject (and mean), n=',num2str(length(subList))])
+end
+
+% Plot the GC+IP thickness functions
 if p.Results.showPlots
     figure
     plot(XPos_Degs,thickVec,'-r');
     hold on
-    plot(XPos_Degs,nanmean(thickVec,2),'-k','LineWidth',4);
+    plot(XPos_Degs,meanThickVec,'-k','LineWidth',4);
     xlabel('Eccentricity [deg visual angle]');
     ylabel('Thickness [microns]');
     title(['GC+IP thickness profiles for each subject (and mean), n=',num2str(length(subList))])
@@ -115,7 +142,7 @@ if p.Results.showPlots
     figure
     plot(XPos_Degs,ratioVec,'-r');
     hold on
-    plot(XPos_Degs,nanmean(ratioVec,2),'-k','LineWidth',4);
+    plot(XPos_Degs,meanRatioVec,'-k','LineWidth',4);
     xlabel('Eccentricity [deg visual angle]');
     ylabel('Ratio GC/[GC+IP]');
     title(['GC ratio profiles for each subject (and mean), n=',num2str(length(subList))])
@@ -138,33 +165,55 @@ end
 % Nasal vs. temporal ratio differences
 if p.Results.showPlots
     figure
-    ratioMean = nanmean(ratioVec,2);
-    ratioSEM = nanstd(ratioVec,1,2)./sqrt(length(subList));
     subVec = 1:floor(length(XPos_Degs)/2);
 
     % Plot the temporal arm
-    plot(XPos_Degs(subVec),ratioMean(subVec),'-k','LineWidth',2);
+    plot(XPos_Degs(subVec),meanRatioVec(subVec),'-k','LineWidth',2);
     hold on
-    plot(XPos_Degs(subVec),ratioMean(subVec)+ratioSEM(subVec),'-k','LineWidth',1);
-    plot(XPos_Degs(subVec),ratioMean(subVec)-ratioSEM(subVec),'-k','LineWidth',1);
+    plot(XPos_Degs(subVec),meanRatioVec(subVec)+semRatioVec(subVec),'-k','LineWidth',1);
+    plot(XPos_Degs(subVec),meanRatioVec(subVec)-semRatioVec(subVec),'-k','LineWidth',1);
 
     % Now mirror the vectors and plot the nasal arm
-    ratioMean = flipud(ratioMean);
-    ratioSEM = flipud(ratioSEM);
-    plot(XPos_Degs(subVec),ratioMean(subVec),'-r','LineWidth',2);
-    plot(XPos_Degs(subVec),ratioMean(subVec)+ratioSEM(subVec),'-r','LineWidth',1);
-    plot(XPos_Degs(subVec),ratioMean(subVec)-ratioSEM(subVec),'-r','LineWidth',1);
+    meanRatioVecFlip = flipud(meanRatioVec);
+    semRatioVecFlip = flipud(semRatioVec);
+    plot(XPos_Degs(subVec),meanRatioVecFlip(subVec),'-r','LineWidth',2);
+    plot(XPos_Degs(subVec),meanRatioVecFlip(subVec)+semRatioVecFlip(subVec),'-r','LineWidth',1);
+    plot(XPos_Degs(subVec),meanRatioVecFlip(subVec)-semRatioVecFlip(subVec),'-r','LineWidth',1);
     
     xlabel('Eccentricity [deg visual angle]');
     ylabel('Ratio GC/[GC+IP]');
     title(['Mean GC ratio profiles [+-SEM] for nasal (red) and temporal (black)'])
 end
 
+% Convert thickness to tissue volume. Start with an anonymous function that
+% provides mmPerDeg at the ellipsoidal pole of the vitreous chamber
+mmPerDeg = @(axialLength) (0.0165.*axialLength)-0.1070;
+
+gcVolumePerDegSq = zeros(size(gcVec));
+for ss = 1:length(subList)
+    idx = find(subjectTable.AOSO_ID==str2num(subList{ss}));
+    axialLength = subjectTable.Axial_Length_average(idx);
+    gcVolumePerDegSq(:,ss) = gcVec(:,ss).*mmPerDeg(axialLength).^2;
+end
+meanGCVolumePerDegSq = nanmean(gcVolumePerDegSq,2);
+meanGCVolumePerDegSq(badIdx) = nan;
+
+% Plot gc tissue volume functions
+if p.Results.showPlots
+    figure
+    plot(XPos_Degs,gcVolumePerDegSq,'-r');
+    hold on
+    plot(XPos_Degs,meanGCVolumePerDegSq,'-k','LineWidth',4);
+    xlabel('Eccentricity [deg visual angle]');
+    ylabel('GC tissue volume [mm^3] / deg^2');
+    title(['GC tissue volume profiles for each subject (and mean), n=',num2str(length(subList))])
+end
+
 
 %% Relate GC+IP thickness and ratio to axial length
 
 % Create a table of median thickness and axial length
-dataTable = cell2table([num2cell(str2double(subList)'),num2cell(nanmedian(thickVec)'),num2cell(nanmedian(ratioVec)')],'VariableNames',{'AOSO_ID','gcipMedianThick','medianRatio'});
+dataTable = cell2table([num2cell(str2double(subList)'),num2cell(nanmedian(thickVec)'),num2cell(nanmedian(ratioVec)'),num2cell(nanmedian(gcVolumePerDegSq)')],'VariableNames',{'AOSO_ID','gcipMedianThick','medianRatio','gcVolumePerDegSq'});
 
 % Join the data table with the subject biometry and demographics table,
 % using the AOSO_ID as the key variable
@@ -194,6 +243,19 @@ if p.Results.showPlots
     xlabel('Axial length [mm]');
     ylabel('median GC/(GC+IP) ratio');
     title(['Axial length vs. median ratio, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.medianRatio))])
+end
+
+% Plot median tissue volume vs axial length.
+if p.Results.showPlots
+    figure
+    plot(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq,'xr');
+    hold on
+    c = polyfit(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq,1);
+    plot(comboTable.Axial_Length_average,polyval(c,comboTable.Axial_Length_average),'--b')
+    axis square
+    xlabel('Axial length [mm]');
+    ylabel('median GC tissue volume [mm^3] / deg^2');
+    title(['Axial length vs. gc tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq))])
 end
 
 
