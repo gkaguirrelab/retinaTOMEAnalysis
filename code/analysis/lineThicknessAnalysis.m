@@ -1,4 +1,4 @@
-function lineThicknessAnalysis(GCIPthicknessFile, varargin)
+function comboTable=lineThicknessAnalysis(GCIPthicknessFile, varargin)
 % Do some analysis
 %
 % Description:
@@ -7,15 +7,15 @@ function lineThicknessAnalysis(GCIPthicknessFile, varargin)
 % Examples:
 %{
     dropboxBaseDir = getpref('retinaTOMEAnalysis','dropboxBaseDir');
-    GCIPthicknessFile = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','GCIP_thicknessesByDeg_7_18_2019.mat');
-    lineThicknessAnalysis(GCIPthicknessFile)
+    GCIPthicknessFile = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','GCIP_thicknessesByDeg');
+    comboTable=lineThicknessAnalysis(GCIPthicknessFile);
 %}
 
 %% Parse vargin for options passed here
 p = inputParser;
 
 % Required
-p.addRequired('dataDir',@ischar);
+p.addRequired('GCIPthicknessFile',@ischar);
 
 % Optional analysis params
 p.addParameter('showPlots',true,@islogical);
@@ -30,7 +30,6 @@ opts = detectImportOptions(p.Results.subjectTableFileName);
 subjectTable = readtable(p.Results.subjectTableFileName, opts);
 
 % Load the data file
-GCIPthicknessFile =    '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/AOSO_analysis/OCTExplorerExtendedHorizontalData/GCIP_thicknessesByDeg_7_18_2019.mat';
 load(GCIPthicknessFile)
 
 subList = {};
