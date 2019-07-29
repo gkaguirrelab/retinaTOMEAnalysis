@@ -114,4 +114,4 @@ for n = 1:N
     end
 end
 
-save(fullfile(dataDir,"GCIP_thicknessesByDeg_7_18_2019.mat"),'subIDs','dataAvailable','degPerPixel','eyeSideIndex','XPos_Pixels','XPos_Degs','GCthicknessValuesAtXPos','IPthicknessValuesAtXPos')
+save(fullfile(dataDir,"GCIP_thicknessesByDeg.mat"),'subIDs','dataAvailable','degPerPixel','eyeSideIndex','XPos_Pixels','XPos_Degs','GCthicknessValuesAtXPos','IPthicknessValuesAtXPos')

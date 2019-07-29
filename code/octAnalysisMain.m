@@ -70,6 +70,6 @@ dataDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizonta
 calcExtOCTGCIPThickness(dataDir)
 
 %% Analyze GC IP layers in the extended OCT 
-GCIPthicknessFile = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','GCIP_thicknessesByDeg_7_18_2019.mat');
+GCIPthicknessFile = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','GCIP_thicknessesByDeg.mat');
 analyzeGCIPExtendedOCT(GCIPthicknessFile)
 
