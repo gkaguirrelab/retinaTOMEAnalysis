@@ -3,6 +3,12 @@ function smoothManualSegGCIPExtOCT(dataDir)
 %OCT data and calculate and smooth the the manual segmentation boundaries
 %for the GCIP layers.
 
+
+% Sometimes stray pixels appear in the manual segmentation. If any
+% connected cluster of pixels is less than this threshold, remove these
+% specks from the segmentation.
+componentPixelThresh = 4;
+
 %search for all manual segmentations in the directory
 allSegs = subdir(fullfile(dataDir,'*seg*nii*'));
 
@@ -10,13 +16,7 @@ allSegs = subdir(fullfile(dataDir,'*seg*nii*'));
 for n = 1:length(allSegs)
     currSeg = allSegs(n).name;
     [currPath,currName,currExt]=fileparts(currSeg);
-    
-    %check if already processed
-    if(isfile(fullfile(currPath,'ManualBoundaries.mat')))
-        disp([fullfile(currPath,'ManualBoundaries.mat') ' found, skipping.'])
-  %      continue;
-    end
-    
+        
     %load the segmentation .nii
     segImg = niftiread(currSeg);
     segImg = rot90(segImg,-2);
@@ -51,7 +51,17 @@ for n = 1:length(allSegs)
     
     %calculate binary mask and find connected components 
     SegAvg_bw = SegAvg > 0;
-    CC=bwconncomp(SegAvg_bw);
+    
+    % Remove any stray components that are below the size threshold
+    CC=bwconncomp(SegAvg_bw);    
+    numPixels = cellfun(@numel,CC.PixelIdxList);    
+    if any(numPixels < componentPixelThresh)
+        removeIdx = find(numPixels < componentPixelThresh);
+        for bb = 1:length(removeIdx)
+            SegAvg_bw(CC.PixelIdxList{removeIdx(bb)})=0;
+        end
+        CC=bwconncomp(SegAvg_bw);
+    end
     
     %we expect exactly 3 connect components separated by the fovea and
     %optic disk, return error if more or fewer pieces are found
