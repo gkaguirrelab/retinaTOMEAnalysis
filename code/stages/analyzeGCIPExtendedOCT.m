@@ -25,20 +25,20 @@ figure(1)
 plot(XPos_Degs,GCthick_ValidAvgEyes)
 title(['GC Thicknesses (N = ' num2str(length(validInd)) ' )'])
 xlabel('Location (Degrees)')
-ylabel('Thickness (Pixel)')
+ylabel('Thickness (um)')
 
 figure(2)
 plot(XPos_Degs,IPthick_ValidAvgEyes);
 title(['IP Thicknesses (N = ' num2str(length(validInd)) ' )'])
 xlabel('Location (Degrees)')
-ylabel('Thickness (Pixel)')
+ylabel('Thickness (um)')
 
 figure(3)
 plot(XPos_Degs,[mean(GCthick_ValidAvgEyes,1); mean(IPthick_ValidAvgEyes,1)]);
 title(['Mean GC and IP Thicknesses (N = ' num2str(length(validInd)) ' )'])
 legend({'GC','IP'});
 xlabel('Location (Degrees)')
-ylabel('Thickness (Pixel)')
+ylabel('Thickness (um)')
 
 figure(4)
 prcntGC = GCthick_ValidAvgEyes./(GCthick_ValidAvgEyes+IPthick_ValidAvgEyes);
