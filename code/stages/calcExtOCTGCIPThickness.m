@@ -5,10 +5,11 @@ function calcExtOCTGCIPThickness(dataDir)
 %following variables:
 % XPos_Pixels[1xP] - The location of the measurements (which is now the same for all subjects, so a single vector)
 % XPos_Degs[1xP] - Same as above, but in units of degrees
-% GCthicknessValuesAtXPos[Nx2xP] - GC thickness values (Dims: 1-Subject, 2-OD/OS, 3-Layer Thickness Values)
-% IPthicknessValuesAtXPos[Nx2xP] - IP thickness values (Dims: 1-Subject, 2-OD/OS, 3-Layer Thickness Values)
+% GCthicknessValuesAtXPos_um[Nx2xP] - GC thickness values (Dims: 1-Subject, 2-OD/OS, 3-Layer Thickness Values)
+% IPthicknessValuesAtXPos_um[Nx2xP] - IP thickness values (Dims: 1-Subject, 2-OD/OS, 3-Layer Thickness Values)
 %
 % Other relevant variables:
+% Sub_AScanResolution_um[Nx2] - resolution (in micron) of the ascan for each subject's image (by eye)
 % dataAvailable[Nx2] - flag of whether the data is available for the subject (DIM1) and eye (DIM2, {OD,OS}).
 % degPerPixel[1] - static conversion ratio between deg/pixel, according to the machine.
 % subIDs[Nx1] - subject IDs, ordered the same as the first dimension of the thickness variables
@@ -19,8 +20,9 @@ N = length(allFiles);
 degPerPixel=30/1536;%30 degree fov
 XPos_Pixels = -1280:1280;%this covers a 25 degrees around the fovea
 XPos_Degs = XPos_Pixels*degPerPixel;%same locations in degrees
-GCthicknessValuesAtXPos = zeros(N,2,length(XPos_Pixels));%(SUB,{OD/OS},THICKNESS)
-IPthicknessValuesAtXPos = zeros(N,2,length(XPos_Pixels));%(SUB,{OD/OS},THICKNESS)
+GCthicknessValuesAtXPos_um = zeros(N,2,length(XPos_Pixels));%(SUB,{OD/OS},THICKNESS)
+IPthicknessValuesAtXPos_um = zeros(N,2,length(XPos_Pixels));%(SUB,{OD/OS},THICKNESS)
+Sub_AScanResolution = zeros(N,2);%Resolution
 eyeSideIndex = {'OD', 'OS'};
 dataAvailable = zeros(N,2);%(SUB, {OD/OS})
 subIDs = char({allFiles(:).name});
@@ -47,7 +49,6 @@ for n = 1:N
         end
         load(BoundaryFile);
 
-        
         %use segment edges to find fovea/disc centers
         [foveaL_Loc_x, foveaL_Loc_ind] = max(boundariesSmooth(segTemporal).GC_IP(:,1));
         foveaL_Loc_y = boundariesSmooth(segTemporal).GC_IP(foveaL_Loc_ind,2);
@@ -108,10 +109,12 @@ for n = 1:N
         minthicknessGC = boundaryDist(GC_IPFinal,GC_InnerFinal,1);
         minthicknessIP = boundaryDist(GC_IPFinal,IP_OuterFinal,1);
         
-        GCthicknessValuesAtXPos(n,s,:) = minthicknessGC;
-        IPthicknessValuesAtXPos(n,s,:) = minthicknessIP;
+        %Save in Microns
+        Sub_AScanResolution(n,s) = AscanRes*1000;
+        GCthicknessValuesAtXPos_um(n,s,:) = minthicknessGC*AscanRes*1000;
+        IPthicknessValuesAtXPos_um(n,s,:) = minthicknessIP*AscanRes*1000;
 
     end
 end
 
-save(fullfile(dataDir,"GCIP_thicknessesByDeg.mat"),'subIDs','dataAvailable','degPerPixel','eyeSideIndex','XPos_Pixels','XPos_Degs','GCthicknessValuesAtXPos','IPthicknessValuesAtXPos')
+save(fullfile(dataDir,"GCIP_thicknessesByDeg.mat"),'subIDs','dataAvailable','degPerPixel','eyeSideIndex','XPos_Pixels','XPos_Degs','GCthicknessValuesAtXPos_um','IPthicknessValuesAtXPos_um','Sub_AScanResolution')

@@ -14,16 +14,20 @@ allSegs = subdir(fullfile(dataDir,'*seg*nii*'));
 
 %process each segmentation
 for n = 1:length(allSegs)
+    ValidFlag = 1;
     currSeg = allSegs(n).name;
     [currPath,currName,currExt]=fileparts(currSeg);
         
     %load the segmentation .nii
+    
     segImg = niftiread(currSeg);
     segImg = rot90(segImg,-2);
     segImg = permute(segImg,[2 1 3]);
     
     %load the original montaged .nii
-    OCTImg = niftiread(strrep(strrep(currSeg,'_Segmentation',''),'.gz',''));
+    OCTFile = strrep(strrep(currSeg,'_Segmentation',''),'.gz','');
+    OCTInfo=niftiinfo(OCTFile);
+    OCTImg = niftiread(OCTFile);
     OCTImg = rot90(OCTImg,-2);
     OCTImg = permute(OCTImg,[2 1 3]);
     
@@ -66,7 +70,8 @@ for n = 1:length(allSegs)
     %we expect exactly 3 connect components separated by the fovea and
     %optic disk, return error if more or fewer pieces are found
     if(CC.NumObjects ~= 3)
-        disp(['Error:' fullfile(currPath,'ManualBoundaries.mat') ' incorrect number of segments, skipping.'])
+        disp(['Error:' fullfile(currPath,currSeg) ' incorrect number of segments, skipping.'])
+        ValidFlag = 0;
         continue;
     end
     
@@ -106,6 +111,15 @@ for n = 1:length(allSegs)
         
         %Pad ends
         padSize = 50;
+        
+        
+        if(isempty(Top) || isempty(Mid) || isempty(Bot)) 
+        disp(['Error:' fullfile(currPath,currSeg) ' missing boundaries, skipping.'])
+                ValidFlag=0;
+        continue;
+        end
+
+        
         TopPadded = padEnds(Top,padSize);
         MidPadded = padEnds(Mid,padSize);
         BotPadded = padEnds(Bot,padSize);
@@ -167,5 +181,8 @@ for n = 1:length(allSegs)
     %save the overlay images and the boundary data
     imwrite(overlay,fullfile(currPath,'AvgAll_Trans_wManual.tif'),'tif')
     imwrite(overlaySmooth,fullfile(currPath,['AvgAll_Trans_wManualSmooth_Padded_p' num2str(PolyLevel) '.tif']),'tif')
-    save(fullfile(currPath,'ManualBoundaries.mat'),'boundaries','boundariesSmooth','currSeg')
+    AscanRes = OCTInfo.PixelDimensions(2);%resolution of A-scans
+    if(ValidFlag) %only save if no errors were found
+        save(fullfile(currPath,'ManualBoundaries.mat'),'boundaries','boundariesSmooth','currSeg','AscanRes')
+    end
 end
