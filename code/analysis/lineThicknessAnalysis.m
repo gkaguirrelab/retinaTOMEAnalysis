@@ -35,6 +35,7 @@ load(GCIPthicknessFile)
 subList = {};
 thickVec = [];
 gcVec = [];
+ipVec = [];
 ratioVec = [];
 ratioOD = [];
 ratioOS = [];
@@ -45,22 +46,22 @@ thickOS = [];
 % are at it, confirm that there is a substantial correlation across
 % subjects between the left and right eye in the median of the ratio
 % functions.
-GCthicknessValuesAtXPos(GCthicknessValuesAtXPos==0)=nan;
-IPthicknessValuesAtXPos(IPthicknessValuesAtXPos==0)=nan;
+GCthicknessValuesAtXPos_um(GCthicknessValuesAtXPos_um==0)=nan;
+IPthicknessValuesAtXPos_um(IPthicknessValuesAtXPos_um==0)=nan;
 
 for ii = 1:50
-    if ~all(isnan(squeeze(GCthicknessValuesAtXPos(ii,1,:)))) && ...
-            ~all(isnan(squeeze(GCthicknessValuesAtXPos(ii,2,:))))
-        gcVecOD = squeeze(GCthicknessValuesAtXPos(ii,1,:));
-        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos(ii,2,:)));
+    if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) && ...
+            ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,2,:))))
+        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,:));
+        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,:)));
         gcVec(:,end+1) = mean([gcVecOD,gcVecOS],2,'includenan');
-        ipVecOD = squeeze(IPthicknessValuesAtXPos(ii,1,:));
-        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos(ii,2,:)));
-        ipVec = mean([ipVecOD,ipVecOS],2,'includenan');
+        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,:));
+        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,:)));
+        ipVec(:,end+1) = mean([ipVecOD,ipVecOS],2,'includenan');
 
         thickVecOD = sum([gcVecOD,ipVecOD],2,'includenan');
         thickVecOS = sum([gcVecOS,ipVecOS],2,'includenan');
-        thickVec(:,end+1) = sum([gcVec(:,end),ipVec],2,'includenan');
+        thickVec(:,end+1) = sum([gcVec(:,end),ipVec(:,end)],2,'includenan');
         ratioVecOD = gcVecOD./thickVecOD;
         ratioVecOS = gcVecOS./thickVecOS;
         ratioVec(:,end+1) = gcVec(:,end)./thickVec(:,end);
@@ -113,7 +114,6 @@ if p.Results.showPlots
     refline([1 0]);
 end
 
-
 % Plot the GC thickness functions
 if p.Results.showPlots
     figure
@@ -147,18 +147,18 @@ if p.Results.showPlots
     title(['GC ratio profiles for each subject (and mean), n=',num2str(length(subList))])
 end
 
-% median ratio vs. thickness
+% median GC vs. IP thickness
 if p.Results.showPlots
     figure
-    plot(nanmedian(thickVec),nanmedian(ratioVec),'xr');
+    plot(nanmedian(gcVec),nanmedian(ipVec),'xr');
     hold on
-    c = polyfit(nanmedian(thickVec),nanmedian(ratioVec),1);
-    plot(nanmedian(thickVec),polyval(c,nanmedian(thickVec)),'--b')
+    c = polyfit(nanmedian(gcVec),nanmedian(ipVec),1);
+    plot(nanmedian(gcVec),polyval(c,nanmedian(gcVec)),'--b')
 
     axis square
-    xlabel('median GC+IP thickness');
-    ylabel('median GC/(GC+IP) ratio');
-    title(['Individual variation in median GC/[GC+IP] thickness, r=',num2str(corr(nanmedian(thickVec)',nanmedian(ratioVec)'))])
+    xlabel('median GC thickness');
+    ylabel('median IP thickness');
+    title(['Individual variation in median GC/[GC+IP] thickness, r=',num2str(corr(nanmedian(gcVec)',nanmedian(ipVec)'))])
 end
 
 % Nasal vs. temporal ratio differences
