@@ -22,7 +22,7 @@ XPos_Pixels = -1280:1280;%this covers a 25 degrees around the fovea
 XPos_Degs = XPos_Pixels*degPerPixel;%same locations in degrees
 GCthicknessValuesAtXPos_um = zeros(N,2,length(XPos_Pixels));%(SUB,{OD/OS},THICKNESS)
 IPthicknessValuesAtXPos_um = zeros(N,2,length(XPos_Pixels));%(SUB,{OD/OS},THICKNESS)
-Sub_AScanResolution = zeros(N,2);%Resolution
+Sub_AScanResolution_um = zeros(N,2);%Resolution
 eyeSideIndex = {'OD', 'OS'};
 dataAvailable = zeros(N,2);%(SUB, {OD/OS})
 subIDs = char({allFiles(:).name});
@@ -110,11 +110,11 @@ for n = 1:N
         minthicknessIP = boundaryDist(GC_IPFinal,IP_OuterFinal,1);
         
         %Save in Microns
-        Sub_AScanResolution(n,s) = AscanRes*1000;
+        Sub_AScanResolution_um(n,s) = AscanRes*1000;
         GCthicknessValuesAtXPos_um(n,s,:) = minthicknessGC*AscanRes*1000;
         IPthicknessValuesAtXPos_um(n,s,:) = minthicknessIP*AscanRes*1000;
 
     end
 end
 
-save(fullfile(dataDir,"GCIP_thicknessesByDeg.mat"),'subIDs','dataAvailable','degPerPixel','eyeSideIndex','XPos_Pixels','XPos_Degs','GCthicknessValuesAtXPos_um','IPthicknessValuesAtXPos_um','Sub_AScanResolution')
+save(fullfile(dataDir,"GCIP_thicknessesByDeg.mat"),'subIDs','dataAvailable','degPerPixel','eyeSideIndex','XPos_Pixels','XPos_Degs','GCthicknessValuesAtXPos_um','IPthicknessValuesAtXPos_um','Sub_AScanResolution_um')
