@@ -37,10 +37,10 @@ thickVec = [];
 gcVec = [];
 ipVec = [];
 ratioVec = [];
-ratioOD = [];
-ratioOS = [];
-thickOD = [];
-thickOS = [];
+gcMedianOD = [];
+gcMedianOS = [];
+ipMedianOD = [];
+ipMedianOS = [];
 
 % Obtain the GC+IP thickness and ratio functions for each subject. While we
 % are at it, confirm that there is a substantial correlation across
@@ -50,28 +50,37 @@ GCthicknessValuesAtXPos_um(GCthicknessValuesAtXPos_um==0)=nan;
 IPthicknessValuesAtXPos_um(IPthicknessValuesAtXPos_um==0)=nan;
 
 for ii = 1:50
-    if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) && ...
+    if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) || ...
             ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,2,:))))
-        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,:));
-        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,:)));
-        gcVec(:,end+1) = mean([gcVecOD,gcVecOS],2,'includenan');
-        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,:));
-        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,:)));
-        ipVec(:,end+1) = mean([ipVecOD,ipVecOS],2,'includenan');
-
-        thickVecOD = sum([gcVecOD,ipVecOD],2,'includenan');
-        thickVecOS = sum([gcVecOS,ipVecOS],2,'includenan');
-        thickVec(:,end+1) = sum([gcVec(:,end),ipVec(:,end)],2,'includenan');
-        ratioVecOD = gcVecOD./thickVecOD;
-        ratioVecOS = gcVecOS./thickVecOS;
-        ratioVec(:,end+1) = gcVec(:,end)./thickVec(:,end);
+        
+        % We are keeping this subject
         subList(end+1) = {subIDs(ii,:)};
         
-        % Save some values from the left and right eye for diagnostic plots
-        thickOD(end+1) = nanmedian(thickVecOD);
-        thickOS(end+1) = nanmedian(thickVecOS);
-        ratioOD(end+1) = nanmedian(ratioVecOD);
-        ratioOS(end+1) = nanmedian(ratioVecOS);
+        % Get the data for each layer and eye
+        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,:));
+        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,:)));
+        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,:));
+        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,:)));
+        
+        % Detect if the data from one eye is missing
+        if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
+        gcVec(:,end+1) = mean([gcVecOD,gcVecOS],2,'includenan');
+        ipVec(:,end+1) = mean([ipVecOD,ipVecOS],2,'includenan');        
+        else
+        gcVec(:,end+1) = nanmean([gcVecOD,gcVecOS],2);
+        ipVec(:,end+1) = nanmean([ipVecOD,ipVecOS],2);        
+        end
+        
+        % Calculate the ratio and thickness vecs
+        thickVec(:,end+1) = sum([gcVec(:,end),ipVec(:,end)],2,'includenan');
+        ratioVec(:,end+1) = gcVec(:,end)./thickVec(:,end);
+        
+        % Save the median value for each eye and layer
+        gcMedianOD(end+1) = nanmedian(gcVecOD);
+        gcMedianOS(end+1) = nanmedian(gcVecOS);
+        ipMedianOD(end+1) = nanmedian(ipVecOD);
+        ipMedianOS(end+1) = nanmedian(ipVecOS);
+
     end
 end
 
@@ -90,29 +99,6 @@ semThickVec(badIdx)=nan;
 semRatioVec(badIdx)=nan;
 
 
-% Present a plot that demonstrates that there is individual variation in
-% the thickness of the GC+IP layer.
-if p.Results.showPlots
-    figure
-    plot(thickOD,thickOS,'xr');
-    axis square
-    xlabel('median GC+IP thickness [pixels] OD');
-    ylabel('median GC+IP thickness [pixels] OS');
-    title(['Individual variation in median GC+IP thickness, r=',num2str(corr(thickOD',thickOS'))])
-    refline([1 0]);
-end
-
-% Present a plot that demonstrates that there is individual variation in
-% the thickness of the GC layer relative to the GC+IP thickness.
-if p.Results.showPlots
-    figure
-    plot(ratioOD,ratioOS,'xr');
-    axis square
-    xlabel('median GC/(GC+IP) ratio OD');
-    ylabel('median GC/(GC+IP) ratio OS');
-    title(['Individual variation in median GC/[GC+IP] thickness, r=',num2str(corr(ratioOD',ratioOS'))])
-    refline([1 0]);
-end
 
 % Plot the GC thickness functions
 if p.Results.showPlots
@@ -150,15 +136,17 @@ end
 % median GC vs. IP thickness
 if p.Results.showPlots
     figure
-    plot(nanmedian(gcVec),nanmedian(ipVec),'xr');
+    aa = nanmean([gcMedianOD; gcMedianOS]);
+    bb = nanmean([ipMedianOD; ipMedianOS]);    
+    plot(aa,bb,'xr');
     hold on
-    c = polyfit(nanmedian(gcVec),nanmedian(ipVec),1);
-    plot(nanmedian(gcVec),polyval(c,nanmedian(gcVec)),'--b')
+    c = polyfit(aa,bb,1);
+    plot(aa,polyval(c,aa),'--b')
 
     axis square
     xlabel('median GC thickness');
     ylabel('median IP thickness');
-    title(['Individual variation in median GC/[GC+IP] thickness, r=',num2str(corr(nanmedian(gcVec)',nanmedian(ipVec)'))])
+    title(['GC vs IP median thickness across subjects, r=',num2str(corr(aa',bb'))])
 end
 
 % Nasal vs. temporal ratio differences
