@@ -92,10 +92,15 @@ for n = 1:length(allSegs)
         
         %for each Ascan we expect to find one of these boundaries
         for x = 1:XN
+            
+            if(~isempty(find(currSect(:,x)>2,1)))
+                continue;
+            end
+            
             ty=find(currSect(:,x)>0,1,'first');
             my=find(currSect(:,x)>1,1,'first');
-            by=find(currSect(:,x)>0,1,'last');
-            
+            by=find(currSect(:,x)>0,1,'last');        
+             
             %save boundary location (X,Y) at each Ascan
             if(~isempty(ty))
                 Top = [Top ; x ty];

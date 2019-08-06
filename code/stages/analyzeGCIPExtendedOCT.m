@@ -7,6 +7,7 @@ load(GCIPthicknessFile);
 validInd = find(sum(dataAvailable,2) > 1);
 N = size(validInd);
 %only load cases where data exists for both eyes
+subIDs_Valid = subIDs(validInd,:);
 GCthick_Valid = GCthicknessValuesAtXPos_um(validInd,:,:);
 IPthick_Valid = IPthicknessValuesAtXPos_um(validInd,:,:);
 
@@ -20,6 +21,16 @@ IPthick_Valid_OS_flipped = squeeze(flip(IPthick_Valid(:,2,:),3));
 GCthick_ValidAvgEyes = (GCthick_Valid_OD+GCthick_Valid_OS_flipped)/2;
 IPthick_ValidAvgEyes = (IPthick_Valid_OD+IPthick_Valid_OS_flipped)/2;
 
+
+
+% figure(1)
+% for i = 1:size(GCthick_ValidAvgEyes,1)
+% plot(XPos_Degs,GCthick_ValidAvgEyes(i,:))
+% i
+% subIDs_Valid(i,:)
+% 
+% pause
+% end
 %plot(XPos_Degs,GCthicknessValuesAtXPos_ValidAvg)
 figure(1)
 plot(XPos_Degs,GCthick_ValidAvgEyes)
