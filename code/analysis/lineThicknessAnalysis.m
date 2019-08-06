@@ -176,6 +176,7 @@ end
 % provides mmPerDeg at the ellipsoidal pole of the vitreous chamber
 mmPerDeg = @(axialLength) (0.0165.*axialLength)-0.1070;
 
+% Perform the calculation for the GC layer
 gcVolumePerDegSq = zeros(size(gcVec));
 for ss = 1:length(subList)
     idx = find(subjectTable.AOSO_ID==str2num(subList{ss}));
@@ -184,6 +185,17 @@ for ss = 1:length(subList)
 end
 meanGCVolumePerDegSq = nanmean(gcVolumePerDegSq,2);
 meanGCVolumePerDegSq(badIdx) = nan;
+
+% Perform the calculation for the IP layer
+ipVolumePerDegSq = zeros(size(ipVec));
+for ss = 1:length(subList)
+    idx = find(subjectTable.AOSO_ID==str2num(subList{ss}));
+    axialLength = subjectTable.Axial_Length_average(idx);
+    ipVolumePerDegSq(:,ss) = ipVec(:,ss).*mmPerDeg(axialLength).^2;
+end
+meanIPVolumePerDegSq = nanmean(ipVolumePerDegSq,2);
+meanIPVolumePerDegSq(badIdx) = nan;
+
 
 % Plot gc tissue volume functions
 if p.Results.showPlots
@@ -200,7 +212,7 @@ end
 %% Relate GC+IP thickness and ratio to axial length
 
 % Create a table of median thickness and axial length
-dataTable = cell2table([num2cell(str2double(subList)'),num2cell(nanmedian(gcVec)'),num2cell(nanmedian(thickVec)'),num2cell(nanmedian(ratioVec)'),num2cell(nanmedian(gcVolumePerDegSq)')],'VariableNames',{'AOSO_ID','gcMedianThick','gcipMedianThick','medianRatio','gcVolumePerDegSq'});
+dataTable = cell2table([num2cell(str2double(subList)'),num2cell(nanmedian(gcVec)'),num2cell(nanmedian(ipVec)'),num2cell(nanmedian(thickVec)'),num2cell(nanmedian(ratioVec)'),num2cell(nanmedian(gcVolumePerDegSq)'),num2cell(nanmedian(ipVolumePerDegSq)')],'VariableNames',{'AOSO_ID','gcMedianThick','ipMedianThick','gcipMedianThick','medianRatio','gcVolumePerDegSq','ipVolumePerDegSq'});
 
 % Join the data table with the subject biometry and demographics table,
 % using the AOSO_ID as the key variable
@@ -219,6 +231,20 @@ if p.Results.showPlots
     title(['Axial length vs. median GC thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcMedianThick))])
 end
 
+% Plot IP thickness vs axial length.
+if p.Results.showPlots
+    figure
+    plot(comboTable.Axial_Length_average,comboTable.ipMedianThick,'xr');
+    hold on
+    c = polyfit(comboTable.Axial_Length_average,comboTable.ipMedianThick,1);
+    plot(comboTable.Axial_Length_average,polyval(c,comboTable.Axial_Length_average),'--b')
+    axis square
+    xlabel('Axial length [mm]');
+    ylabel('median IP thickness [microns]');
+    title(['Axial length vs. median IP thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.ipMedianThick))])
+end
+
+
 % Plot ratio vs axial length.
 if p.Results.showPlots
     figure
@@ -232,7 +258,7 @@ if p.Results.showPlots
     title(['Axial length vs. median ratio, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.medianRatio))])
 end
 
-% Plot median tissue volume vs axial length.
+% Plot median GC tissue volume vs axial length.
 if p.Results.showPlots
     figure
     plot(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq,'xr');
@@ -245,5 +271,18 @@ if p.Results.showPlots
     title(['Axial length vs. gc tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq))])
 end
 
+% Plot median GC+IP tissue volume vs axial length.
+if p.Results.showPlots
+    figure
+    sumVec = comboTable.gcVolumePerDegSq+comboTable.ipVolumePerDegSq;
+    plot(comboTable.Axial_Length_average,sumVec,'xr');
+    hold on
+    c = polyfit(comboTable.Axial_Length_average,sumVec,1);
+    plot(comboTable.Axial_Length_average,polyval(c,comboTable.Axial_Length_average),'--b')
+    axis square
+    xlabel('Axial length [mm]');
+    ylabel('median GC+IP tissue volume [mm^3] / deg^2');
+    title(['Axial length vs. gc+ip tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,sumVec))])
+end
 
 end
