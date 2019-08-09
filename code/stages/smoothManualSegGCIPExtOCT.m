@@ -7,7 +7,7 @@ function smoothManualSegGCIPExtOCT(dataDir)
 % Sometimes stray pixels appear in the manual segmentation. If any
 % connected cluster of pixels is less than this threshold, remove these
 % specks from the segmentation.
-componentPixelThresh = 4;
+componentPixelThresh = 10;
 
 %search for all manual segmentations in the directory
 allSegs = subdir(fullfile(dataDir,'*seg*nii*'));
