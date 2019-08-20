@@ -58,7 +58,9 @@ setpref(projectName,'projectBaseDir',projectBaseDir); % main directory path
 % ID in the vlfeatroot variable below.
 VLFEATROOT = fullfile(userpath(),'src','vlfeat-0.9.21');
 run(fullfile(VLFEATROOT,'toolbox','vl_setup'));
+fprintf('**************************\n');
 fprintf('vlfeat version: ');
 vl_version
+fprintf('**************************\n');
 
 end

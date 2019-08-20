@@ -19,6 +19,7 @@ p.addRequired('GCIPthicknessFile',@ischar);
 
 % Optional analysis params
 p.addParameter('showPlots',true,@islogical);
+p.addParameter('dataSaveName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'), 'AOSO_analysis','OCTExplorerExtendedHorizontalData','LineAnalysisResults.mat'),@ischar);
 p.addParameter('figSaveDir','/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/_Papers/Aguirre_2019_rgcCorticalAnatomy/VSS2019/raw figures/horizontalLine',@ischar);
 p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 
@@ -284,5 +285,7 @@ if p.Results.showPlots
     ylabel('median GC+IP tissue volume [mm^3] / deg^2');
     title(['Axial length vs. gc+ip tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,sumVec))])
 end
+
+save(p.Results.dataSaveName,'XPos_Degs','meanGCVec');
 
 end
