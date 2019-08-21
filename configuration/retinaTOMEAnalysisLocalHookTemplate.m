@@ -16,10 +16,7 @@ function retinaTOMEAnalysisLocalHook
  
 %% Define project
 projectName = 'retinaTOMEAnalysis';
- 
-%% Say hello
-fprintf('Running % local hook\n',projectName);
- 
+  
 %% Clear out old preferences
 if (ispref(projectName))
     rmpref(projectName);
@@ -57,10 +54,14 @@ setpref(projectName,'projectBaseDir',projectBaseDir); % main directory path
 % version from vlfeat.org. Unpack within userpath/src/. Update the version
 % ID in the vlfeatroot variable below.
 VLFEATROOT = fullfile(userpath(),'src','vlfeat-0.9.21');
-run(fullfile(VLFEATROOT,'toolbox','vl_setup'));
-fprintf('**************************\n');
-fprintf('vlfeat version: ');
-vl_version
-fprintf('**************************\n');
+try
+    run(fullfile(VLFEATROOT,'toolbox','vl_setup'));
+    fprintf('**********************\n');
+    fprintf('vlfeat version: ');
+    vl_version
+    fprintf('**********************\n');
+catch
+    error('vlfeat is not installed. Check retinaTOMEAnalysisLocalHook for instructions.');
+end
 
 end
