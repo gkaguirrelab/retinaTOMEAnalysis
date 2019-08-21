@@ -272,6 +272,21 @@ if p.Results.showPlots
     title(['Axial length vs. gc tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq))])
 end
 
+% Need to deal with Nans here
+[coeff,score,~,~,explained,mu] = pca(gcVolumePerDegSq,'Centered',false);
+if p.Results.showPlots
+    figure
+    plot(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq,'xr');
+    hold on
+    c = polyfit(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq,1);
+    plot(comboTable.Axial_Length_average,polyval(c,comboTable.Axial_Length_average),'--b')
+    axis square
+    xlabel('Axial length [mm]');
+    ylabel('median GC tissue volume [mm^3] / deg^2');
+    title(['Axial length vs. gc tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq))])
+end
+
+
 % Plot median GC+IP tissue volume vs axial length.
 if p.Results.showPlots
     figure
