@@ -273,7 +273,7 @@ if p.Results.showPlots
 end
 
 % Need to deal with Nans here
-[coeff,score,~,~,explained,mu] = pca(gcVolumePerDegSq,'Centered',false);
+[coeff,score,~,~,explained,mu] = pca(gcVolumePerDegSq,'Centered',true);
 if p.Results.showPlots
     figure
     plot(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq,'xr');
