@@ -4,6 +4,7 @@
 	"hook": "",
 	"importance": "",
 	"localHookTemplate": "configuration/retinaTOMEAnalysisLocalHookTemplate.m",
+	"printLocalHookOutput": "1",
 	"name": "retinaTOMEAnalysis",
 	"pathPlacement": "append",
 	"subfolder": "code",
