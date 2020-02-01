@@ -17,11 +17,18 @@ p = inputParser;
 % Required
 p.addRequired('GCIPthicknessFile',@ischar);
 
+
+
 % Optional analysis params
+
 p.addParameter('showPlots',true,@islogical);
 p.addParameter('dataSaveName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'), 'AOSO_analysis','OCTExplorerExtendedHorizontalData','LineAnalysisResults.mat'),@ischar);
 p.addParameter('figSaveDir','/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/_Papers/Aguirre_2019_rgcCorticalAnatomy/VSS2019/raw figures/horizontalLine',@ischar);
 p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
+
+% p.addParameter('dataSaveName',fullfile('C:\Users\dontm\Dropbox (Aguirre-Brainard Lab)', 'AOSO_analysis','OCTExplorerExtendedHorizontalData','LineAnalysisResults.mat'),@ischar);
+% p.addParameter('figSaveDir','C:\Users\dontm\Dropbox (Personal)\Research\Publications\Connectome_RetinaAnalysis_2019\figures',@ischar);
+% p.addParameter('subjectTableFileName',fullfile('C:\Users\dontm\Dropbox (Aguirre-Brainard Lab)','TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 
 %% Parse and check the parameters
 p.parse(GCIPthicknessFile, varargin{:});
@@ -65,11 +72,11 @@ for ii = 1:50
         
         % Detect if the data from one eye is missing
         if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
-        gcVec(:,end+1) = mean([gcVecOD,gcVecOS],2,'includenan');
-        ipVec(:,end+1) = mean([ipVecOD,ipVecOS],2,'includenan');        
+            gcVec(:,end+1) = mean([gcVecOD,gcVecOS],2,'includenan');
+            ipVec(:,end+1) = mean([ipVecOD,ipVecOS],2,'includenan');
         else
-        gcVec(:,end+1) = nanmean([gcVecOD,gcVecOS],2);
-        ipVec(:,end+1) = nanmean([ipVecOD,ipVecOS],2);        
+            gcVec(:,end+1) = nanmean([gcVecOD,gcVecOS],2);
+            ipVec(:,end+1) = nanmean([ipVecOD,ipVecOS],2);
         end
         
         % Calculate the ratio and thickness vecs
@@ -81,7 +88,7 @@ for ii = 1:50
         gcMedianOS(end+1) = nanmedian(gcVecOS);
         ipMedianOD(end+1) = nanmedian(ipVecOD);
         ipMedianOS(end+1) = nanmedian(ipVecOS);
-
+        
     end
 end
 
@@ -100,67 +107,37 @@ semThickVec(badIdx)=nan;
 semRatioVec(badIdx)=nan;
 
 
-
+close all
 % Plot the GC thickness functions
-if p.Results.showPlots
-    figure
-    plot(XPos_Degs,gcVec,'-r');
-    hold on
-    plot(XPos_Degs,meanGCVec,'-k','LineWidth',4);
-    xlabel('Eccentricity [deg visual angle]');
-    ylabel('Thickness [microns]');
-    title(['GC thickness profiles for each subject (and mean), n=',num2str(length(subList))])
-end
+profilePlot(XPos_Degs, gcVec, meanGCVec, 'Eccentricity [deg visual angle]','Thickness [microns]', ...
+    ['GC thickness profiles for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
 
 % Plot the GC+IP thickness functions
-if p.Results.showPlots
-    figure
-    plot(XPos_Degs,thickVec,'-r');
-    hold on
-    plot(XPos_Degs,meanThickVec,'-k','LineWidth',4);
-    xlabel('Eccentricity [deg visual angle]');
-    ylabel('Thickness [microns]');
-    title(['GC+IP thickness profiles for each subject (and mean), n=',num2str(length(subList))])
-end
+profilePlot(XPos_Degs, thickVec, meanThickVec, 'Eccentricity [deg visual angle]','Thickness [microns]', ...
+    ['GC+IP thickness profiles for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
 
 % Plot the ratio functions
-if p.Results.showPlots
-    figure
-    plot(XPos_Degs,ratioVec,'-r');
-    hold on
-    plot(XPos_Degs,meanRatioVec,'-k','LineWidth',4);
-    xlabel('Eccentricity [deg visual angle]');
-    ylabel('Ratio GC/[GC+IP]');
-    title(['GC ratio profiles for each subject (and mean), n=',num2str(length(subList))])
-end
+profilePlot(XPos_Degs, ratioVec, meanRatioVec, 'Eccentricity [deg visual angle]','Ratio GC/[GC+IP]', ...
+    ['GC ratio profiles for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
 
 % median GC vs. IP thickness
-if p.Results.showPlots
-    figure
-    aa = nanmean([gcMedianOD; gcMedianOS]);
-    bb = nanmean([ipMedianOD; ipMedianOS]);    
-    plot(aa,bb,'xr');
-    hold on
-    c = polyfit(aa,bb,1);
-    plot(aa,polyval(c,aa),'--b')
+aa = nanmean([gcMedianOD; gcMedianOS]);
+bb = nanmean([ipMedianOD; ipMedianOS]);
+regressionPlot(aa, bb, 'median GC thickness','median IP thickness', ...
+    ['GC vs IP median thickness across subjects, r=',num2str(corr(aa',bb'))],p.Results.showPlots)
 
-    axis square
-    xlabel('median GC thickness');
-    ylabel('median IP thickness');
-    title(['GC vs IP median thickness across subjects, r=',num2str(corr(aa',bb'))])
-end
 
 % Nasal vs. temporal ratio differences
 if p.Results.showPlots
     figure
     subVec = 1:floor(length(XPos_Degs)/2);
-
+    
     % Plot the temporal arm
     plot(XPos_Degs(subVec),meanRatioVec(subVec),'-k','LineWidth',2);
     hold on
     plot(XPos_Degs(subVec),meanRatioVec(subVec)+semRatioVec(subVec),'-k','LineWidth',1);
     plot(XPos_Degs(subVec),meanRatioVec(subVec)-semRatioVec(subVec),'-k','LineWidth',1);
-
+    
     % Now mirror the vectors and plot the nasal arm
     meanRatioVecFlip = flipud(meanRatioVec);
     semRatioVecFlip = flipud(semRatioVec);
@@ -178,11 +155,16 @@ end
 mmPerDeg = @(axialLength) (0.0165.*axialLength)-0.1070;
 
 % Perform the calculation for the GC layer
+totalVolumePerDegSq = zeros(size(gcVec));
 gcVolumePerDegSq = zeros(size(gcVec));
+AreaPerDegSq = zeros(size(gcVec));
+
 for ss = 1:length(subList)
     idx = find(subjectTable.AOSO_ID==str2num(subList{ss}));
     axialLength = subjectTable.Axial_Length_average(idx);
-    gcVolumePerDegSq(:,ss) = gcVec(:,ss).*mmPerDeg(axialLength).^2;
+    totalVolumePerDegSq(:,ss) = (gcVec(:,ss)).*mmPerDeg(axialLength).^2;
+    gcVolumePerDegSq(:,ss) = (gcVec(:,ss)).*mmPerDeg(axialLength).^2;
+    AreaPerDegSq(:,ss) = mmPerDeg(axialLength).^2;
 end
 meanGCVolumePerDegSq = nanmean(gcVolumePerDegSq,2);
 meanGCVolumePerDegSq(badIdx) = nan;
@@ -199,107 +181,159 @@ meanIPVolumePerDegSq(badIdx) = nan;
 
 
 % Plot gc tissue volume functions
-if p.Results.showPlots
-    figure
-    plot(XPos_Degs,gcVolumePerDegSq,'-r');
-    hold on
-    plot(XPos_Degs,meanGCVolumePerDegSq,'-k','LineWidth',4);
-    xlabel('Eccentricity [deg visual angle]');
-    ylabel('GC tissue volume [mm^3] / deg^2');
-    title(['GC tissue volume profiles for each subject (and mean), n=',num2str(length(subList))])
-end
-
+profilePlot(XPos_Degs, gcVolumePerDegSq, meanGCVolumePerDegSq, 'Eccentricity [deg visual angle]','GC tissue volume [mm^3] / deg^2', ...
+    ['GC tissue volume profiles for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
 
 %% Relate GC+IP thickness and ratio to axial length
 
 % Create a table of median thickness and axial length
-dataTable = cell2table([num2cell(str2double(subList)'),num2cell(nanmedian(gcVec)'),num2cell(nanmedian(ipVec)'),num2cell(nanmedian(thickVec)'),num2cell(nanmedian(ratioVec)'),num2cell(nanmedian(gcVolumePerDegSq)'),num2cell(nanmedian(ipVolumePerDegSq)')],'VariableNames',{'AOSO_ID','gcMedianThick','ipMedianThick','gcipMedianThick','medianRatio','gcVolumePerDegSq','ipVolumePerDegSq'});
+dataTable = cell2table([num2cell(str2double(subList)'),num2cell(nanmedian(gcVec)'),num2cell(nanmedian(ipVec)'),num2cell(nanmedian(thickVec)'),num2cell(nanmedian(ratioVec)'),num2cell(nanmedian(gcVolumePerDegSq)'),num2cell(nanmedian(ipVolumePerDegSq)')],...
+    'VariableNames',{'AOSO_ID','gcMedianThick','ipMedianThick','gcipMedianThick','medianRatio','gcVolumePerDegSq','ipVolumePerDegSq'});
 
 % Join the data table with the subject biometry and demographics table,
 % using the AOSO_ID as the key variable
 comboTable = join(dataTable,subjectTable,'Keys','AOSO_ID');
 
 % Plot GC thickness vs axial length.
-if p.Results.showPlots
-    figure
-    plot(comboTable.Axial_Length_average,comboTable.gcMedianThick,'xr');
-    hold on
-    c = polyfit(comboTable.Axial_Length_average,comboTable.gcMedianThick,1);
-    plot(comboTable.Axial_Length_average,polyval(c,comboTable.Axial_Length_average),'--b')
-    axis square
-    xlabel('Axial length [mm]');
-    ylabel('median GC thickness [microns]');
-    title(['Axial length vs. median GC thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcMedianThick))])
-end
+regressionPlot(comboTable.Axial_Length_average, comboTable.gcMedianThick, 'Axial length [mm]','median GC thickness [microns]', ...
+    ['Axial length vs. median GC thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcMedianThick))],p.Results.showPlots)
 
 % Plot IP thickness vs axial length.
-if p.Results.showPlots
-    figure
-    plot(comboTable.Axial_Length_average,comboTable.ipMedianThick,'xr');
-    hold on
-    c = polyfit(comboTable.Axial_Length_average,comboTable.ipMedianThick,1);
-    plot(comboTable.Axial_Length_average,polyval(c,comboTable.Axial_Length_average),'--b')
-    axis square
-    xlabel('Axial length [mm]');
-    ylabel('median IP thickness [microns]');
-    title(['Axial length vs. median IP thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.ipMedianThick))])
-end
-
+regressionPlot(comboTable.Axial_Length_average, comboTable.ipMedianThick, 'Axial length [mm]','median IP thickness [microns]', ...
+    ['Axial length vs. median IP thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.ipMedianThick))],p.Results.showPlots)
 
 % Plot ratio vs axial length.
-if p.Results.showPlots
-    figure
-    plot(comboTable.Axial_Length_average,comboTable.medianRatio,'xr');
-    hold on
-    c = polyfit(comboTable.Axial_Length_average,comboTable.medianRatio,1);
-    plot(comboTable.Axial_Length_average,polyval(c,comboTable.Axial_Length_average),'--b')
-    axis square
-    xlabel('Axial length [mm]');
-    ylabel('median GC/(GC+IP) ratio');
-    title(['Axial length vs. median ratio, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.medianRatio))])
-end
+regressionPlot(comboTable.Axial_Length_average, comboTable.medianRatio, 'Axial length [mm]','median GC/(GC+IP) ratio', ...
+    ['Axial length vs. median ratio, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.medianRatio))],p.Results.showPlots)
 
 % Plot median GC tissue volume vs axial length.
-if p.Results.showPlots
-    figure
-    plot(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq,'xr');
-    hold on
-    c = polyfit(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq,1);
-    plot(comboTable.Axial_Length_average,polyval(c,comboTable.Axial_Length_average),'--b')
-    axis square
-    xlabel('Axial length [mm]');
-    ylabel('median GC tissue volume [mm^3] / deg^2');
-    title(['Axial length vs. gc tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq))])
-end
+regressionPlot(comboTable.Axial_Length_average, comboTable.gcVolumePerDegSq, 'Axial length [mm]','median GC tissue volume [mm^3] / deg^2', ...
+    ['Axial length vs. gc tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq))],p.Results.showPlots)
 
-% Need to deal with Nans here
-[coeff,score,~,~,explained,mu] = pca(gcVolumePerDegSq,'Centered',true);
-if p.Results.showPlots
-    figure
-    plot(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq,'xr');
-    hold on
-    c = polyfit(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq,1);
-    plot(comboTable.Axial_Length_average,polyval(c,comboTable.Axial_Length_average),'--b')
-    axis square
-    xlabel('Axial length [mm]');
-    ylabel('median GC tissue volume [mm^3] / deg^2');
-    title(['Axial length vs. gc tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq))])
-end
+% Plot median GC thickness vs median GC tissue volume.
+regressionPlot(comboTable.gcMedianThick, comboTable.gcVolumePerDegSq, 'median GC thickness [micron]','median GC tissue volume [mm^3] / deg^2', ...
+    ['gc thickness vs. gc tissue volume, r=',num2str(corr(comboTable.gcMedianThick,comboTable.gcVolumePerDegSq))],p.Results.showPlots)
 
 
 % Plot median GC+IP tissue volume vs axial length.
+sumVec = comboTable.gcVolumePerDegSq+comboTable.ipVolumePerDegSq;
+regressionPlot(comboTable.Axial_Length_average, sumVec, 'Axial length [mm]','median GC+IP tissue volume [mm^3] / deg^2', ...
+    ['Axial length vs. gc+ip tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,sumVec))],p.Results.showPlots)
+
+%p.Results.showPlots=1;
+% Plot r values of GC tissue volume vs axial length across Ecc
 if p.Results.showPlots
     figure
-    sumVec = comboTable.gcVolumePerDegSq+comboTable.ipVolumePerDegSq;
-    plot(comboTable.Axial_Length_average,sumVec,'xr');
-    hold on
-    c = polyfit(comboTable.Axial_Length_average,sumVec,1);
-    plot(comboTable.Axial_Length_average,polyval(c,comboTable.Axial_Length_average),'--b')
-    axis square
-    xlabel('Axial length [mm]');
-    ylabel('median GC+IP tissue volume [mm^3] / deg^2');
-    title(['Axial length vs. gc+ip tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,sumVec))])
+    corrGCVolumePerDegSq=zeros(1,size(gcVolumePerDegSq,1));
+    for i = 1:size(gcVolumePerDegSq,1)
+        corrGCVolumePerDegSq(i)= corr(comboTable.Axial_Length_average,gcVolumePerDegSq(i,:)', 'rows','complete');
+    end
+    plot(XPos_Degs,corrGCVolumePerDegSq,'-k','LineWidth',4);
+    xlabel('Eccentricity (deg)');
+    ylabel('Correlation Coefficient, r ');
 end
+
+
+% Plot linear slope of GC tissue volume vs axial length across Ecc
+if p.Results.showPlots
+    figure
+    [YData, YData_errTop,YData_errBot] = slopeAtEcc(gcVolumePerDegSq,comboTable.Axial_Length_average,0,0);
+    
+    plot(XPos_Degs,YData,'-k','LineWidth',2);
+    xlabel('Eccentricity (deg)');
+    ylabel('Regression Slope');
+    %    ylabel('Regression Intercept');
+    %    ylabel('Regression Slope As Percent of Total Volume');
+    
+    figure
+    plot(XPos_Degs,YData,'-k','LineWidth',2);
+    hold on
+    plot(XPos_Degs,squeeze(YData_errTop),'-r','LineWidth',2);
+    plot(XPos_Degs,squeeze(YData_errBot),'-r','LineWidth',2);
+    hold off
+    
+    xlabel('Eccentricity (deg)');
+    ylabel('Regression Slope');
+    %    ylabel('Regression Intercept');
+    %    ylabel('Regression Slope As Percent of Total Volume');
+    
+end
+
+% Plot linear slope of area expansion vs axial length across Ecc
+if p.Results.showPlots
+    figure
+    [YData2, YData_errTop,YData_errBot] = slopeAtEcc(AreaPerDegSq,comboTable.Axial_Length_average,0,0);
+    
+    plot(XPos_Degs,YData2,'-k','LineWidth',2);
+    xlabel('Eccentricity (deg)');
+    %    ylabel('Regression Slope');
+    %    ylabel('Regression Intercept');
+    ylabel('Regression Slope');
+    
+    figure
+    plot(XPos_Degs,YData2,'-k','LineWidth',2);
+    hold on
+    plot(XPos_Degs,squeeze(YData_errTop),'-r','LineWidth',2);
+    plot(XPos_Degs,squeeze(YData_errBot),'-r','LineWidth',2);
+    hold off
+    xlabel('Eccentricity (deg)');
+    ylabel('Regression Slope');
+    
+    figure
+    plot(XPos_Degs,YData./YData2,'-k','LineWidth',2);
+    
+end
+
+%plot slope of gc volume vs area
+if p.Results.showPlots
+    figure
+    [YData2, YData_errTop,YData_errBot] = slopeAtEcc2(gcVolumePerDegSq,AreaPerDegSq,0,0);
+    
+    plot(XPos_Degs,YData2,'-k','LineWidth',2);
+    xlabel('Eccentricity (deg)');
+    %    ylabel('Regression Slope');
+    %    ylabel('Regression Intercept');
+    ylabel('Regression Slope');
+    
+    figure
+    plot(XPos_Degs,YData2,'-k','LineWidth',2);
+    hold on
+    plot(XPos_Degs,squeeze(YData_errTop),'-r','LineWidth',2);
+    plot(XPos_Degs,squeeze(YData_errBot),'-r','LineWidth',2);
+    hold off
+    xlabel('Eccentricity (deg)');
+    ylabel('Regression Slope');
+    
+end
+
+
+%PCA Anlaysis
+%work in progress
+% Need to deal with Nans here
+%k=0:.05:30;
+k=0:.01:1;
+w=nanmean(nanmean(gcVec,2))';
+slope = zeros(1,length(k));
+for i = 1:length(k)
+slope(i) = gcPCAcorrCostFunction(k(i),totalVolumePerDegSq,gcVec,AreaPerDegSq,comboTable.Axial_Length_average);
+
+end
+
+figure
+plot(k,slope)
+axis square
+xlabel('Stromal Comparment Thickness (fraction of Mean GC profile) ');
+ylabel('Slope of GC PC1 Score vs Axial Length');
+%title('Slope of GC PC1 Score vs Axial Length')
+
+ylabel('Slope of Median GC Volume vs Axial Length');
+%title('Slope of GC Volume vs Axial Length')
+
+figure
+gcVolumePerDegSq_adjusted = totalVolumePerDegSq - (.7*(nanmean(gcVec,2)*ones(1,50)).*AreaPerDegSq);
+
+profilePlot(XPos_Degs, gcVolumePerDegSq_adjusted, nanmean(gcVolumePerDegSq_adjusted,2), 'Eccentricity [deg visual angle]','Thickness [microns]', ...
+    ['GC thickness profiles for each subject (and mean) after adjustment, n=',num2str(length(subList))],1)
 
 save(p.Results.dataSaveName,'XPos_Degs','meanGCVec');
 
