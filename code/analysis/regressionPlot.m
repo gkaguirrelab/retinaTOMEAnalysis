@@ -1,7 +1,7 @@
 function regressionPlot(xVal, yVal, plotxlabel, plotylabel, plotTitle,plotFlag)
 
 if plotFlag
-    figure(1)
+    figure
     plot(xVal,yVal,'xr');
     hold on
     c = polyfit(xVal,yVal,1);
