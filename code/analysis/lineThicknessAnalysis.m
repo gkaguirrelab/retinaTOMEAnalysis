@@ -311,30 +311,41 @@ end
 %work in progress
 % Need to deal with Nans here
 %k=0:.05:30;
-k=0:.01:1;
+k=0:.01:1;%step size
 w=nanmean(nanmean(gcVec,2))';
 slope = zeros(1,length(k));
 for i = 1:length(k)
-slope(i) = gcPCAcorrCostFunction(k(i),totalVolumePerDegSq,gcVec,AreaPerDegSq,comboTable.Axial_Length_average);
-
+slope(i) = gcPCAcorrCostFunction(k(i),totalVolumePerDegSq,gcVec,AreaPerDegSq,comboTable.Axial_Length_average,XPos_Degs);
 end
 
+%plot the cose function
 figure
-plot(k,slope)
+plot(k,abs(slope))
 axis square
-xlabel('Stromal Comparment Thickness (fraction of Mean GC profile) ');
-ylabel('Slope of GC PC1 Score vs Axial Length');
-%title('Slope of GC PC1 Score vs Axial Length')
-
+xlabel('Stromal Component Thickness (fraction of PC1 of GC profile) ');
 ylabel('Slope of Median GC Volume vs Axial Length');
-%title('Slope of GC Volume vs Axial Length')
 
+%find the optimal point of the cost function
+[~,minInd]=min(abs(slope));
+
+[slope_optimal, adjustedgcVolumePerDegSq_optimal] = gcPCAcorrCostFunction(k(minInd),totalVolumePerDegSq,gcVec,AreaPerDegSq,comboTable.Axial_Length_average,XPos_Degs);
+
+
+%plot regression at current point
+adjustedgcVolumePerDegSq_optimal_median=nanmedian(adjustedgcVolumePerDegSq_optimal,2);
+regressionPlot(comboTable.Axial_Length_average, adjustedgcVolumePerDegSq_optimal_median, 'Axial length [mm]','Adjusted tissue volume [mm^3] / deg^2', ...
+    ['Axial length vs. adjusted gc tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,adjustedgcVolumePerDegSq_optimal_median))],p.Results.showPlots)
+
+%plot volume profile of each subject after adjusment
+profilePlot(XPos_Degs, adjustedgcVolumePerDegSq_optimal, nanmean(adjustedgcVolumePerDegSq_optimal,1), 'Eccentricity [deg visual angle]','Adjusted tissue volume [mm^3] / deg^2', ...
+    ['GC Volume profiles for each subject (and mean) after adjustment, n=',num2str(length(subList))],1)
+
+%example of one profile before and after
 figure
-gcVolumePerDegSq_adjusted = totalVolumePerDegSq - (.7*(nanmean(gcVec,2)*ones(1,50)).*AreaPerDegSq);
+plot(XPos_Degs, adjustedgcVolumePerDegSq_optimal(10,:));
+hold on
+plot(XPos_Degs, gcVolumePerDegSq(:,10));
 
-profilePlot(XPos_Degs, gcVolumePerDegSq_adjusted, nanmean(gcVolumePerDegSq_adjusted,2), 'Eccentricity [deg visual angle]','Thickness [microns]', ...
-    ['GC thickness profiles for each subject (and mean) after adjustment, n=',num2str(length(subList))],1)
 
 save(p.Results.dataSaveName,'XPos_Degs','meanGCVec');
-
 end
