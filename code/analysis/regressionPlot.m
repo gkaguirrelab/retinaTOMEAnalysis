@@ -15,5 +15,4 @@ if plotFlag
     xlabel(plotxlabel);
     ylabel(plotylabel);
     title(plotTitle)
-    ylim([0 3]);
 end
