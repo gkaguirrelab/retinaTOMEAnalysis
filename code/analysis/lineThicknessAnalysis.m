@@ -205,11 +205,11 @@ for cc = 1:size(scoreExpanded,2)
 end
 
 % Show the effect of smoothing on the components
-nDimsToUse = 4;
+nDimsToUse = 6;
 figure
 set(gcf,'color','w');
 for ii = 1:nDimsToUse
-subplot(2,2,ii);
+subplot(3,2,ii);
 plot(scoreExpanded(:,ii),'.','Color',[0.85 0.85 0.85]);
 hold on
 plot(scoreExpandedSmoothed(:,ii),'-r','LineWidth',1);
@@ -217,7 +217,6 @@ axis off
 end
 
 % Plot the reconstructions
-nDimsToUse = 4;
 figure
 set(gcf,'color','w');
 for ii = 1:49
@@ -236,9 +235,6 @@ xlim([-25 25]);
 hold on
 plot(XPos_Degs,meanGCVolumePerDegSqProfileAdjust,'-g');
 
-profilePlot(XPos_Degs, scoreExpandedSmoothed(:,2).*(coeff(:,2)'), scoreExpandedSmoothed(:,2).*(mean(coeff(:,2))), 'Eccentricity [deg visual angle]','PC1', ...
-    ['PC2 for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
-xlim([-25 25]);
 
 end
 
