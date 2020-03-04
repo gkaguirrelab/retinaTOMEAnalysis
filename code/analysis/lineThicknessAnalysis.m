@@ -171,38 +171,72 @@ regressionPlot(axialLengths, nanmean(gcVolumePerDegSqAdjust,1), 'Axial length [m
 
 
 %% PCA
-% Set to nan any x positions for which even a single subject is missing
+
+% Set to nan any x positions for which more than 10 subjects are missing
 % data
-
-
-nanX = any(isnan(gcVolumePerDegSqAdjust'));
+gcVolumePerDegSqAdjust(badIdx,:) = nan;
+nanX = sum(isnan(gcVolumePerDegSqAdjust'))>47;
 gcVolumeCleaned = gcVolumePerDegSqAdjust(~nanX,:);
-    [coeff,score,~,~,explained,mu] = pca(gcVolumeCleaned,'Centered',false);
 
+% Conduct a PCA using the alternating least squares (ALS) algorithm to
+% account for the missing values
+[coeff,score,~,~,explained,mu] = pca(gcVolumeCleaned,'Centered',false,'algorithm','als');
+
+% Expand the score vectors back to the full x range
 scoreExpanded = nan(size(gcVolumePerDegSqAdjust));
 scoreExpanded(~nanX,:) = score;
 
+% Find the three segment domains
+tt = find(diff(nanX));
+domains = {[1 tt(1)],[tt(2)+1 tt(3)],[tt(4)+1 length(nanX)]};
+
+% Perform piece-wise spline smoothing of the scores to remove the noisy
+% effects of data imputation
+smoothVal = 0.1; % 0-1, lower is smoother.
+scoreExpandedSmoothed = scoreExpanded;
+for cc = 1:size(scoreExpanded,2)
+    for dd = 1:length(domains)
+        rd = domains{dd};
+        x = XPos_Degs(rd(1):rd(2));
+        y = scoreExpanded(rd(1):rd(2),cc);
+        pp = csaps(x',y,smoothVal);
+        scoreExpandedSmoothed(rd(1):rd(2),cc) = ppval(pp,x');
+    end
+end
+
+% Show the effect of smoothing on the components
+nDimsToUse = 4;
+figure
+set(gcf,'color','w');
+for ii = 1:nDimsToUse
+subplot(2,2,ii);
+plot(scoreExpanded(:,ii),'.','Color',[0.85 0.85 0.85]);
+hold on
+plot(scoreExpandedSmoothed(:,ii),'-r','LineWidth',1);
+axis off
+end
+
 % Plot the reconstructions
-nDimsToUse = 7;
+nDimsToUse = 4;
 figure
 set(gcf,'color','w');
 for ii = 1:49
 subplot(7,7,ii);
 plot(gcVolumePerDegSqAdjust(:,ii),'.','Color',[0.85 0.85 0.85]);
 hold on
-profileFit = scoreExpanded(:,1:nDimsToUse)*coeff(ii,1:nDimsToUse)';
+profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*coeff(ii,1:nDimsToUse)';
 plot(profileFit,'-r','LineWidth',1);
 axis off
 end
 
 % Plot the PCs
-profilePlot(XPos_Degs, scoreExpanded(:,1).*(coeff(:,1)'), scoreExpanded(:,1).*(mean(coeff(:,1))), 'Eccentricity [deg visual angle]','PC1', ...
+profilePlot(XPos_Degs, scoreExpandedSmoothed(:,1).*(coeff(:,1)'), scoreExpandedSmoothed(:,1).*(mean(coeff(:,1))), 'Eccentricity [deg visual angle]','PC1', ...
     ['PC1 for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
 xlim([-25 25]);
 hold on
 plot(XPos_Degs,meanGCVolumePerDegSqProfileAdjust,'-g');
 
-profilePlot(XPos_Degs, scoreExpanded(:,2).*(coeff(:,2)'), scoreExpanded(:,2).*(mean(coeff(:,2))), 'Eccentricity [deg visual angle]','PC1', ...
+profilePlot(XPos_Degs, scoreExpandedSmoothed(:,2).*(coeff(:,2)'), scoreExpandedSmoothed(:,2).*(mean(coeff(:,2))), 'Eccentricity [deg visual angle]','PC1', ...
     ['PC2 for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
 xlim([-25 25]);
 
