@@ -1,4 +1,4 @@
-function regressionPlot(xVal, yVal, plotxlabel, plotylabel, plotTitle,plotFlag,debugFlag)
+function regressionPlot(xVal, yVal, plotxlabel, plotylabel, plotTitle,plotFlag)
 
 if plotFlag
     if(exist('debugFlag','var'))

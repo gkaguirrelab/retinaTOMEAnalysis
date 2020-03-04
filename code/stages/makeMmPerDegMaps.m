@@ -16,19 +16,14 @@ function makeMmPerDegMaps(saveDir, varargin)
 %   This routine loads the eye biometric parameters measured for the TOME
 %   subjects and uses these to create a model eye for each subject. Ray
 %   tracing in that model eye is then conducted to produce a map of the mm
-%   of retina per degree of visual angle on the retinal surface.
+%   of retina per degree of visual angle on the retinal surface. This map
+%   is then fit with a polynomial surface and the parameters retained. To
+%   obtain the mmPerDeg for a given subject at a given position in the
+%   visual field, relative to the fovea, use:
 %
-%   The resulting map is 13 x 13 samples, and has the following properties:
-%       mmPerDeg(1,1) -- nasal, superior
-%       mmPerDeg(13,1) -- temporal, superior
-%       mmPerDeg(1,13) -- nasal, inferior
-%       mmPerDeg(13,13) -- temporal, inferior
-%       mmPerDeg(7,7) -- fovea
+%       mmPerDeg = polyval(mmPerDegPolyFit{ss},[horizDeg, vertDeg])
 %
-%   The model assumes that all subjects have the same alpha angles (the
-%   angle between the visual and optical axes of the eye). While this is an
-%   inaccurate assumption, we lack this measurement for each subject, and
-%   instead use the mean value for all subjects.
+%   The position on the retina will be the negative of these.  
 %
 
 
@@ -40,138 +35,66 @@ p.addRequired('saveDir',@ischar);
 
 % Optional analysis params
 p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
-p.addParameter('alpha',[5.45 2.5 0],@isnumeric);
-p.addParameter('outlierThresh',0.01,@isnumeric);
 
 %% Parse and check the parameters
 p.parse(saveDir, varargin{:});
-
 
 % Load the subject data table
 opts = detectImportOptions(p.Results.subjectTableFileName);
 subjectTable = readtable(p.Results.subjectTableFileName, opts);
 
 % Create an empty cell array to hold the results
-resultSet = {};
+mmPerDegPolyFit = {};
 
-parfor (ii = 1:length(subjectTable.AOSO_ID))
-%for (ii = 1:length(subjectTable.AOSO_ID))
+parfor ii = 1:size(subjectTable.AOSO_ID,1)
+%for ii = 1:length(subjectTable.AOSO_ID)
 
     % Assemble the corneal curvature, spherical error, and axial length.
-    % For some subjects there are missing measures so we model the default
-    % value for this eye.
-    cc=[subjectTable.K1_average(ii),subjectTable.K2_average(ii),subjectTable.K1_angle_average(ii)];
-    if any(isnan(cc))
-        cc = [];
-    end
-    SR = subjectTable.Spherical_Error_average(ii);
-    if isnan(SR)
-        SR=[];
-    end
     axialLength = subjectTable.Axial_Length_average(ii);
-    if isnan(SR)
-        axialLength=[];
-    end
+    SR = subjectTable.Spherical_Error_average(ii);
+    cc = subjectTable.modelEyeK_OD(ii);
+    cc=str2num(cc{1});
 
     % Create the model eye
-    eye = modelEyeParameters('axialLength',axialLength,'sphericalAmetropia',SR,'measuredCornealCurvature',cc);
-    
-    % Extract the quadric surface for the vitreo-retinal interface
-    S = eye.retina.S;
+    eye = modelEyeParameters('axialLength',axialLength,'sphericalAmetropia',SR,'measuredCornealCurvature',cc,'calcLandmarkFovea',true);
     
     % Define the visual field domain over which we will make the measure
-    horizVals = -15:2.5:15;
-    vertVals = -15:2.5:15;
+    horizVals = -30:15:30;
+    vertVals = -30:15:30;
 
     % Define an empty matrix to hold the results
     mmPerDeg = nan(length(horizVals),length(vertVals));
-    angleErrorMap  = nan(length(horizVals),length(vertVals));
-    
+
     % Define the delta deg
     deltaDegEuclidean = 1;
-    deltaAngles = [sqrt(deltaDegEuclidean/2) sqrt(deltaDegEuclidean/2) 0];
+    deltaAngles = [sqrt(deltaDegEuclidean/2) sqrt(deltaDegEuclidean/2)];
     
     % Loop over horizontal and vertical field positions
     for jj = 1:length(horizVals)
         for kk = 1:length(vertVals)
             % The position in the field relative to the optical axis of the
             % eye
-            degField = [horizVals(jj) vertVals(kk) 0] + p.Results.alpha;
+            degField = [horizVals(jj) vertVals(kk)] + eye.landmarks.fovea.degField(1:2);
             % Obtain the retinal points that are delta degrees on either
             % side of the specified degree field position
-            [~,X0,angleError0] = findRetinaFieldPoint( eye, degField - deltaAngles./2);
-            [~,X1,angleError1] = findRetinaFieldPoint( eye, degField + deltaAngles./2);
-            % Calculate and store the maximum angle error
-            angleError = max([angleError0 angleError1]);
-            angleErrorMap(jj,kk) = angleError;            
-            % If the ray trace was accurate, calculate and store the
-            % distance
-            if angleError < 1e-3
-                % This is the minimal geodesic distance across the
-                % ellipsoidal surface (like the great circle on a sphere).
-                % Not using this because of too many failures across the
-                % umbilical point, which is within the sampled area
-                %{
-                    distance = abs(quadric.panouGeodesicDistance(S,[],[],X0,X1));
-                %}
-                % This is the Euclidean distance between the points
-                distance = sqrt(sum((X0-X1).^2));
-                % Need to divide by the delta distance to express as mm per
-                % degree of visual angle
-                mmPerDeg(jj,kk) = distance / deltaDegEuclidean;
-            end
+            [~,X0] = calcRetinaFieldPoint( eye, degField - deltaAngles./2);
+            [~,X1] = calcRetinaFieldPoint( eye, degField + deltaAngles./2);
+            mmPerDeg(jj,kk) = norm(X0-X1) / norm(deltaAngles);
         end
     end
-    % Remove outlier points from the map
-    mmPerDeg = removeMapOutliers(mmPerDeg,p.Results.outlierThresh);
+    % Fit a polynomial surface to the measure
+    [X,Y]=meshgrid(horizVals,vertVals);
+    pp = fit([X(:),Y(:)],mmPerDeg(:),'poly33');
     % Give some console update
     fprintf(['Done subject ' num2str(subjectTable.AOSO_ID(ii)) '\n']);
     % Store the map in a cell array that accumulates across the parfor
-    resultSet(ii) = {mmPerDeg};
+    mmPerDegPolyFit(ii) = {pp};    
 end
 
-% Write out the maps
-for ii = 1:length(subjectTable.AOSO_ID)
-    outfile = fullfile(saveDir,[num2str(subjectTable.AOSO_ID(ii)) '_mmPerDegMap.mat']);
-    mmPerDeg = resultSet{ii};
-    save(outfile,'mmPerDeg');
-end
+% Write out the results
+outfile = fullfile(saveDir,'mmPerDegPolyFit.mat');
+save(outfile,'mmPerDegPolyFit');
 
 end % Main
 
-function outMap = removeMapOutliers(inMap,thresh)
-
-% Create a convolution kernel that obtains the mean of the adjancent (not
-% diagonal) vertcies
-Z = ones(3,3);
-Z([1,3],[1,3]) = 0;
-Z(2,2)=0;
-
-% Copy the inMap to outMap
-outMap = inMap;
-
-% Into the while loop
-notDoneFlag = true;
-while notDoneFlag
-    
-    % Obtain a map of the local average around each point
-    localAverageMap=nanconv(outMap,Z,'edge');
-    
-    % Candidate outliers deviate from the local average
-    canidateOutlierMap = abs(inMap-localAverageMap);
-    canidateOutlierMap(isnan(outMap))=nan;
-    
-    % Find the biggest outlier
-    [maxDiff,idx]=max(canidateOutlierMap(:));
-    
-    % Is this outlier over our threshold, if so, remove the outlier point
-    % from the map. If not, we are done.
-    if maxDiff>thresh
-        outMap(idx)=nan;
-    else
-        notDoneFlag = false;
-    end
-end % while
-
-end % removeMapOutliers
 
