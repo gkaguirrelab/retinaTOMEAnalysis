@@ -183,35 +183,28 @@ scoreExpanded = nan(size(gcVolumePerDegSqAdjust));
 scoreExpanded(~nanX,:) = score;
 
 % Plot the reconstructions
+nDimsToUse = 7;
 figure
 set(gcf,'color','w');
 for ii = 1:49
 subplot(7,7,ii);
 plot(gcVolumePerDegSqAdjust(:,ii),'.','Color',[0.85 0.85 0.85]);
 hold on
-profileFit = scoreExpanded(:,1:5)*coeff(ii,1:5)';
+profileFit = scoreExpanded(:,1:nDimsToUse)*coeff(ii,1:nDimsToUse)';
 plot(profileFit,'-r','LineWidth',1);
 axis off
 end
 
-% % Plot the PCs
-% profilePlot(XPos_Degs, scoreExpanded(:,1).*(coeff(:,1)'), scoreExpanded(:,1).*(mean(coeff(:,1))), 'Eccentricity [deg visual angle]','PC1', ...
-%     ['PC1 for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
-% xlim([-25 25]);
-% hold on
-% plot(XPos_Degs,meanGCVolumePerDegSqProfileAdjust,'-g');
-% 
-% profilePlot(XPos_Degs, scoreExpanded(:,2).*(coeff(:,2)'), scoreExpanded(:,2).*(mean(coeff(:,2))), 'Eccentricity [deg visual angle]','PC1', ...
-%     ['PC2 for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
-% xlim([-25 25]);
-% 
-% profilePlot(XPos_Degs, scoreExpanded(:,3).*(coeff(:,3)'), scoreExpanded(:,3).*(mean(coeff(:,3))), 'Eccentricity [deg visual angle]','PC1', ...
-%     ['PC2 for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
-% xlim([-25 25]);
-% 
-% profilePlot(XPos_Degs, scoreExpanded(:,4).*(coeff(:,4)'), scoreExpanded(:,3).*(mean(coeff(:,3))), 'Eccentricity [deg visual angle]','PC1', ...
-%     ['PC2 for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
-% xlim([-25 25]);
+% Plot the PCs
+profilePlot(XPos_Degs, scoreExpanded(:,1).*(coeff(:,1)'), scoreExpanded(:,1).*(mean(coeff(:,1))), 'Eccentricity [deg visual angle]','PC1', ...
+    ['PC1 for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
+xlim([-25 25]);
+hold on
+plot(XPos_Degs,meanGCVolumePerDegSqProfileAdjust,'-g');
+
+profilePlot(XPos_Degs, scoreExpanded(:,2).*(coeff(:,2)'), scoreExpanded(:,2).*(mean(coeff(:,2))), 'Eccentricity [deg visual angle]','PC1', ...
+    ['PC2 for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
+xlim([-25 25]);
 
 end
 
