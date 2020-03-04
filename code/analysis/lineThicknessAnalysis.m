@@ -17,19 +17,12 @@ p = inputParser;
 % Required
 p.addRequired('GCIPthicknessFile',@ischar);
 
-
-
 % Optional analysis params
-
 p.addParameter('showPlots',true,@islogical);
 p.addParameter('dataSaveName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'), 'AOSO_analysis','OCTExplorerExtendedHorizontalData','LineAnalysisResults.mat'),@ischar);
 p.addParameter('mmPerDegFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'AOSO_analysis','mmPerDegMaps','mmPerDegPolyFit.mat'),@ischar);
 p.addParameter('figSaveDir','/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/_Papers/Aguirre_2019_rgcCorticalAnatomy/VSS2019/raw figures/horizontalLine',@ischar);
 p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
-
-% p.addParameter('dataSaveName',fullfile('C:\Users\dontm\Dropbox (Aguirre-Brainard Lab)', 'AOSO_analysis','OCTExplorerExtendedHorizontalData','LineAnalysisResults.mat'),@ischar);
-% p.addParameter('figSaveDir','C:\Users\dontm\Dropbox (Personal)\Research\Publications\Connectome_RetinaAnalysis_2019\figures',@ischar);
-% p.addParameter('subjectTableFileName',fullfile('C:\Users\dontm\Dropbox (Aguirre-Brainard Lab)','TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 
 
 %% Parse and check the parameters
@@ -104,6 +97,9 @@ meanGCVec = nanmean(gcVec,2);
 meanRatioVec = nanmean(ratioVec,2);
 semThickVec = nanstd(thickVec,1,2)./sqrt(subCountPerPoint);
 semRatioVec = nanstd(ratioVec,1,2)./sqrt(subCountPerPoint);
+
+% Define the "bad" indices across x position as those that are missing
+% measurements from more than a 2/3rds of the subjects.
 badIdx = subCountPerPoint<(length(subList)/3);
 meanGCVec(badIdx)=nan;
 
@@ -117,7 +113,6 @@ profilePlot(XPos_Degs, gcVec, meanGCVec, 'Eccentricity [deg visual angle]','Thic
 % Define some variables
 totalVolumePerDegSq = zeros(size(gcVec));
 gcVolumePerDegSq = zeros(size(gcVec));
-AreaPerDegSq = zeros(size(gcVec));
 
 % Loop over subjects
 for ss = 1:length(subList)
@@ -127,6 +122,8 @@ for ss = 1:length(subList)
     totalVolumePerDegSq(:,ss) = (gcVec(:,ss)).*mmSqPerDegSq(:,ss);
     gcVolumePerDegSq(:,ss) = (gcVec(:,ss)).*mmSqPerDegSq(:,ss);
 end
+
+% Get the mean tissue volume profile, and nan out the "bad" indices
 meanGCVolumePerDegSqProfile = nanmean(gcVolumePerDegSq,2);
 meanGCVolumePerDegSqProfile(badIdx) = nan;
 
@@ -159,14 +156,17 @@ regressionPlot(comboTable.Axial_Length_average, comboTable.gcVolumePerDegSq, 'Ax
 
 
 %% Adjust gcTissue volume to emmetropic eye
+
 % Slope of axial length vs. mean gcTissueVolume
 pp = polyfit(axialLengths,nanmean(gcVolumePerDegSq,1),1);
 adjustProportion = polyval(pp,23.58) ./ polyval(pp,axialLengths) ;
 
+% Loop through the subjects and apply the adjust proportion to the profile
 for ss = 1:50
     gcVolumePerDegSqAdjust(:,ss) = gcVolumePerDegSq(:,ss) .* adjustProportion(ss);
 end
 
+% Obtain the mean, adjusted profile, and nan out the "bad" indices.
 meanGCVolumePerDegSqProfileAdjust = nanmean(gcVolumePerDegSqAdjust,2);
 meanGCVolumePerDegSqProfileAdjust(badIdx) = nan;
 
@@ -182,14 +182,17 @@ regressionPlot(axialLengths, nanmean(gcVolumePerDegSqAdjust,1), 'Axial length [m
 
 %% Conduct PCA
 
-% Set to nan any x positions for which more than 10 subjects are missing
-% data
+% Before we do the PCA, nan out the "bad" indices from the data. We won't
+% attempt to reconstruct these points.
 gcVolumePerDegSqAdjust(badIdx,:) = nan;
-nanX = sum(isnan(gcVolumePerDegSqAdjust'))>47;
+
+% We limit the PCA analysis to those x positions for which we have
+% measurements for greater than 90% of the subjects.
+nanX = sum(isnan(gcVolumePerDegSqAdjust'))>45;
 gcVolumeCleaned = gcVolumePerDegSqAdjust(~nanX,:);
 
 % Conduct a PCA using the alternating least squares (ALS) algorithm to
-% account for the missing values
+% account for the few missing values
 [coeff,score,~,~,explained] = pca(gcVolumeCleaned,'Centered',false,'algorithm','als');
 
 % Expand the score vectors back to the full x range
@@ -214,7 +217,7 @@ for cc = 1:size(scoreExpanded,2)
     end
 end
 
-% Show the effect of smoothing on the components
+% Show the effect of smoothing on the PCA scores
 nDimsToUse = 6;
 figure
 set(gcf,'color','w');
