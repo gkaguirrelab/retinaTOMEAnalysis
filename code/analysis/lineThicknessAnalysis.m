@@ -111,24 +111,32 @@ meanGCVec(badIdx)=nan;
 profilePlot(XPos_Degs, gcVec, meanGCVec, 'Eccentricity [deg visual angle]','Thickness [microns]', ...
     ['GC thickness profiles for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
 
-% Perform the calculation for the GC layer
+
+%% Convert from mm thickness to tissue volume
+
+% Define some variables
 totalVolumePerDegSq = zeros(size(gcVec));
 gcVolumePerDegSq = zeros(size(gcVec));
 AreaPerDegSq = zeros(size(gcVec));
 
+% Loop over subjects
 for ss = 1:length(subList)
     idx = find(subjectTable.AOSO_ID==str2num(subList{ss}));
-    mmSqPerDegSq = mmPerDegPolyFit{idx}([zeros(size(XPos_Degs));-XPos_Degs]').^2;
+    mmSqPerDegSq(:,ss) = mmPerDegPolyFit{idx}([zeros(size(XPos_Degs));-XPos_Degs]').^2;
     axialLengths(ss) = subjectTable.Axial_Length_average(idx);
-    totalVolumePerDegSq(:,ss) = (gcVec(:,ss)).*mmSqPerDegSq;
-    gcVolumePerDegSq(:,ss) = (gcVec(:,ss)).*mmSqPerDegSq;
+    totalVolumePerDegSq(:,ss) = (gcVec(:,ss)).*mmSqPerDegSq(:,ss);
+    gcVolumePerDegSq(:,ss) = (gcVec(:,ss)).*mmSqPerDegSq(:,ss);
 end
 meanGCVolumePerDegSqProfile = nanmean(gcVolumePerDegSq,2);
 meanGCVolumePerDegSqProfile(badIdx) = nan;
 
-% Plot gc tissue volume functions
+% Plot gc tissue volume profile
 profilePlot(XPos_Degs, gcVolumePerDegSq, meanGCVolumePerDegSqProfile, 'Eccentricity [deg visual angle]','GC tissue volume [mm^3] / deg^2', ...
     ['GC tissue volume profiles for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
+
+% Plot the mmSqPerDegSq functions
+profilePlot(XPos_Degs, mmSqPerDegSq, nanmean(mmSqPerDegSq,2), 'Eccentricity [deg visual angle]','mm^2 / deg^2', ...
+    ['mm square retina per degree square visuall angle (and mean), n=',num2str(length(subList))],p.Results.showPlots)
 
 
 %% Relate GC+IP thickness and ratio to axial length
@@ -149,6 +157,8 @@ regressionPlot(comboTable.Axial_Length_average, comboTable.gcMeanThick, 'Axial l
 regressionPlot(comboTable.Axial_Length_average, comboTable.gcVolumePerDegSq, 'Axial length [mm]','median GC tissue volume [mm^3] / deg^2', ...
     ['Axial length vs. gc tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq))],p.Results.showPlots)
 
+
+%% Adjust gcTissue volume to emmetropic eye
 % Slope of axial length vs. mean gcTissueVolume
 pp = polyfit(axialLengths,nanmean(gcVolumePerDegSq,1),1);
 adjustProportion = polyval(pp,23.58) ./ polyval(pp,axialLengths) ;
@@ -170,7 +180,7 @@ regressionPlot(axialLengths, nanmean(gcVolumePerDegSqAdjust,1), 'Axial length [m
     ['Axial length vs. adjusted gc tissue volume, r=',num2str(corr(axialLengths',nanmean(gcVolumePerDegSqAdjust,1)'))],p.Results.showPlots)
 
 
-%% PCA
+%% Conduct PCA
 
 % Set to nan any x positions for which more than 10 subjects are missing
 % data
@@ -180,7 +190,7 @@ gcVolumeCleaned = gcVolumePerDegSqAdjust(~nanX,:);
 
 % Conduct a PCA using the alternating least squares (ALS) algorithm to
 % account for the missing values
-[coeff,score,~,~,explained,mu] = pca(gcVolumeCleaned,'Centered',false,'algorithm','als');
+[coeff,score,~,~,explained] = pca(gcVolumeCleaned,'Centered',false,'algorithm','als');
 
 % Expand the score vectors back to the full x range
 scoreExpanded = nan(size(gcVolumePerDegSqAdjust));
@@ -208,25 +218,31 @@ end
 nDimsToUse = 6;
 figure
 set(gcf,'color','w');
+shapeExplained = explained ./ sum(explained(2:end));
+shapeExplained(1) = nan;
 for ii = 1:nDimsToUse
-subplot(3,2,ii);
-plot(scoreExpanded(:,ii),'.','Color',[0.85 0.85 0.85]);
-hold on
-plot(scoreExpandedSmoothed(:,ii),'-r','LineWidth',1);
-axis off
+    subplot(3,2,ii);
+    plot(scoreExpanded(:,ii),'.','Color',[0.85 0.85 0.85]);
+    hold on
+    plot(scoreExpandedSmoothed(:,ii),'-r','LineWidth',1);
+    str = sprintf('PC%d, shape var explained: %2.2f',ii,shapeExplained(ii));
+    title(str);
+    axis off
 end
+suptitle('Original and smoothed PCA scores')
 
 % Plot the reconstructions
 figure
 set(gcf,'color','w');
 for ii = 1:49
-subplot(7,7,ii);
-plot(gcVolumePerDegSqAdjust(:,ii),'.','Color',[0.85 0.85 0.85]);
-hold on
-profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*coeff(ii,1:nDimsToUse)';
-plot(profileFit,'-r','LineWidth',1);
-axis off
+    subplot(7,7,ii);
+    plot(gcVolumePerDegSqAdjust(:,ii),'.','Color',[0.85 0.85 0.85]);
+    hold on
+    profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*coeff(ii,1:nDimsToUse)';
+    plot(profileFit,'-r','LineWidth',1);
+    axis off
 end
+suptitle('Original and fitted gc tissue volume profiles by subject')
 
 % Plot the PCs
 profilePlot(XPos_Degs, scoreExpandedSmoothed(:,1).*(coeff(:,1)'), scoreExpandedSmoothed(:,1).*(mean(coeff(:,1))), 'Eccentricity [deg visual angle]','PC1', ...
