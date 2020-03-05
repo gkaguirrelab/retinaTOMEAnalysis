@@ -25,6 +25,12 @@ function makeMmPerDegMaps(saveDir, varargin)
 %
 %   The position on the retina will be the negative of these.  
 %
+% Examples:
+%{
+    dropboxBaseDir = getpref('retinaTOMEAnalysis','dropboxBaseDir');
+    saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps');
+    makeMmPerDegMaps(saveDir)
+%}
 
 
 %% Parse vargin for options passed here

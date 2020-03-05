@@ -33,7 +33,10 @@ opts = detectImportOptions(p.Results.subjectTableFileName);
 subjectTable = readtable(p.Results.subjectTableFileName, opts);
 
 % Load the data file
-load(GCIPthicknessFile)
+load(GCIPthicknessFile,'XPos_Degs', ...
+    'GCthicknessValuesAtXPos_um', ...
+    'IPthicknessValuesAtXPos_um', ...
+    'subIDs');
 
 % Load the mmPerDegMaps file
 load(p.Results.mmPerDegFileName,'mmPerDegPolyFit');
@@ -248,12 +251,16 @@ end
 suptitle('Original and fitted gc tissue volume profiles by subject')
 
 % Plot the PCs
-profilePlot(XPos_Degs, scoreExpandedSmoothed(:,1).*(coeff(:,1)'), scoreExpandedSmoothed(:,1).*(mean(coeff(:,1))), 'Eccentricity [deg visual angle]','PC1', ...
+meanPC1 = scoreExpandedSmoothed(:,1).*(mean(coeff(:,1)));
+profilePlot(XPos_Degs, scoreExpandedSmoothed(:,1).*(coeff(:,1)'), meanPC1, 'Eccentricity [deg visual angle]','PC1', ...
     ['PC1 for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
 xlim([-25 25]);
 hold on
 plot(XPos_Degs,meanGCVolumePerDegSqProfileAdjust,'-g');
 
+
+%% Save some results
+save(p.Results.dataSaveName,'XPos_Degs','meanPC1','gcVolumePerDegSqAdjust','coeff','scoreExpandedSmoothed');
 
 end
 
