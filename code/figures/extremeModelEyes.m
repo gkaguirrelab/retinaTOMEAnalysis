@@ -9,20 +9,20 @@ radius=15;
 for ii=1:length(theta)
     x=radius*cos(theta(ii));
     y=radius*sin(theta(ii));
-    [~,X(ii,:)] = findRetinaFieldPoint( sceneGeometry.eye, a0+[x y 0]);
+    [~,X(ii,:)] = calcRetinaFieldPoint( sceneGeometry.eye, a0+[x y 0]);
 end
-G = findRetinaFieldPoint( sceneGeometry.eye, a0);
+G = calcRetinaFieldPoint( sceneGeometry.eye, a0);
 [outputRay,rayPath] = calcNodalRay(sceneGeometry.eye,G);
 plotOpticalSystem('surfaceSet',sceneGeometry.refraction.retinaToCamera,'addLighting',true,'rayPath',rayPath,'outputRay',outputRay);
-plot3(X(:,1),X(:,2),X(:,3),'.r');
+plot3(X(:,1),X(:,2),X(:,3),'.b');
 
 sceneGeometry = createSceneGeometry('axialLength',21.79,'sphericalAmetropia',3.875);
 for ii=1:length(theta)
     x=radius*cos(theta(ii));
     y=radius*sin(theta(ii));
-    [~,X(ii,:)] = findRetinaFieldPoint( sceneGeometry.eye, a0+[x y 0]);
+    [~,X(ii,:)] = calcRetinaFieldPoint( sceneGeometry.eye, a0+[x y 0]);
 end
-plotOpticalSystem('newFigure',false,'surfaceSet',sceneGeometry.refraction.retinaToLens);
+plotOpticalSystem('newFigure',false,'surfaceSet',sceneGeometry.refraction.retinaToStop);
 plot3(X(:,1),X(:,2),X(:,3),'.r');
 
 
