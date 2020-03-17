@@ -25,6 +25,7 @@ p.addParameter('figSaveDir','/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/_Pape
 p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 
 
+
 %% Parse and check the parameters
 p.parse(GCIPthicknessFile, varargin{:});
 
@@ -253,12 +254,93 @@ refline(1,0);
 %%
 %% AND ADD BACK IN THE EFFECT OF THE EMMETROPIC EYE (23.58 mm)
 %%
+%% also synthesize
+adjustedCoeff = zeros(size(coeff));
+ALmax= max(axialLengths);
+ALmin= min(axialLengths);
+ALRange = linspace(ALmin,ALmax,50);
+ALRange(16) = 23.58;%We're forcing this one to be the mean emmetropic value (was 23.56 before).
+synCoeff = zeros(50,nDimsToUse);
+for p=1:nDimsToUse
+    
+    currCoeff = coeff(:,p);
+    %find regression line between PC coeff and  axial length
+    pp = polyfit(axialLengths,currCoeff',1);
+    
+    %find PC coeff value for emmetrope
+    %Adjust each score by fraction: coeff_emm / coeff_regress
+    AL_emmetrope_mm=23.58;
+    adjustProportion_allSub = polyval(pp,AL_emmetrope_mm) - polyval(pp,axialLengths);
+    adjustedCoeff(:,p) = currCoeff + adjustProportion_allSub';
+    
+    %Save synthesized representation of AL
+    synCoeff(:,p) = polyval(pp,ALRange);
+end
+
 %%%%%%%%%%%%%%%
+% Plot the reconstructions with the adjustment
+figure
+set(gcf,'color','w');
+[ALsorted, ALsortedIndx] = sort(axialLengths);
+counter=0;
+for ii = ALsortedIndx
+    counter = counter+1;
+    subplot(8,7,counter);
+    plot(gcVolumePerDegSq(:,ii),'.','Color',[0.85 0.85 0.85]);
+    hold on
+    profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*adjustedCoeff(ii,1:nDimsToUse)';
+    plot(profileFit,'-r','LineWidth',1);
+    ylim([-1 8])
+    axis off
+end
+suptitle('Original and AL influence adjusted gc tissue volume profiles by subject')
+
+%%%%%%%%%%%%%%%
+% Plot the synthesized reconstructions by axial length
+figure
+set(gcf,'color','w');
+for ii = 1:50
+    subplot(8,7,ii);
+    profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*synCoeff(ii,1:nDimsToUse)';
+    plot(profileFit,'-r','LineWidth',1);
+    ylim([-1 8])
+    axis off
+end
+suptitle('Synthesized gc tissue volume profiles by AL')
+
+figure
+
+profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*synCoeff(1,1:nDimsToUse)';
+plot(profileFit,'-r','LineWidth',1);
+hold on
+profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*synCoeff(16,1:nDimsToUse)';
+plot(profileFit,'-g','LineWidth',1);
+profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*synCoeff(50,1:nDimsToUse)';
+plot(profileFit,'-b','LineWidth',1);
+ylim([-1 8])
+title('Synthetic from Axial Lengths: Red=21.79, Green=23.58, Blue=27.57')
+
+%%plot each PC by axial length
+figure
+
+%use center profile if we want to see it relative to an emmetropic eye
+%(23.58mm)
+centerProfile = scoreExpandedSmoothed(:,1)*synCoeff(16,1)';
+
+for d = 2:6
+subplot(3,2,d)
+profileFit = centerProfile + scoreExpandedSmoothed(:,d)*synCoeff(1,d)';
+plot(profileFit,'-r','LineWidth',1);
+hold on
+profileFit = centerProfile + scoreExpandedSmoothed(:,d)*synCoeff(16,d)';
+plot(profileFit,'-g','LineWidth',1);
+profileFit = centerProfile + scoreExpandedSmoothed(:,d)*synCoeff(50,d)';
+plot(profileFit,'-b','LineWidth',1);
+end
+suptitle('PC components by Axial Lengths: Red=21.79, Green=23.58, Blue=27.57')
 
 
-
-
-% 
+%
 % % Plot the PCs
 % meanPC1 = scoreExpandedSmoothed(:,1).*(mean(coeff(:,1)));
 % profilePlot(XPos_Degs, scoreExpandedSmoothed(:,1).*(coeff(:,1)'), meanPC1, 'Eccentricity [deg visual angle]','PC1', ...
@@ -268,25 +350,25 @@ refline(1,0);
 % plot(XPos_Degs,meanGCVolumePerDegSqProfileAdjust,'-g');
 
 % %% Adjust gcTissue volume to emmetropic eye
-% 
+%
 % % Slope of axial length vs. mean gcTissueVolume
 % pp = polyfit(axialLengths,nanmean(gcVolumePerDegSq,1),1);
 % adjustProportion = polyval(pp,23.58) ./ polyval(pp,axialLengths) ;
-% 
+%
 % % Loop through the subjects and apply the adjust proportion to the profile
 % for ss = 1:50
 %     gcVolumePerDegSqAdjust(:,ss) = gcVolumePerDegSq(:,ss) .* adjustProportion(ss);
 % end
-% 
+%
 % % Obtain the mean, adjusted profile, and nan out the "bad" indices.
 % meanGCVolumePerDegSqProfileAdjust = nanmean(gcVolumePerDegSqAdjust,2);
 % meanGCVolumePerDegSqProfileAdjust(badIdx) = nan;
-% 
+%
 % % Plot adjusted gc tissue volume functions
 % profilePlot(XPos_Degs, gcVolumePerDegSqAdjust, meanGCVolumePerDegSqProfileAdjust, 'Eccentricity [deg visual angle]','GC tissue volume [mm^3] / deg^2', ...
 %     ['Adjusted GC tissue volume profiles for each subject (and mean), n=',num2str(length(subList))],p.Results.showPlots)
-% 
-% 
+%
+%
 % % Plot adjusted mean GC tissue volume vs axial length.
 % regressionPlot(axialLengths, nanmean(gcVolumePerDegSqAdjust,1), 'Axial length [mm]','adjusted mean GC tissue volume [mm^3] / deg^2', ...
 %     ['Axial length vs. adjusted gc tissue volume, r=',num2str(corr(axialLengths',nanmean(gcVolumePerDegSqAdjust,1)'))],p.Results.showPlots)
