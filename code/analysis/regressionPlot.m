@@ -1,10 +1,10 @@
-function regressionPlot(xVal, yVal, plotxlabel, plotylabel, plotTitle,plotFlag)
+function h=regressionPlot(xVal, yVal, plotxlabel, plotylabel, plotTitle,plotFlag)
 
 if plotFlag
     if(exist('debugFlag','var'))
-        figure(30)
+        h=figure(30);
     else
-        figure
+        h=figure;
     end
     plot(xVal,yVal,'xr');
     hold on

@@ -1,7 +1,7 @@
-function profilePlot(xVal, yVal, yMean, plotxlabel, plotylabel, plotTitle,plotFlag)
+function h=profilePlot(xVal, yVal, yMean, plotxlabel, plotylabel, plotTitle,plotFlag)
 
 if plotFlag
-    figure
+    h=figure;
     plot(xVal,yVal,'-r');
     hold on
     plot(xVal,yMean,'-k','LineWidth',4);
