@@ -47,10 +47,8 @@ thickVec = [];
 gcVec = [];
 ipVec = [];
 ratioVec = [];
-gcMedianOD = [];
-gcMedianOS = [];
-ipMedianOD = [];
-ipMedianOS = [];
+gcipMeanOD = [];
+gcipMeanOS = [];
 
 % Obtain the GC thickness and ratio functions for each subject. While we
 % are at it, confirm that there is a substantial correlation across
@@ -77,6 +75,7 @@ for ii = 1:50
             gcVec(:,end+1) = mean([gcVecOD,gcVecOS],2,'includenan');
             ipVec(:,end+1) = mean([ipVecOD,ipVecOS],2,'includenan');
         else
+            fprintf([subList{end} ': missing eye\n']);
             gcVec(:,end+1) = nanmean([gcVecOD,gcVecOS],2);
             ipVec(:,end+1) = nanmean([ipVecOD,ipVecOS],2);
         end
@@ -85,14 +84,16 @@ for ii = 1:50
         thickVec(:,end+1) = sum([gcVec(:,end),ipVec(:,end)],2,'includenan');
         ratioVec(:,end+1) = gcVec(:,end)./thickVec(:,end);
         
-        % Save the median value for each eye and layer
-        gcMedianOD(end+1) = nanmedian(gcVecOD);
-        gcMedianOS(end+1) = nanmedian(gcVecOS);
-        ipMedianOD(end+1) = nanmedian(ipVecOD);
-        ipMedianOS(end+1) = nanmedian(ipVecOS);
+        % Save the m value for each eye and layer
+        gcipMeanOD(end+1) = nanmean(gcVecOD+ipVecOD);
+        gcipMeanOS(end+1) = nanmean(gcVecOS+ipVecOS);
         
     end
 end
+
+% Report the correlation of mean thickness between eyes across subjects
+str = sprintf('The correlation of mean GCIPL thickness between eyes across subjects is R = %2.2f \n',corr(gcipMeanOD',gcipMeanOS','Rows','complete'));
+fprintf(str);
 
 % Make some vectors of mean thickness and ratio
 subCountPerPoint = sum(~isnan(thickVec),2);
