@@ -85,7 +85,7 @@ end
 str = sprintf('The correlation of LogMAR acuity between the two eyes across subjects is R = %2.2f \n',corr(LogMAR(:,1),LogMAR(:,2)));
 fprintf(str);
 
-str = sprintf('The mean LogMAR acuity (±SD) across subjects (averaged over eyes) is %2.2f ± %2.3f \n',mean(mean(LogMAR,2)),std(mean(LogMAR,2)));
+str = sprintf('The mediab LogMAR acuity (±IQR) across subjects (averaged over eyes) is %2.2f ± %2.3f \n',median(mean(LogMAR,2)),iqr(mean(LogMAR,2)));
 fprintf(str);
 
 
