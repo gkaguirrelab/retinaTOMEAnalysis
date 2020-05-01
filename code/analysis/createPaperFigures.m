@@ -15,15 +15,14 @@ p.addParameter('showPlots',true,@islogical);
 % p.addParameter('figSaveDir','/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/_Papers/Aguirre_2019_rgcCorticalAnatomy/VSS2019/raw figures/horizontalLine',@ischar);
 % p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 
-dropboxBaseDir ='C:\Users\dontm\Dropbox (Aguirre-Brainard Lab)\';
-p.addParameter('dataSaveName',fullfile('C:\Users\dontm\Dropbox (Aguirre-Brainard Lab)', 'AOSO_analysis','OCTExplorerExtendedHorizontalData','LineAnalysisResults.mat'),@ischar);
-p.addParameter('mmPerDegFileName',fullfile('C:\Users\dontm\Dropbox (Aguirre-Brainard Lab)','AOSO_analysis','mmPerDegMaps','mmPerDegPolyFit.mat'),@ischar);
-p.addParameter('figSaveDir','C:\Users\dontm\Dropbox (Personal)\Research\Publications\Connectome_RetinaAnalysis_2019\figures',@ischar);
-p.addParameter('subjectTableFileName',fullfile('C:\Users\dontm\Dropbox (Aguirre-Brainard Lab)','TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
+dropboxBaseDir ='D:\Min\Dropbox (Aguirre-Brainard Lab)';
+p.addParameter('dataSaveName',fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','LineAnalysisResults.mat'),@ischar);
+p.addParameter('mmPerDegFileName',fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps','mmPerDegPolyFit.mat'),@ischar);
+p.addParameter('subjectTableFileName',fullfile(dropboxBaseDir,'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 
-saveDir = 'C:\Users\dontm\Dropbox (Personal)\Research\Projects\retinaTOMEAnalysis\code\figures\PaperFigures';
+saveDir = 'D:\Min\Dropbox (Personal)\Research\Projects\retinaTOMEAnalysis\code\figures\PaperFigures2';
 mkdir(saveDir);
-for i=1:7
+for i=1:9
     mkdir(fullfile(saveDir,['fig' num2str(i)]));
 end
 %% Parse and check the parameters
@@ -249,7 +248,7 @@ setTightFig
 saveas(h,fullfile(saveDir,'fig2','a.png'));
 
 % Plot GC thickness vs axial length, ['Axial length vs. median GC thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcMeanThick))]
-h=regressionPlot(comboTable.Axial_Length_average, comboTable.gcMeanThick, 'Axial Length [mm]','Median GC Thickness [microns]', [],p.Results.showPlots);
+h=regressionPlot(comboTable.Axial_Length_average, comboTable.gcMeanThick, 'Axial Length [mm]','Mean GC Thickness [microns]', [],p.Results.showPlots);
 setTightFig
 saveas(h,fullfile(saveDir,'fig2','b.png'));
 
@@ -264,7 +263,7 @@ setTightFig
 saveas(h,fullfile(saveDir,'fig2','r.png'));
 
 % Plot mean GC tissue volume vs axial length, ['Axial length vs. gc tissue volume, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcVolumePerDegSq))]
-h=regressionPlot(comboTable.Axial_Length_average, comboTable.gcVolumePerDegSq, 'Axial Length [mm]','Median GC Tissue Volume [mm^3 / deg^2]', ...
+h=regressionPlot(comboTable.Axial_Length_average, comboTable.gcVolumePerDegSq, 'Axial Length [mm]','Mean GC Tissue Volume [mm^3 / deg^2]', ...
     [],p.Results.showPlots);
 setTightFig
 saveas(h,fullfile(saveDir,'fig2','f.png'));
@@ -336,17 +335,51 @@ saveas(h,fullfile(saveDir,'fig6','a.png'));
 
 
 % %%%%%%%%%%%%%%%
-% % Plot the synthesized reconstructions by axial length
-% figure
-% set(gcf,'color','w');
-% for ii = 1:50
-%     subplot(8,7,ii);
-%     profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*synCoeff(ii,1:nDimsToUse)';
-%     plot(profileFit,'-r','LineWidth',1);
-%     ylim([-1 8])
-%     axis off
-% end
-% suptitle('Synthesized gc tissue volume profiles by AL')
+%figure 8 profiles after reconstruction with the AL component removed
+% Plot the synthesized reconstructions by axial length
+gcVec_reconstruct = scoreExpandedSmoothed(:,1:nDimsToUse)*adjustedCoeff(:,1:nDimsToUse)';
+meangcVec_reconstruct = mean(gcVec_reconstruct,2);
+gcMedianThick_reconstruct = nanmedian(gcVec_reconstruct,1);
+gcMeanThick_reconstruct = nanmean(gcVec_reconstruct,1);
+
+
+% Plot the GC thickness functions, ['GC thickness profiles for each subject (and mean), n=',num2str(length(subList))]
+h=profilePlot(XPos_Degs, gcVec_reconstruct, meangcVec_reconstruct, 'Eccentricity [deg visual angle]','GC Tissue Volume [mm^3 / deg^2]',[],p.Results.showPlots);
+setTightFig
+saveas(h,fullfile(saveDir,'fig8','a.png'));
+
+% Plot GC thickness vs axial length, ['Axial length vs. median GC thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcMeanThick))]
+h=regressionPlot(comboTable.Axial_Length_average, gcMedianThick_reconstruct', 'Axial Length [mm]','Median GC Tissue Volume [mm^3 / deg^2]', [],p.Results.showPlots);
+setTightFig
+saveas(h,fullfile(saveDir,'fig8','b.png'));
+
+% Plot GC thickness vs axial length, ['Axial length vs. median GC thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcMeanThick))]
+h=regressionPlot(comboTable.Axial_Length_average, gcMeanThick_reconstruct', 'Axial Length [mm]','Mean GC Tissue Volume [mm^3 / deg^2]', [],p.Results.showPlots);
+setTightFig
+saveas(h,fullfile(saveDir,'fig8','c.png'));
+
+%figure 9 profiles after reconstruction using the synthetic AL component
+% Plot the synthesized reconstructions by axial length
+gcVec_reconstruct = scoreExpandedSmoothed(:,1:nDimsToUse)*synCoeff(:,1:nDimsToUse)';
+meangcVec_reconstruct = mean(gcVec_reconstruct,2);
+gcMedianThick_reconstruct = nanmedian(gcVec_reconstruct,1);
+gcMeanThick_reconstruct = nanmean(gcVec_reconstruct,1);
+
+
+% Plot the GC thickness functions, ['GC thickness profiles for each subject (and mean), n=',num2str(length(subList))]
+h=profilePlot(XPos_Degs, gcVec_reconstruct, meangcVec_reconstruct, 'Eccentricity [deg visual angle]','GC Tissue Volume [mm^3 / deg^2]',[],p.Results.showPlots);
+setTightFig
+saveas(h,fullfile(saveDir,'fig9','a.png'));
+
+% Plot GC thickness vs axial length, ['Axial length vs. median GC thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcMeanThick))]
+h=regressionPlot(comboTable.Axial_Length_average, gcMedianThick_reconstruct', 'Axial Length [mm]','GC Tissue Volume [mm^3 / deg^2]', [],p.Results.showPlots);
+setTightFig
+saveas(h,fullfile(saveDir,'fig9','b.png'));
+
+% Plot GC thickness vs axial length, ['Axial length vs. median GC thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcMeanThick))]
+h=regressionPlot(ALRange', gcMeanThick_reconstruct', 'Axial Length [mm]','GC Tissue Volume [mm^3 / deg^2]', [],p.Results.showPlots);
+setTightFig
+saveas(h,fullfile(saveDir,'fig9','c.png'));
 
 % figure
 % profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*synCoeff(1,1:nDimsToUse)';
