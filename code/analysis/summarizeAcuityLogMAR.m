@@ -85,9 +85,12 @@ end
 str = sprintf('The correlation of LogMAR acuity between the two eyes across subjects is R = %2.2f \n',corr(LogMAR(:,1),LogMAR(:,2)));
 fprintf(str);
 
-str = sprintf('The mediab LogMAR acuity (±IQR) across subjects (averaged over eyes) is %2.2f ± %2.3f \n',median(mean(LogMAR,2)),iqr(mean(LogMAR,2)));
+str = sprintf('The median LogMAR acuity (±IQR) across subjects (averaged over eyes) is %2.2f ± %2.3f \n',median(mean(LogMAR,2)),iqr(mean(LogMAR,2)));
 fprintf(str);
 
+% Report the correlation of acuity with axial length
+str = sprintf('The correlation of LogMAR acuity (averaged over eyes) with axial length is %2.2f \n',corr(mean(LogMAR,2),subjectTable.Axial_Length_average));
+fprintf(str);
 
 
 end
