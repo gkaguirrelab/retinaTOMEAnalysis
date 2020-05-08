@@ -1,9 +1,10 @@
+function fig6_AxialLengthAdjustedReconstruction(axialLengths,gcVolumePerDegSq,scoreExpandedSmoothed,adjustedCoeff,nDimsToUse,saveDir)
 % Plot the reconstructions with the adjustment
-h=figure
+h=figure;
 set(gcf,'color','w');
 [ALsorted, ALsortedIndx] = sort(axialLengths);
 counter=0;
-for ii = ALsortedIndx
+for ii = ALsortedIndx'
     counter = counter+1;
     subplot(8,7,counter);
     plot(gcVolumePerDegSq(:,ii),'.','Color',[0.85 0.85 0.85]);

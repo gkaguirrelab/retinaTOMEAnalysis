@@ -1,5 +1,5 @@
-% Plot the reconstructions
-h=figure
+function fig4_smoothedPCAReconstruction(gcVolumePerDegSq,scoreExpandedSmoothed,coeff,nDimsToUse,saveDir)
+h=figure;
 set(gcf,'color','w');
 for ii = 1:49
     subplot(7,7,ii);

@@ -1,14 +1,15 @@
+function fig7_SynthesizeALImpactOnEmmEye(scoreExpandedSmoothed,synCoeff,XPos_Degs,saveDir)
 %%plot each PC by axial length
-h=figure
+h=figure;
 
 %use center profile if we want to see it relative to an emmetropic eye
-%(23.58mm)
-centerProfile = scoreExpandedSmoothed(:,1)*synCoeff(16,1)';
+%(23.58mm) which is in position 16 in "syncoeff"
+%centerProfile = scoreExpandedSmoothed(:,1)*synCoeff(16,1)';
 
 for d = 1:6
 subplot(3,2,d)
 
-if(d==1)
+if(d==1)%don't add the center profile if on the first PC
 centerProfile = zeros(size(scoreExpandedSmoothed(:,1)*synCoeff(16,1)'));    
 else
 centerProfile = scoreExpandedSmoothed(:,1)*synCoeff(16,1)';    

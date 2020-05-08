@@ -1,3 +1,5 @@
+function [gcVec,meanGCVecProfile,badIdx,subList,XPos_Degs,subjectTable,thicknessTable] = loadAndMergeData(p,GCIPthicknessFile)
+
 % Load the subject data table
 opts = detectImportOptions(p.Results.subjectTableFileName);
 subjectTable = readtable(p.Results.subjectTableFileName, opts);
@@ -8,8 +10,6 @@ load(GCIPthicknessFile,'XPos_Degs', ...
     'IPthicknessValuesAtXPos_um', ...
     'subIDs');
 
-% Load the mmPerDegMaps file
-load(p.Results.mmPerDegFileName,'mmPerDegPolyFit');
 
 subList = {};
 thickVec = [];
@@ -66,13 +66,18 @@ fprintf(str);
 
 % Make some vectors of mean thickness and ratio
 subCountPerPoint = sum(~isnan(thickVec),2);
-meanThickVec = nanmean(thickVec,2);
-meanGCVec = nanmean(gcVec,2);
-meanRatioVec = nanmean(ratioVec,2);
-semThickVec = nanstd(thickVec,1,2)./sqrt(subCountPerPoint);
-semRatioVec = nanstd(ratioVec,1,2)./sqrt(subCountPerPoint);
+meanThickVecProfile = nanmean(thickVec,2);
+meanGCVecProfile = nanmean(gcVec,2);
+meanRatioVecProfile = nanmean(ratioVec,2);
+semThickVecProfile = nanstd(thickVec,1,2)./sqrt(subCountPerPoint);
+semRatioVecProfile = nanstd(ratioVec,1,2)./sqrt(subCountPerPoint);
 
 % Define the "bad" indices across x position as those that are missing
 % measurements from more than a 2/3rds of the subjects.
 badIdx = subCountPerPoint<(length(subList)/3);
-meanGCVec(badIdx)=nan;
+meanGCVecProfile(badIdx)=nan;
+
+% Create a table of median thickness and axial length
+thicknessTable = cell2table([num2cell(str2double(subList)'),num2cell(nanmean(gcVec)')],...
+    'VariableNames',{'AOSO_ID','gcMeanThick'});
+

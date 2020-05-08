@@ -11,6 +11,19 @@ function comboTable=lineThicknessAnalysis(GCIPthicknessFile, varargin)
     comboTable=lineThicknessAnalysis(GCIPthicknessFile);
 %}
 
+dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
+%dropboxBaseDir ='C:\Users\dontm\Dropbox (Aguirre-Brainard Lab)';
+
+
+
+%% Create Save Directory
+saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','GCPaperFigures');
+mkdir(saveDir);
+for i=1:9
+    mkdir(fullfile(saveDir,['fig' num2str(i)]));
+end
+
+
 %% Parse vargin for options passed here
 p = inputParser;
 
@@ -19,85 +32,70 @@ p.addRequired('GCIPthicknessFile',@ischar);
 
 % Optional analysis params
 p.addParameter('showPlots',true,@islogical);
-p.addParameter('dataSaveName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'), 'AOSO_analysis','OCTExplorerExtendedHorizontalData','LineAnalysisResults.mat'),@ischar);
-p.addParameter('mmPerDegFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'AOSO_analysis','mmPerDegMaps','mmPerDegPolyFit.mat'),@ischar);
-p.addParameter('figSaveDir','/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/_Papers/Aguirre_2019_rgcCorticalAnatomy/VSS2019/raw figures/horizontalLine',@ischar);
-p.addParameter('subjectTableFileName',fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'),'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
+p.addParameter('dataSaveName',fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','LineAnalysisResults.mat'),@ischar);
+p.addParameter('mmPerDegFileName',fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps','mmPerDegPolyFit.mat'),@ischar);
+p.addParameter('figSaveDir',saveDir,@ischar);
+p.addParameter('subjectTableFileName',fullfile(dropboxBaseDir,'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 
 
 
 %% Parse and check the parameters
 p.parse(GCIPthicknessFile, varargin{:});
 
-loadAndMergeData
+%loads the GC profiles, mean gc profile, bad indexes, subject list, and X positions
+[gcVec,meanGCVecProfile,badIdx,subList,XPos_Degs,subjectTable,thicknessTable] =  loadAndMergeData(p,GCIPthicknessFile);
 
+%Converts GC thickness into GC volume and provide mmSqPerDegSq conversion for each subject
+[mmSqPerDegSq,gcVolumePerDegSq,meanGCVolumePerDegSqProfile,volumeTable] = convertThicknessToVolume(p,gcVec,badIdx,subList,XPos_Degs,subjectTable);
 
-convertThicknessToVolume
-
-%% Save Directory
-
-saveDir = 'D:\Min\Dropbox (Personal)\Research\Projects\retinaTOMEAnalysis\code\figures\PaperFigures2';
-mkdir(saveDir);
-for i=1:9
-    mkdir(fullfile(saveDir,['fig' num2str(i)]));
-end
-
-
-%% Relate GC+IP thickness and ratio to axial length
-
-% Create a table of median thickness and axial length
-dataTable = cell2table([num2cell(str2double(subList)'),num2cell(nanmean(gcVec)'),num2cell(nanmean(gcVolumePerDegSq)')],...
-    'VariableNames',{'AOSO_ID','gcMeanThick','gcVolumePerDegSq'});
-
-% Join the data table with the subject biometry and demographics table,
+% Join the thickness and volume data table with the subject biometry and demographics table,
 % using the AOSO_ID as the key variable
-comboTable = join(dataTable,subjectTable,'Keys','AOSO_ID');
+gcTable = join(thicknessTable,volumeTable,'Keys','AOSO_ID');
+comboTable = join(gcTable,subjectTable,'Keys','AOSO_ID');
 
-fig1_ShowMontage
-fig2_ThickAndVolRelationships
+
+nDimsToUse = 6;%number of PCA components to use.
 
 %% Conduct PCA upon the tissue volume data
-
-createVolumePCA
-
-% Show the effect of smoothing on the PCA scores
-nDimsToUse = 6;
-
-fig3_EffectOfSmoothingOnPCA
+%Perform the PCA and smooth components
+[GCVolPCAScoreExpanded, GCVolPCAScoreExpandedSmoothed, GCVolPCACoeff, GCVolPCAVarExplained] = createVolumePCA(gcVolumePerDegSq,badIdx,XPos_Degs);
+%Adjust each coeff with the Axial length contribution, also create some synthetic ones
+[adjustedGCVolPCACoeff,synGCVolPCACoeff,synthALRange] = adjustAndSynthPCAWithAxialLength(nDimsToUse,GCVolPCACoeff,comboTable.Axial_Length_average);
 
 
-%% Identify the scores that correlate with axial length
-%%%%%%%%%%%%%%%
-%%
-%% NEED TO ORTHOGONALIZE X WITH RESPECT TO AXIAL LENGTH HERE
-%%
-%% AND ADD BACK IN THE EFFECT OF THE EMMETROPIC EYE (23.58 mm)
-%%
-%% also synthesize
-adjustAndSynthPCAWithAxialLength
+if(p.Results.showPlots)%Flag determines if we plot and save or not
+close all;
 
-fig4_smoothedPCAReconstruction
+%Pulls up an example montage and individual pieces
+fig1_ShowMontage(dropboxBaseDir, saveDir)
 
-fig5_PCACompRegressionAxialLength
+%Plots Relating GC thickness and volume to axial length
+fig2_ThickAndVolRelationships(XPos_Degs, gcVec, meanGCVecProfile, mmSqPerDegSq, gcVolumePerDegSq, meanGCVolumePerDegSqProfile,comboTable,saveDir)
 
-%%%%%%%%%%%%%%%
-% Plot the reconstructions with the adjustment
-fig6_AxialLengthAdjustedReconstruction
+%Show the effect of smoothing on each of the PCA scores
+fig3_EffectOfSmoothingOnPCA(GCVolPCAVarExplained,GCVolPCAScoreExpanded,GCVolPCAScoreExpandedSmoothed,nDimsToUse,saveDir)
 
-%%%%%%%%%%%%%%%
-% Plot the synthesized reconstructions by axial length
-fig7_SynthesizeALImpactOnEmmEye
+%reconstruct original profiles using smoothed and first 'nDimsToUse'
+%components to show they still looks correct
+fig4_smoothedPCAReconstruction(gcVolumePerDegSq,GCVolPCAScoreExpandedSmoothed,GCVolPCACoeff,nDimsToUse,saveDir)
 
-% %%%%%%%%%%%%%%%
-%figure 8 profiles after reconstruction with the AL component removed
-fig8_VolRelationshipAfterAdjustment
+%Look at how each PCA component regresses with axial length
+fig5_PCACompRegressionAxialLength(comboTable.Axial_Length_average,GCVolPCACoeff,nDimsToUse,saveDir)
 
+% Plot the reconstructions of each of the profiles after adjusting the PCs
+% to remove the influence of axial length (subjects sorted by axial length)
+fig6_AxialLengthAdjustedReconstruction(comboTable.Axial_Length_average,gcVolumePerDegSq,GCVolPCAScoreExpandedSmoothed,adjustedGCVolPCACoeff,nDimsToUse,saveDir)
 
-%figure 9 profiles after reconstruction using the synthetic AL component
-fig9_SynthProfileAndALRelationship
+% Using PCa, show how axial length will affect the average emmetropic profile
+fig7_SynthesizeALImpactOnEmmEye(GCVolPCAScoreExpandedSmoothed,synGCVolPCACoeff,XPos_Degs,saveDir)
 
-%% Save some results
-%save(p.Results.dataSaveName,'XPos_Degs','meanPC1','gcVolumePerDegSqAdjust','coeff','scoreExpandedSmoothed');
+%Show AL adjusted profiles stacked, and their mean/median relationship with axial length before/after adjustment
+fig8_VolRelationshipAfterAdjustment(XPos_Degs,comboTable,GCVolPCAScoreExpandedSmoothed,adjustedGCVolPCACoeff,GCVolPCACoeff,nDimsToUse,saveDir)
+
+%Synthetic profiles demonstrating only the influence of the axial length
+%component i PC space
+fig9_SynthProfileAndALRelationship(XPos_Degs,GCVolPCAScoreExpandedSmoothed,synGCVolPCACoeff,synthALRange,nDimsToUse,saveDir)
+end
 
 end
 
