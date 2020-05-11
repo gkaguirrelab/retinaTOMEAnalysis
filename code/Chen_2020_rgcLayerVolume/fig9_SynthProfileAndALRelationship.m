@@ -11,12 +11,3 @@ h=profilePlot(XPos_Degs, gcVec_reconstruct, meangcVec_reconstruct, 'Eccentricity
 setTightFig
 saveas(h,fullfile(saveDir,'fig9','a.png'));
 
-% Plot GC thickness vs axial length, ['Axial length vs. median GC thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcMeanThick))]
-h=regressionPlot(ALRange', gcMedianThick_reconstruct', 'Median Axial Length [mm]','GC Tissue Volume [mm^3 / deg^2]', [],1);
-setTightFig
-saveas(h,fullfile(saveDir,'fig9','b.png'));
-
-% Plot GC thickness vs axial length, ['Axial length vs. median GC thickness, r=',num2str(corr(comboTable.Axial_Length_average,comboTable.gcMeanThick))]
-h=regressionPlot(ALRange', gcMeanThick_reconstruct', 'Mean Axial Length [mm]','GC Tissue Volume [mm^3 / deg^2]', [],1);
-setTightFig
-saveas(h,fullfile(saveDir,'fig9','c.png'));
