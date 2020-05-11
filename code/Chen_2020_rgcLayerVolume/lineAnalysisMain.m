@@ -72,6 +72,9 @@ if(p.Results.showPlots)%Flag determines if we plot and save or not
     %Plots Relating GC thickness and volume to axial length
     fig2_ThickAndVolRelationships(XPos_Degs, gcVec, meanGCVecProfile, mmSqPerDegSq, gcVolumePerDegSq, meanGCVolumePerDegSqProfile,comboTable,saveDir)
     
+    % Panel d of figure 2 is a couple of extreme model eyes
+    fig2d_ExtremeEyes(saveDir)
+    
     %Show the effect of smoothing on each of the PCA scores
     fig3_EffectOfSmoothingOnPCA(GCVolPCAVarExplained,GCVolPCAScoreExpanded,GCVolPCAScoreExpandedSmoothed,nDimsToUse,saveDir)
     
