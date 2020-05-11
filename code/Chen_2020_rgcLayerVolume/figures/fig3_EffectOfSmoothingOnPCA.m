@@ -1,6 +1,6 @@
 function fig3_EffectOfSmoothingOnPCA(explained,scoreExpanded,scoreExpandedSmoothed,nDimsToUse,saveDir)
 % Show the effect of smoothing on the PCA scores
-h=figure
+h=figure;
 set(gcf,'color','w');
 shapeExplained = explained ./ sum(explained(2:end));
 shapeExplained(1) = nan;
