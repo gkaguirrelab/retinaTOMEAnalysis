@@ -1,11 +1,11 @@
-function [gcVec,meanGCVecProfile,badIdx,subList,XPos_Degs,subjectTable,thicknessTable] = loadAndMergeData(p,GCIPthicknessFile)
+function [gcVec,meanGCVecProfile,badIdx,subList,XPos_Degs,subjectTable,thicknessTable] = loadAndMergeData(p)
 
 % Load the subject data table
 opts = detectImportOptions(p.Results.subjectTableFileName);
 subjectTable = readtable(p.Results.subjectTableFileName, opts);
 
 % Load the data file
-load(GCIPthicknessFile,'XPos_Degs', ...
+load(p.Results.GCIPthicknessFile,'XPos_Degs', ...
     'GCthicknessValuesAtXPos_um', ...
     'IPthicknessValuesAtXPos_um', ...
     'subIDs');
