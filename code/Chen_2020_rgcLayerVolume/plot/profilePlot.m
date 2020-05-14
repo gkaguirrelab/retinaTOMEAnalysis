@@ -4,7 +4,9 @@ if plotFlag
     h=figure;
     plot(xVal,yVal,'-r');
     hold on
-    plot(xVal,yMean,'-k','LineWidth',4);
+    if ~isempty(yMean)
+        plot(xVal,yMean,'-k','LineWidth',4);
+    end
     xlabel(plotxlabel);
     ylabel(plotylabel);
     title(plotTitle)

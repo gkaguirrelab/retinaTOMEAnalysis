@@ -11,7 +11,16 @@ for ii = 1:nDimsToUse
     plot(scoreExpandedSmoothed(:,ii),'-r','LineWidth',1);
     str = sprintf('PC%d, shape var explained: %2.2f',ii,shapeExplained(ii));
     title(str);
+    hold on
+    if ii==1
+        ylim([0 40]);
+        plot([0 0],[0 40],'-k');
+    else
+        ylim([-5 5]);
+        plot([0 0],[-5 5],'-k');
+    end
     axis off
+    refline(0,0);
 end
 suptitle('Original and Smoothed PCA Components')
 setTightFig
