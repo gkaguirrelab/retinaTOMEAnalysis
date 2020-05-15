@@ -61,7 +61,7 @@ nDimsToUse = 6; % number of PCA components to use.
 
 % Adjust each coeff with the axial length contribution, also create some
 % synthetic ones
-[adjustedGCVolPCACoeff,synGCVolPCACoeff,synthALRange] = adjustAndSynthPCAWithAxialLength(nDimsToUse,GCVolPCACoeff,comboTable.Axial_Length_average);
+[adjustedGCVolPCACoeff,synGCVolPCACoeff] = adjustAndSynthPCAWithAxialLength(nDimsToUse,GCVolPCACoeff,comboTable.Axial_Length_average);
 
 
 %% Create and save plots if so instructed
@@ -75,7 +75,7 @@ if p.Results.showPlots
     fig2_ThickAndVolRelationships(XPos_Degs, gcVec, meanGCVecProfile, mmSqPerDegSq, gcVolumePerDegSq, meanGCVolumePerDegSqProfile,comboTable,saveDir)
     
     % Panel d of figure 2 is a couple of extreme model eyes
-%    fig2d_ExtremeEyes(saveDir)
+    fig2d_ExtremeEyes(saveDir)
     
     % Show the effect of smoothing on each of the PCA scores
     fig3_EffectOfSmoothingOnPCA(GCVolPCAVarExplained,GCVolPCAScoreExpanded,GCVolPCAScoreExpandedSmoothed,nDimsToUse,saveDir)
