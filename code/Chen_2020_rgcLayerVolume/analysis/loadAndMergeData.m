@@ -33,11 +33,11 @@ for ii = 1:50
         % We are keeping this subject
         subList(end+1) = {subIDs(ii,:)};
         
-        % Get the data for each layer and eye
-        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,:));
-        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,:)));
-        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,:));
-        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,:)));
+        % Get the data for each layer and eye and convert to mm
+        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,:))/1000;
+        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,:)))/1000;
+        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,:))/1000;
+        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,:)))/1000;
         
         % Detect if the data from one eye is missing
         if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))

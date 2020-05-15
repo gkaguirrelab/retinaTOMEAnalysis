@@ -1,9 +1,10 @@
-function fig8_VolRelationshipAfterAdjustment(XPos_Degs,comboTable,scoreExpandedSmoothed,adjustedCoeff,coeff,nDimsToUse,saveDir)
+function fig8_VolRelationshipAfterAdjustment(XPos_Degs,comboTable,scoreExpandedSmoothed,adjustedCoeff,coeff,gcVolumePerDegSq,nDimsToUse,saveDir)
 
 % Plot the synthesized reconstructions by axial length
 gcVec_reconstruct = scoreExpandedSmoothed(:,1:nDimsToUse)*adjustedCoeff(:,1:nDimsToUse)';
+gcVec_reconstruct(isnan(gcVolumePerDegSq))=nan;
 gcVec_reconstruct_orig = scoreExpandedSmoothed(:,1:nDimsToUse)*coeff(:,1:nDimsToUse)';
-meangcVec_reconstruct = mean(gcVec_reconstruct,2);
+meangcVec_reconstruct = nanmean(gcVec_reconstruct,2);
 gcMedianVol_reconstruct = nanmedian(gcVec_reconstruct,1);
 gcMeanVol_reconstruct = nanmean(gcVec_reconstruct,1);
 gcMeanVol_reconstruct_orig = nanmean(gcVec_reconstruct_orig,1);

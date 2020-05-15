@@ -1,20 +1,20 @@
 function fig9_SynthProfileAndALRelationship(GCVolPCACoeff,axialLengths,XPos_Degs,comboTable,scoreExpandedSmoothed,nDimsToUse,saveDir)
 % Plot the synthesized reconstructions by axial length
-[minAL,hyperopeIdx] = min(comboTable.Axial_Length_average);
-[maxAL,myopeIdx] = max(comboTable.Axial_Length_average);
+minAL = min(comboTable.Axial_Length_average);
+maxAL = max(comboTable.Axial_Length_average);
 emAL = 23.58;
 ALs = [minAL emAL maxAL];
 
 for ii=1:length(ALs)
     for dd = 1:nDimsToUse
-
-    % find regression line between PC coeff and  axial length
-    pp = polyfit(axialLengths,GCVolPCACoeff(:,dd),1);    
-    coeff(dd) = polyval(pp,ALs(ii));    
+        
+        % find regression line between PC coeff and  axial length
+        pp = polyfit(axialLengths,GCVolPCACoeff(:,dd),1);
+        coeff(dd) = polyval(pp,ALs(ii));
     end
     
     synthProfileVol(:,ii) = scoreExpandedSmoothed(:,1:nDimsToUse)*coeff';
-
+    
 end
 
 
@@ -27,22 +27,48 @@ saveas(h,fullfile(saveDir,'fig9','a.png'));
 
 % Make a mmPerDegMap for each of these model eyes, and produce the
 % thickness profiles, and thickness profiles by mm
+XPos_mm = zeros(length(XPos_Degs),length(ALs));
 for ii=1:length(ALs)
+    ii
     mmPerDegPolyFit{ii} = magMap(ALs(ii));
-    mmSqPerDegSq = mmPerDegPolyFit{ii}([zeros(size(XPos_Degs));-XPos_Degs]').^2;
+    pp = mmPerDegPolyFit{ii};
+    mmSqPerDegSq = pp([zeros(size(XPos_Degs));-XPos_Degs]').^2;
     synthProfileThick(:,ii) = synthProfileVol(:,ii)./mmSqPerDegSq;
-
+    % Create the XPos_mm for each model
+    horizPos = @(hh) pp(hh, 0);
+    for xx = 1:length(XPos_Degs)
+        if XPos_Degs(xx)==0
+            continue
+        end
+        if XPos_Degs(xx)>0
+            XPos_mm(xx,ii) = integral(horizPos,0,XPos_Degs(xx));
+        else
+            XPos_mm(xx,ii) = -integral(horizPos,XPos_Degs(xx),0);
+        end
+    end
 end
 
-% Plot the GC thick functions
+% Plot the GC thick functions with support in degrees
 str = sprintf('Synthesized GC thickness profiles for AL = %2.2f, %2.2f, %2.2f',ALs);
-h=profilePlot(XPos_Degs, synthProfileThick(:,idx), [], 'Eccentricity [deg visual angle]','GC Tissue Thickness [mm]',[],1);
+h=profilePlot(XPos_Degs, synthProfileThick, [], 'Eccentricity [deg visual angle]','GC Tissue Thickness [mm]',[],1);
+ylim([0 0.06]);
 title(str)
 setTightFig
 saveas(h,fullfile(saveDir,'fig9','b.png'));
 
-
-
+% Plot the GC thick functions with support in mm
+h = figure;
+str = sprintf('Synthesized GC thickness profiles for AL = %2.2f, %2.2f, %2.2f',ALs);
+for ii = 1:length(ALs)
+    plot(XPos_mm(:,ii), synthProfileThick(:,ii), '.');
+    hold on
+end
+xlabel('Eccentricity [mm]');ylabel('GC Tissue Thickness [mm]');
+ylim([0 0.06]);
+xlim([-8 8]);
+title(str)
+setTightFig
+saveas(h,fullfile(saveDir,'fig9','c.png'));
 
 end
 

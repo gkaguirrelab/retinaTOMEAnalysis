@@ -75,7 +75,7 @@ if p.Results.showPlots
     fig2_ThickAndVolRelationships(XPos_Degs, gcVec, meanGCVecProfile, mmSqPerDegSq, gcVolumePerDegSq, meanGCVolumePerDegSqProfile,comboTable,saveDir)
     
     % Panel d of figure 2 is a couple of extreme model eyes
-    fig2d_ExtremeEyes(saveDir)
+%    fig2d_ExtremeEyes(saveDir)
     
     % Show the effect of smoothing on each of the PCA scores
     fig3_EffectOfSmoothingOnPCA(GCVolPCAVarExplained,GCVolPCAScoreExpanded,GCVolPCAScoreExpandedSmoothed,nDimsToUse,saveDir)
@@ -95,7 +95,7 @@ if p.Results.showPlots
     fig7_SynthesizeALImpactOnEmmEye(GCVolPCAScoreExpandedSmoothed,synGCVolPCACoeff,XPos_Degs,saveDir)
     
     % Show AL adjusted profiles stacked, and their mean/median relationship with axial length before/after adjustment
-    fig8_VolRelationshipAfterAdjustment(XPos_Degs,comboTable,GCVolPCAScoreExpandedSmoothed,adjustedGCVolPCACoeff,GCVolPCACoeff,nDimsToUse,saveDir)
+    fig8_VolRelationshipAfterAdjustment(XPos_Degs,comboTable,GCVolPCAScoreExpandedSmoothed,adjustedGCVolPCACoeff,GCVolPCACoeff,gcVolumePerDegSq,nDimsToUse,saveDir)
     
     % Synthetic profiles that demonstrate the appearance of eyes of
     % different sizes, cast in different coordinate systems
