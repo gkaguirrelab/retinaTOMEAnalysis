@@ -99,7 +99,7 @@ if p.Results.showPlots
     
     % Synthetic profiles that demonstrate the appearance of eyes of
     % different sizes, cast in different coordinate systems
-    fig9_SynthProfileAndALRelationship(XPos_Degs,comboTable,GCVolPCAScoreExpandedSmoothed,synGCVolPCACoeff,nDimsToUse,saveDir)
+    fig9_SynthProfileAndALRelationship(GCVolPCACoeff,comboTable.Axial_Length_average,XPos_Degs,comboTable,GCVolPCAScoreExpandedSmoothed,nDimsToUse,saveDir)
 end
 
 end

@@ -59,7 +59,7 @@ calcExtOCTGCIPThickness(inputDir)
 % retina. The set of polynomial fits are stored in a single matlab variable
 % called "mmPerDegPolyFit.mat".
 outputDir = fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps');
-makeMmPerDegMaps(saveDir)
+makeMmPerDegMaps(outputDir)
 
 
 %% Analyze GC IP layers in the extended OCT 
