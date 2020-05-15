@@ -60,7 +60,7 @@ saveas(h,fullfile(saveDir,'fig9','b.png'));
 h = figure;
 str = sprintf('Synthesized GC thickness profiles for AL = %2.2f, %2.2f, %2.2f',ALs);
 for ii = 1:length(ALs)
-    plot(XPos_mm(:,ii), synthProfileThick(:,ii), '.');
+    plot(XPos_mm(:,ii), synthProfileThick(:,ii), '-');
     hold on
 end
 xlabel('Eccentricity [mm]');ylabel('GC Tissue Thickness [mm]');
