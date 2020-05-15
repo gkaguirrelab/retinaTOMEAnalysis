@@ -11,7 +11,7 @@ for ii = ALsortedIndx'
     hold on
     profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*adjustedCoeff(ii,1:nDimsToUse)';
     plot(profileFit,'-r','LineWidth',1);
-    ylim([-1 8])
+    ylim([0 0.01])
     axis off
 end
 setTightFig

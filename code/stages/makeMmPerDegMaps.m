@@ -49,30 +49,31 @@ p.parse(saveDir, varargin{:});
 opts = detectImportOptions(p.Results.subjectTableFileName);
 subjectTable = readtable(p.Results.subjectTableFileName, opts);
 
-% Create an empty cell array to hold the results
-mmPerDegPolyFit = {};
+% Create an empty variable to hold the result
+mmPerDegPolyFit = [];
 
-parfor ii = 1:size(subjectTable.AOSO_ID,1)
-%for ii = 1:length(subjectTable.AOSO_ID)
+%parfor ii = 1:size(subjectTable.AOSO_ID,1)
+for ii = 1:length(subjectTable.AOSO_ID)
 
     % Assemble the corneal curvature, spherical error, and axial length.
     axialLength = subjectTable.Axial_Length_average(ii);
     SR = subjectTable.Spherical_Error_average(ii);
-    cc = subjectTable.modelEyeK_OD(ii);
-    cc=str2num(cc{1});
+    kvals = subjectTable.kvals{ii};
+    kvals = eval(kvals);
 
     % Create the model eye
-    eye = modelEyeParameters('axialLength',axialLength,'sphericalAmetropia',SR,'measuredCornealCurvature',cc,'calcLandmarkFovea',true);
-    
-    % Define the visual field domain over which we will make the measure
+    eye = modelEyeParameters('axialLength',axialLength,'sphericalAmetropia',SR,'kvals',kvals,'calcLandmarkFovea',true);
+
+    % Define the visual field domain over which we will make the measure,
+    % in degrees relative to the fovea
     horizVals = -30:15:30;
     vertVals = -30:15:30;
 
     % Define an empty matrix to hold the results
     mmPerDeg = nan(length(horizVals),length(vertVals));
-
+    
     % Define the delta deg
-    deltaDegEuclidean = 1;
+    deltaDegEuclidean = 1e-3;
     deltaAngles = [sqrt(deltaDegEuclidean/2) sqrt(deltaDegEuclidean/2)];
     
     % Loop over horizontal and vertical field positions
@@ -80,17 +81,26 @@ parfor ii = 1:size(subjectTable.AOSO_ID,1)
         for kk = 1:length(vertVals)
             % The position in the field relative to the optical axis of the
             % eye
+            
             degField = [horizVals(jj) vertVals(kk)] + eye.landmarks.fovea.degField(1:2);
+            
             % Obtain the retinal points that are delta degrees on either
             % side of the specified degree field position
             [~,X0] = calcRetinaFieldPoint( eye, degField - deltaAngles./2);
-            [~,X1] = calcRetinaFieldPoint( eye, degField + deltaAngles./2);
+            [~,X1] = calcRetinaFieldPoint( eye, degField + deltaAngles./2);           
+            
+            % The difference between X0 and X1 is used to calculate the mm
+            % of retina per degree of visual field for this location
             mmPerDeg(jj,kk) = norm(X0-X1) / norm(deltaAngles);
+                     
         end
+                
     end
+    
     % Fit a polynomial surface to the measure
     [X,Y]=meshgrid(horizVals,vertVals);
     pp = fit([X(:),Y(:)],mmPerDeg(:),'poly33');
+    
     % Give some console update
     fprintf(['Done subject ' num2str(subjectTable.AOSO_ID(ii)) '\n']);
     % Store the map in a cell array that accumulates across the parfor

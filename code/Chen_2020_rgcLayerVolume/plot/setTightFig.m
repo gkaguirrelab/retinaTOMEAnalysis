@@ -1,3 +1,5 @@
+return
+
 ax = gca;
 outerpos = ax.OuterPosition;
 ti = ax.TightInset; 

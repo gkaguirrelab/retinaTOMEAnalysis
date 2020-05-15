@@ -1,3 +1,8 @@
+%% preProcessMacularVolumeScans
+% 
+% This script performs initial processing on the macular volume scans
+% collected using OCT as part of the TOME project.
+%
 
 % Obtain the dropBox base directory
 dropboxBaseDir = getpref('retinaTOMEAnalysis','dropboxBaseDir');
@@ -8,7 +13,7 @@ dropboxBaseDir = getpref('retinaTOMEAnalysis','dropboxBaseDir');
 % and then processed using OCT Explorer v5.0 (on a Macintosh). This
 % analysis yields (for each '.vol' file) a file named
 % `_Surfaces_Retina-JEI-Final.xml`. This first step converts these XML
-% files to a format more easily loaded in matlab.
+% files to a format more easily loaded in MATLAB.
 dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','OCTExplorerSegmentationData');
 octExplorerXMLToMatlab(dataDir);
 
@@ -32,7 +37,6 @@ saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject
 makeLeftRightMontage(dataDir,saveDir)
 
 
-
 %% makeMmPerDegMaps
 % Saves maps of the conversion of degree of visual angle to mm of retina
 saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps');
@@ -51,25 +55,4 @@ makeVolumeMaps(thicknessMapDir,mmPerDegMapDir,saveDir);
 %% Conduct a PCA analysis of the thickness maps
 dataDir = fullfile(dropboxBaseDir,'AOSO_analysis','averageThicknessMapsBySubject');
 thicknessMapPCAAnalysis(dataDir)
-
-
-%% CODE TO PROCESS HORIZONTAL LINE SCANS
-
-%% Montage Horizontal Extended OCT Scans
-dataDir = fullfile(dropboxBaseDir,'AOSO_data','connectomeRetinaData');
-saveDir =fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData');
-scanInfoFile =fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','ExtendedOCTDataDescriptions.xlsx');
-montageExtendedOCT(dataDir,scanInfoFile,saveDir)
-
-%% Smooth the manual segmentations 
-dataDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData');
-smoothManualSegGCIPExtOCT(dataDir)
-
-%% Caclulate IP and GC Thickness Values
-dataDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData');
-calcExtOCTGCIPThickness(dataDir)
-
-%% Analyze GC IP layers in the extended OCT 
-GCIPthicknessFile = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','GCIP_thicknessesByDeg.mat');
-comboTable=lineThicknessAnalysis(GCIPthicknessFile);
 

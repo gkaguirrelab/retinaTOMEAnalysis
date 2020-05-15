@@ -1,5 +1,5 @@
 function summarizeAcuityLogMAR(varargin)
-% Reports summary values of acuity measures of the Connectome subjects
+% Reports summary values of acuity measures from the Connectome subjects
 %
 % Syntax:
 %  summarizeAcuityLogMAR

@@ -1,11 +1,11 @@
-function [gcVec,meanGCVecProfile,badIdx,subList,XPos_Degs,subjectTable,thicknessTable] = loadAndMergeData(p,GCIPthicknessFile)
+function [gcVec,meanGCVecProfile,badIdx,subList,XPos_Degs,subjectTable,thicknessTable] = loadAndMergeData(p)
 
 % Load the subject data table
 opts = detectImportOptions(p.Results.subjectTableFileName);
 subjectTable = readtable(p.Results.subjectTableFileName, opts);
 
 % Load the data file
-load(GCIPthicknessFile,'XPos_Degs', ...
+load(p.Results.GCIPthicknessFile,'XPos_Degs', ...
     'GCthicknessValuesAtXPos_um', ...
     'IPthicknessValuesAtXPos_um', ...
     'subIDs');
@@ -33,11 +33,11 @@ for ii = 1:50
         % We are keeping this subject
         subList(end+1) = {subIDs(ii,:)};
         
-        % Get the data for each layer and eye
-        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,:));
-        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,:)));
-        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,:));
-        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,:)));
+        % Get the data for each layer and eye and convert to mm
+        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,:))/1000;
+        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,:)))/1000;
+        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,:))/1000;
+        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,:)))/1000;
         
         % Detect if the data from one eye is missing
         if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))

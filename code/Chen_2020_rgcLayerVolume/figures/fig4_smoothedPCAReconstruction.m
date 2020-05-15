@@ -6,6 +6,7 @@ for ii = 1:49
     plot(gcVolumePerDegSq(:,ii),'.','Color',[0.85 0.85 0.85]);
     hold on
     profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*coeff(ii,1:nDimsToUse)';
+    profileFit(isnan(gcVolumePerDegSq(:,ii)))=nan;
     plot(profileFit,'-r','LineWidth',1);
     axis off
 end

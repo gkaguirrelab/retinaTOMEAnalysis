@@ -2,9 +2,13 @@ function h=profilePlot(xVal, yVal, yMean, plotxlabel, plotylabel, plotTitle,plot
 
 if plotFlag
     h=figure;
-    plot(xVal,yVal,'-r');
-    hold on
-    plot(xVal,yMean,'-k','LineWidth',4);
+    if ~isempty(yMean)
+        plot(xVal,yVal,'-r');
+        hold on
+        plot(xVal,yMean,'-k','LineWidth',4);
+    else
+        plot(xVal,yVal);
+    end
     xlabel(plotxlabel);
     ylabel(plotylabel);
     title(plotTitle)
