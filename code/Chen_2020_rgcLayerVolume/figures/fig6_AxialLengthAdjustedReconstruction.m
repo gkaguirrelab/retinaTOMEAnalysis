@@ -15,7 +15,7 @@ for ii = ALsortedIndx'
     axis off
 end
 setTightFig
-saveas(h,fullfile(saveDir,'fig6','a.png'));
+saveas(h,fullfile(saveDir,'fig6','a.pdf'));
 
 %suptitle('Original and AL influence adjusted gc tissue volume profiles by subject')
 

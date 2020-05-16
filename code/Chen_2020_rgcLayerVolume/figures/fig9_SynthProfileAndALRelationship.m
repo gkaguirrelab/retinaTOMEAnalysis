@@ -23,13 +23,12 @@ str = sprintf('Synthesized GC vol profiles for AL = %2.2f, %2.2f, %2.2f',ALs);
 h=profilePlot(XPos_Degs, synthProfileVol, [], 'Eccentricity [deg visual angle]','GC Tissue Volume [mm^3 / deg^2]',[],1);
 title(str)
 setTightFig
-saveas(h,fullfile(saveDir,'fig9','a.png'));
+saveas(h,fullfile(saveDir,'fig9','a.pdf'));
 
 % Make a mmPerDegMap for each of these model eyes, and produce the
 % thickness profiles, and thickness profiles by mm
 XPos_mm = zeros(length(XPos_Degs),length(ALs));
 for ii=1:length(ALs)
-    ii
     mmPerDegPolyFit{ii} = magMap(ALs(ii));
     pp = mmPerDegPolyFit{ii};
     mmSqPerDegSq = pp([zeros(size(XPos_Degs));-XPos_Degs]').^2;
@@ -54,7 +53,7 @@ h=profilePlot(XPos_Degs, synthProfileThick, [], 'Eccentricity [deg visual angle]
 ylim([0 0.06]);
 title(str)
 setTightFig
-saveas(h,fullfile(saveDir,'fig9','b.png'));
+saveas(h,fullfile(saveDir,'fig9','b.pdf'));
 
 % Plot the GC thick functions with support in mm
 h = figure;
@@ -68,7 +67,7 @@ ylim([0 0.06]);
 xlim([-8 8]);
 title(str)
 setTightFig
-saveas(h,fullfile(saveDir,'fig9','c.png'));
+saveas(h,fullfile(saveDir,'fig9','c.pdf'));
 
 end
 

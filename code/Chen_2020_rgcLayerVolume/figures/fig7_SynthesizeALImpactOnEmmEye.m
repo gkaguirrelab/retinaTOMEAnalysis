@@ -28,6 +28,6 @@ ylim([0 0.0075])
 setTightFig
 
 end
-saveas(h,fullfile(saveDir,'fig7','a.png'));
+saveas(h,fullfile(saveDir,'fig7','a.pdf'));
 
 %suptitle('PC components by Axial Lengths: Red=21.79, Green=23.58, Blue=27.57')

@@ -12,4 +12,4 @@ for ii = 1:49
 end
 suptitle('Original and Reconstructed GC Tissue Volume Profiles by Subject')
 setTightFig
-saveas(h,fullfile(saveDir,'fig4','a.png'));
+saveas(h,fullfile(saveDir,'fig4','a.pdf'));
