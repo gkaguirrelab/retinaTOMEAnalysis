@@ -2,6 +2,7 @@ function h=profilePlot(xVal, yVal, yMean, plotxlabel, plotylabel, plotTitle,plot
 
 if plotFlag
     h=figure;
+    h.Renderer = 'Painters';
     if ~isempty(yMean)
         plot(xVal,yVal,'-r');
         hold on
@@ -12,4 +13,5 @@ if plotFlag
     xlabel(plotxlabel);
     ylabel(plotylabel);
     title(plotTitle)
+    box off
 end

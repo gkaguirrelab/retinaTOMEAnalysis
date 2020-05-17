@@ -6,13 +6,14 @@ if plotFlag
     else
         h=figure;
     end
-    plot(xVal,yVal,'xr');
+    plot(xVal,yVal,'o','MarkerEdgeColor','none','MarkerFaceColor','r');
     hold on
     c = polyfit(xVal,yVal,1);
-    plot(xVal,polyval(c,xVal),'--b')
+    plot(xVal,polyval(c,xVal),'-','Color',[0.5 0.5 0.5])
 
     axis square
     xlabel(plotxlabel);
     ylabel(plotylabel);
     title(plotTitle)
+    box off
 end

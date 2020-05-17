@@ -1,5 +1,6 @@
 function fig4_smoothedPCAReconstruction(gcVolumePerDegSq,scoreExpandedSmoothed,coeff,nDimsToUse,saveDir)
 h=figure;
+h.Renderer = 'Painters';
 set(gcf,'color','w');
 for ii = 1:49
     subplot(7,7,ii);
