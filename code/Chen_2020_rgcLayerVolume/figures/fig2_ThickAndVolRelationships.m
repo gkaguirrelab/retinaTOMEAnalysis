@@ -14,7 +14,7 @@ saveas(h,fullfile(saveDir,'fig2','b.pdf'));
 % Plot the mmSqPerDegSq functions
 h=profilePlot(XPos_Degs, mmSqPerDegSq, nanmean(mmSqPerDegSq,2), 'Eccentricity [deg visual angle]','[mm^2 / deg^2]', [],1);
 setTightFig
-saveas(h,fullfile(saveDir,'fig2','d.pdf'));
+saveas(h,fullfile(saveDir,'fig2','c.pdf'));
 
 % Plot gc tissue volume profile
 h=profilePlot(XPos_Degs, gcVolumePerDegSq, meanGCVolumePerDegSqProfile, 'Eccentricity [deg visual angle]','GC Tissue Volume [mm^3 / deg^2]', [] ,1);

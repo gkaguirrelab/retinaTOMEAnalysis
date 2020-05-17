@@ -10,6 +10,7 @@ for ii = ALsortedIndx'
     plot(gcVolumePerDegSq(:,ii),'.','Color',[0.85 0.85 0.85]);
     hold on
     profileFit = scoreExpandedSmoothed(:,1:nDimsToUse)*adjustedCoeff(ii,1:nDimsToUse)';
+        profileFit(isnan(gcVolumePerDegSq(:,ii)))=nan;
     plot(profileFit,'-r','LineWidth',1);
     ylim([0 0.01])
     axis off
