@@ -20,4 +20,4 @@ str = ['Axial length vs. median GC thickness, r=',num2str(corr(comboTable.Axial_
 h=regressionPlot(comboTable.Axial_Length_average, gcMeanVol_reconstruct', 'Axial Length [mm]','Mean GC Tissue Volume [mm^3 / deg^2]', [],1);
 title(str)
 setTightFig
-saveas(h,fullfile(saveDir,'fig8','c.pdf'));
+saveas(h,fullfile(saveDir,'fig8','b.pdf'));

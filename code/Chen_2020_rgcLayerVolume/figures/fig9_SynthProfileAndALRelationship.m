@@ -22,6 +22,8 @@ end
 str = sprintf('Synthesized GC vol profiles for AL = %2.2f, %2.2f, %2.2f',ALs);
 h=profilePlot(XPos_Degs, synthProfileVol, [], 'Eccentricity [deg visual angle]','GC Tissue Volume [mm^3 / deg^2]',[],1);
 title(str)
+ylim([0 8]);
+xlim([-25 25]);
 setTightFig
 saveas(h,fullfile(saveDir,'fig9','a.pdf'));
 
@@ -51,6 +53,7 @@ end
 str = sprintf('Synthesized GC thickness profiles for AL = %2.2f, %2.2f, %2.2f',ALs);
 h=profilePlot(XPos_Degs, synthProfileThick, [], 'Eccentricity [deg visual angle]','GC Tissue Thickness [mm]',[],1);
 ylim([0 0.06]);
+xlim([-25 25]);
 title(str)
 setTightFig
 saveas(h,fullfile(saveDir,'fig9','b.pdf'));
