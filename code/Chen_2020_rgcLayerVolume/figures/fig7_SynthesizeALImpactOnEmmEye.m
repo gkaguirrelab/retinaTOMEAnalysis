@@ -23,8 +23,8 @@ plot(XPos_Degs,profileFit,'-g','LineWidth',1);
 profileFit = centerProfile + scoreExpandedSmoothed(:,d)*synCoeff(50,d)';
 plot(XPos_Degs,profileFit,'-b','LineWidth',1);
 xlabel('Eccentricity [deg visual angle]');
-xlim([-20 20])
-ylim([0 0.0075])
+xlim([-25 25])
+ylim([0 0.007])
 setTightFig
 
 end
