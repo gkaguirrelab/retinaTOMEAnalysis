@@ -1,4 +1,5 @@
 function fig9_SynthProfileAndALRelationship(GCVolPCACoeff,axialLengths,XPos_Degs,comboTable,scoreExpandedSmoothed,nDimsToUse,saveDir)
+
 % Plot the synthesized reconstructions by axial length
 minAL = min(comboTable.Axial_Length_average);
 maxAL = max(comboTable.Axial_Length_average);
@@ -22,14 +23,15 @@ end
 str = sprintf('Synthesized GC vol profiles for AL = %2.2f, %2.2f, %2.2f',ALs);
 h=profilePlot(XPos_Degs, synthProfileVol, [], 'Eccentricity [deg visual angle]','GC Tissue Volume [mm^3 / deg^2]',[],1);
 title(str)
+ylim([0 8e-3]);
+xlim([-25 25]);
 setTightFig
-saveas(h,fullfile(saveDir,'fig9','a.png'));
+saveas(h,fullfile(saveDir,'fig9','a.pdf'));
 
 % Make a mmPerDegMap for each of these model eyes, and produce the
 % thickness profiles, and thickness profiles by mm
 XPos_mm = zeros(length(XPos_Degs),length(ALs));
 for ii=1:length(ALs)
-    ii
     mmPerDegPolyFit{ii} = magMap(ALs(ii));
     pp = mmPerDegPolyFit{ii};
     mmSqPerDegSq = pp([zeros(size(XPos_Degs));-XPos_Degs]').^2;
@@ -52,9 +54,10 @@ end
 str = sprintf('Synthesized GC thickness profiles for AL = %2.2f, %2.2f, %2.2f',ALs);
 h=profilePlot(XPos_Degs, synthProfileThick, [], 'Eccentricity [deg visual angle]','GC Tissue Thickness [mm]',[],1);
 ylim([0 0.06]);
+xlim([-25 25]);
 title(str)
 setTightFig
-saveas(h,fullfile(saveDir,'fig9','b.png'));
+saveas(h,fullfile(saveDir,'fig9','b.pdf'));
 
 % Plot the GC thick functions with support in mm
 h = figure;
@@ -68,7 +71,7 @@ ylim([0 0.06]);
 xlim([-8 8]);
 title(str)
 setTightFig
-saveas(h,fullfile(saveDir,'fig9','c.png'));
+saveas(h,fullfile(saveDir,'fig9','c.pdf'));
 
 end
 

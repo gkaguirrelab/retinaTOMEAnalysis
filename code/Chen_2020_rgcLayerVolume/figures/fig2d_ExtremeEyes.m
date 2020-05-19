@@ -27,7 +27,7 @@ plot3(X(:,1),X(:,2),X(:,3),'.r');
 title('TOME_3031, 3043, SR=-10, 4, axLength=27.57, 21.79');
 set(gca,'color','none')
 drawnow
-filename =fullfile(saveDir,'fig2','d.png');
+filename =fullfile(saveDir,'fig2','d');
 vecrast(gcf, filename, 600, 'bottom', 'pdf')
 close(gcf)
 

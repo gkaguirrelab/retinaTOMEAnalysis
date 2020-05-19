@@ -1,5 +1,6 @@
 function fig4_smoothedPCAReconstruction(gcVolumePerDegSq,scoreExpandedSmoothed,coeff,nDimsToUse,saveDir)
 h=figure;
+h.Renderer = 'Painters';
 set(gcf,'color','w');
 for ii = 1:49
     subplot(7,7,ii);
@@ -12,4 +13,4 @@ for ii = 1:49
 end
 suptitle('Original and Reconstructed GC Tissue Volume Profiles by Subject')
 setTightFig
-saveas(h,fullfile(saveDir,'fig4','a.png'));
+saveas(h,fullfile(saveDir,'fig4','a.pdf'));

@@ -23,7 +23,7 @@ adjustedGCVolPCACoeff = zeros(size(GCVolPCACoeff));
 ALmax= max(axialLengths);
 ALmin= min(axialLengths);
 synthALRange = linspace(ALmin,ALmax,50);%synth range for AL
-synthALRange(16) = 23.58;%We're forcing this one to be the mean emmetropic value (was 23.56 before).
+synthALRange(16) = 23.58;%We're forcing this one to be the emmetropic value (was 23.56 before).
 synGCVolPCACoeff = zeros(50,nDimsToUse);
 for d=1:nDimsToUse
     

@@ -24,4 +24,4 @@ for ii = 1:nDimsToUse
 end
 suptitle('Original and Smoothed PCA Components')
 setTightFig
-saveas(h,fullfile(saveDir,'fig3','a.png'));
+saveas(h,fullfile(saveDir,'fig3','a.pdf'));
