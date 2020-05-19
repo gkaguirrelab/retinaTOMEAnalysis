@@ -1,3 +1,6 @@
+function fig10_postRetinalAnatomy(p,GCVolPCACoeff,gcVolumePerDegSq,adjustedGCVolPCACoeff,comboTable,GCVolPCAScoreExpandedSmoothed,nDimsToUse,subList,saveDir)
+
+
 for ii = 1:50
     profileFit = GCVolPCAScoreExpandedSmoothed(:,1:nDimsToUse)*GCVolPCACoeff(ii,1:nDimsToUse)';
     profileFit(isnan(gcVolumePerDegSq(:,ii)))=nan;
@@ -19,13 +22,36 @@ opts = detectImportOptions(p.Results.anatMeasuresFileName);
 anatMeasuresTable = readtable(p.Results.anatMeasuresFileName, opts);
 anatComparisonTable = join(anatMeasuresTable,comboTable,'Keys','AOSO_ID');
 
-%% Model optic chiasm volume
+
+%% Report the correlation of optic chiasm volume with some measures
+measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol'};
 y = anatComparisonTable.Optic_Chiasm;
+for ii = 1:length(measureSet)
+    [R,P] = corrcoef(y,anatComparisonTable.(measureSet{ii}));
+    str = sprintf(['Correlation of optic chiasm volume with ' measureSet{ii} ' = %2.2f, p = %2.5f \n'],R(1,2),P(1,2));
+    fprintf(str);
+end
+
+
+%% Model optic chiasm volume
 
 % Create an X model
-X = [anatComparisonTable.meanAdjustedGCVol, anatComparisonTable.meanFitGCVol, anatComparisonTable.SupraTentorialVol./1e9];
+X = [anatComparisonTable.meanAdjustedGCVol, anatComparisonTable.meanFitGCVol];
 mdl = fitlm(X,y,'linear');
 
-X = [anatComparisonTable.meanAdjustedGCVol, anatComparisonTable.meanFitGCVol, anatComparisonTable.SupraTentorialVol./1e9, ones(size(anatComparisonTable.meanAdjustedGCVol))];
-b = regress(y,X);
-yFit = X*b;
+figHandle = figure();
+h = mdl.plot;
+h(1).Marker = 'o';
+h(1).MarkerEdgeColor = 'none';
+h(1).MarkerFaceColor = 'r';
+
+h(2).Color = [0.5 0.5 0.5];
+h(3).Color = [0.5 0.5 0.5];
+
+xlabel('Modeled mean GC Tissue Volume [mm^3 / deg^2]')
+ylabel('Optic chiasm volume [mm^3]')
+
+setTightFig
+saveas(figHandle,fullfile(saveDir,'fig10','b.pdf'));
+
+end

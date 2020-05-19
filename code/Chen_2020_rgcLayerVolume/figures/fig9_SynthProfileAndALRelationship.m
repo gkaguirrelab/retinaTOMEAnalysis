@@ -1,4 +1,5 @@
 function fig9_SynthProfileAndALRelationship(GCVolPCACoeff,axialLengths,XPos_Degs,comboTable,scoreExpandedSmoothed,nDimsToUse,saveDir)
+
 % Plot the synthesized reconstructions by axial length
 minAL = min(comboTable.Axial_Length_average);
 maxAL = max(comboTable.Axial_Length_average);

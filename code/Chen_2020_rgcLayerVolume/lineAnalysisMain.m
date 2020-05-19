@@ -33,7 +33,7 @@ p.parse(varargin{:});
 
 %% Create Save Directory
 saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','GCPaperFigures');
-nFigs = 9;
+nFigs = 10;
 mkdir(saveDir);
 for ii = 1:nFigs
     mkdir(fullfile(saveDir,['fig' num2str(ii)]));
@@ -66,7 +66,7 @@ nDimsToUse = 6; % number of PCA components to use.
 
 
 %% Create and save plots if so instructed
-if p.Results.showPlots 
+if p.Results.showPlots
     close all;
     
     % Pull up an example montage and individual pieces
@@ -101,6 +101,10 @@ if p.Results.showPlots
     % Synthetic profiles that demonstrate the appearance of eyes of
     % different sizes, cast in different coordinate systems
     fig9_SynthProfileAndALRelationship(GCVolPCACoeff,comboTable.Axial_Length_average,XPos_Degs,comboTable,GCVolPCAScoreExpandedSmoothed,nDimsToUse,saveDir)
+    
+    % Relationship between retinal thickness, volume, and optic chiasm size
+    fig10_postRetinalAnatomy(p,GCVolPCACoeff,gcVolumePerDegSq,adjustedGCVolPCACoeff,comboTable,GCVolPCAScoreExpandedSmoothed,nDimsToUse,subList,saveDir)
+    
 end
 
 end
