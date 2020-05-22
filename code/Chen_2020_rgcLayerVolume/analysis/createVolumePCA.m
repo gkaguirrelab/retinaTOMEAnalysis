@@ -1,4 +1,4 @@
-function [GCVolPCAScoreExpanded, GCVolPCAScoreExpandedSmoothed, GCVolPCACoeff, GCVolPCAVarExplained] = createVolumePCA(gcVolumePerDegSq,badIdx,XPos_Degs)
+function [GCVolPCAScoreExpanded, GCVolPCAScoreExpandedSmoothed, GCVolPCACoeff, GCVolPCAVarExplained] = createVolumePCA(gcVolumePerDegSq,badIdx,XPos_Degs,nDimsToUse)
 
 % Before we do the PCA, nan out the "bad" indices from the data. We won't
 % attempt to reconstruct these points.
@@ -35,4 +35,7 @@ for cc = 1:size(GCVolPCAScoreExpanded,2)
     end
 end
 
+% Report the total variance explained by the first nDimsToUse PCs
+str = sprintf('The proportion total variance explained by the first %d PCA components is %2.2f \n', nDimsToUse,sum(GCVolPCAVarExplained(1:nDimsToUse)));
+fprintf(str);
 

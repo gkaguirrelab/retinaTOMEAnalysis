@@ -24,14 +24,21 @@ anatComparisonTable = join(anatMeasuresTable,comboTable,'Keys','AOSO_ID');
 
 
 %% Report the correlation of optic chiasm volume with some measures
-measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol'};
+measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender'};
 y = anatComparisonTable.Optic_Chiasm;
 nBoots = 1000;
 for ii = 1:length(measureSet)
-    [R,P] = corrcoef(y,anatComparisonTable.(measureSet{ii}));
+    if strcmp(measureSet{ii},'Gender')
+        tmp = anatComparisonTable.(measureSet{ii});
+        x = zeros(size(tmp));
+        x(strcmp(tmp,'M'))=1;        
+    else
+        x = anatComparisonTable.(measureSet{ii});
+    end
+    [R,P] = corrcoef(y,x);
     for bb = 1:nBoots
         bootSamp = randsample(length(y),length(y),true);
-        bootR(bb) = corr(y(bootSamp),anatComparisonTable.(measureSet{ii})(bootSamp));
+        bootR(bb) = corr(y(bootSamp),x(bootSamp));
     end
     str = sprintf(['Correlation of optic chiasm volume with ' measureSet{ii} ' = %2.2f ± %2.2f (sem), p = %2.5f \n'],R(1,2),std(bootR),P(1,2));
     fprintf(str);

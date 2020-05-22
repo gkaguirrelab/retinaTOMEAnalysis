@@ -58,7 +58,7 @@ nDimsToUse = 6; % number of PCA components to use.
 
 %% Conduct PCA upon the tissue volume data
 % Perform the PCA and smooth components
-[GCVolPCAScoreExpanded, GCVolPCAScoreExpandedSmoothed, GCVolPCACoeff, GCVolPCAVarExplained] = createVolumePCA(gcVolumePerDegSq,badIdx,XPos_Degs);
+[GCVolPCAScoreExpanded, GCVolPCAScoreExpandedSmoothed, GCVolPCACoeff, GCVolPCAVarExplained] = createVolumePCA(gcVolumePerDegSq,badIdx,XPos_Degs,nDimsToUse);
 
 % Adjust each coeff with the axial length contribution, also create some
 % synthetic ones
