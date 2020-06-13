@@ -49,6 +49,11 @@ end
 
 % Create an X model
 X = [anatComparisonTable.meanAdjustedGCVol, anatComparisonTable.meanFitGCVol];
+X(:,1) = X(:,1)-mean(X(:,1));
+X(:,2) = X(:,2)-mean(X(:,2));
+X(:,1) = X(:,1)/2;
+X(:,2) = X(:,2)/2;
+
 mdl = fitlm(X,y,'linear');
 
 figHandle = figure();
@@ -60,7 +65,7 @@ h(1).MarkerFaceColor = 'r';
 h(2).Color = [0.5 0.5 0.5];
 h(3).Color = [0.5 0.5 0.5];
 
-xlabel('Modeled mean GC Tissue Volume [mm^3 / deg^2]')
+xlabel('Modeled deviation from mean GC Tissue Volume [mm^3 / deg^2]')
 ylabel('Optic chiasm volume [mm^3]')
 
 setTightFig
