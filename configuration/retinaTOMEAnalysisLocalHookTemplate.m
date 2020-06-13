@@ -53,6 +53,13 @@ setpref(projectName,'projectBaseDir',projectBaseDir); % main directory path
 % vlfeat is a compiled library of vision algorithms. Download the latest
 % version from vlfeat.org. Unpack within userpath/src/. Update the version
 % ID in the vlfeatroot variable below.
+%
+% Under Mac OS X Catalina, mex files may need to be explicitly whitelisted
+% to pass the GateKeeper code sign check. The following command can be
+% issued in the terminal to whitelist a directory of code
+%{
+    sudo xattr -r -d com.apple.quarantine /path/to/directory
+%}
 VLFEATROOT = fullfile(userpath(),'src','vlfeat-0.9.21');
 try
     run(fullfile(VLFEATROOT,'toolbox','vl_setup'));
