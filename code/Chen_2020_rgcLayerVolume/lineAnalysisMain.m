@@ -92,7 +92,7 @@ if p.Results.showPlots
     % to remove the influence of axial length (subjects sorted by axial length)
     fig6_AxialLengthAdjustedReconstruction(comboTable.Axial_Length_average,gcVolumePerDegSq,GCVolPCAScoreExpandedSmoothed,adjustedGCVolPCACoeff,nDimsToUse,saveDir)
     
-    % Using PCa, show how axial length will affect the average emmetropic profile
+    % Using PCA, show how axial length will affect the average emmetropic profile
     fig7_SynthesizeALImpactOnEmmEye(GCVolPCAScoreExpandedSmoothed,synGCVolPCACoeff,XPos_Degs,saveDir)
     
     % Show AL adjusted profiles stacked, and their mean/median relationship with axial length before/after adjustment
