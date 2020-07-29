@@ -1,4 +1,4 @@
-function smoothManualSegGCIPExtOCT(dataDir)
+function smoothManualSegGCIPExtOCT(dataDir,origFileNameSuffix)
 %Purpose: Find all manual segmentations in dataDir with Horizontal Extended
 %OCT data and calculate and smooth the the manual segmentation boundaries
 %for the GCIP layers.
@@ -17,7 +17,7 @@ for n = 1:length(allSegs)
     ValidFlag = 1;
     currSeg = allSegs(n).name;
     [currPath,currName,currExt]=fileparts(currSeg);
-        
+    
     %load the segmentation .nii
     
     segImg = niftiread(currSeg);
@@ -25,40 +25,53 @@ for n = 1:length(allSegs)
     segImg = permute(segImg,[2 1 3]);
     
     %load the original montaged .nii
-    OCTFile = strrep(strrep(currSeg,'_Segmentation',''),'.gz','');
+    OCTFile = strrep(strrep(currSeg,'_Segmentation',origFileNameSuffix),'.gz','');
     OCTInfo=niftiinfo(OCTFile);
     OCTImg = niftiread(OCTFile);
-    OCTImg = rot90(OCTImg,-2);
-    OCTImg = permute(OCTImg,[2 1 3]);
+    if ndims(OCTImg) == 3
+        OCTImg = rot90(OCTImg,-2);
+        OCTImg = permute(OCTImg,[2 1 3]);
+    else
+        OCTImg = flipud(rot90(OCTImg,-1));        
+    end
     
     %set the three pieces of the montage
-    im1_ = OCTImg(:,:,1);
-    im2_ = OCTImg(:,:,2);
-    im3_ = OCTImg(:,:,3);
+    if ndims(OCTImg) == 3
+        im1_ = OCTImg(:,:,1);
+        im2_ = OCTImg(:,:,2);
+        im3_ = OCTImg(:,:,3);
+        
+        %calculate the overlapping regions and get rid of nans
+        overlap= ((im1_ ~= 0) & (~isnan(im1_))) + ((im2_ ~= 0) & (~isnan(im2_))) + ((im3_ ~= 0) & (~isnan(im3_)));
+        overlap(overlap == 0) = 1;
+        
+        im1_(isnan(im1_))=0;
+        im2_(isnan(im2_))=0;
+        im3_(isnan(im3_))=0;
+        
+        %calculate the average montage for the orginal image
+        octImAvg = (im1_+im2_+im3_)./(overlap);
+        %cacluate the segmentation montage
+        SegAvg = max(segImg,[],3);
+        
+    else
+        
+        octImAvg = OCTImg;
+        SegAvg = segImg;
+        
+    end
     
-    %calculate the overlapping regions and get rid of nans
-    overlap= ((im1_ ~= 0) & (~isnan(im1_))) + ((im2_ ~= 0) & (~isnan(im2_))) + ((im3_ ~= 0) & (~isnan(im3_)));
-    overlap(overlap == 0) = 1;
-    
-    im1_(isnan(im1_))=0;
-    im2_(isnan(im2_))=0;
-    im3_(isnan(im3_))=0;
-    
-    %calculate the average montage for the orginal image
-    octImAvg = (im1_+im2_+im3_)./(overlap);
-    %cacluate the segmentation montage
-    SegAvg = max(segImg,[],3);
     
     %size of the montage
     YN = size(SegAvg,1);
     XN = size(SegAvg,2);
     
-    %calculate binary mask and find connected components 
+    %calculate binary mask and find connected components
     SegAvg_bw = SegAvg > 0;
     
     % Remove any stray components that are below the size threshold
-    CC=bwconncomp(SegAvg_bw);    
-    numPixels = cellfun(@numel,CC.PixelIdxList);    
+    CC=bwconncomp(SegAvg_bw);
+    numPixels = cellfun(@numel,CC.PixelIdxList);
     if any(numPixels < componentPixelThresh)
         removeIdx = find(numPixels < componentPixelThresh);
         for bb = 1:length(removeIdx)
@@ -67,21 +80,24 @@ for n = 1:length(allSegs)
         CC=bwconncomp(SegAvg_bw);
     end
     
-    %we expect exactly 3 connect components separated by the fovea and
-    %optic disk, return error if more or fewer pieces are found
-    if(CC.NumObjects ~= 3)
+    % For the vertical line scans, we expect 2 connected components
+    % separated by the fovea, and for the horizontal line scan, we expect
+    % three segments, as the nasal retina is also broken up by the optic
+    % disc.
+    
+    if CC.NumObjects~=2 && CC.NumObjects~=3
         disp(['Error:' fullfile(currPath,currSeg) ' incorrect number of segments, skipping.'])
         ValidFlag = 0;
         continue;
     end
     
-    %now we calculate the boundaries
-    boundaries = [];    
-    overlay = cat(3,octImAvg,octImAvg,octImAvg);%manual segmentation overlay
-    overlaySmooth = cat(3,octImAvg,octImAvg,octImAvg);%smoothed segmentation overlay
-
+    boundaries = [];
+    rgbDims = 3;
+    overlay = double(cat(rgbDims,octImAvg,octImAvg,octImAvg));%manual segmentation overlay
+    overlaySmooth = double(cat(rgbDims,octImAvg,octImAvg,octImAvg));%smoothed segmentation overlay
+    
     %calculate for each piece c
-    for c = 1:3
+    for c = 1:CC.NumObjects
         currSect = zeros(YN,XN);
         currSect(CC.PixelIdxList{c}) = SegAvg(CC.PixelIdxList{c});
         
@@ -99,8 +115,8 @@ for n = 1:length(allSegs)
             
             ty=find(currSect(:,x)>0,1,'first');
             my=find(currSect(:,x)>1,1,'first');
-            by=find(currSect(:,x)>0,1,'last');        
-             
+            by=find(currSect(:,x)>0,1,'last');
+            
             %save boundary location (X,Y) at each Ascan
             if(~isempty(ty))
                 Top = [Top ; x ty];
@@ -118,12 +134,12 @@ for n = 1:length(allSegs)
         padSize = 50;
         
         
-        if(isempty(Top) || isempty(Mid) || isempty(Bot)) 
-        disp(['Error:' fullfile(currPath,currSeg) ' missing boundaries, skipping.'])
-                ValidFlag=0;
-        continue;
+        if(isempty(Top) || isempty(Mid) || isempty(Bot))
+            disp(['Error:' fullfile(currPath,currSeg) ' missing boundaries, skipping.'])
+            ValidFlag=0;
+            continue;
         end
-
+        
         
         TopPadded = padEnds(Top,padSize);
         MidPadded = padEnds(Mid,padSize);
@@ -145,7 +161,7 @@ for n = 1:length(allSegs)
         
         %draw the boundaries as overlay on the OCT montage
         for t= 1:length(Top)
-            overlay(Top(t,2),Top(t,1),:) = [0 1 0]';
+                overlay(Top(t,2),Top(t,1),:) = [0 1 0]';
             %sometimes smoothing extends past the image, so we ignore these
             %case
             if(round(TopSmooth(t,2)) <=0 || round(TopSmooth(t,2)) >YN)
@@ -155,7 +171,7 @@ for n = 1:length(allSegs)
         end
         %repeat for the other boundaries
         for t= 1:length(Mid)
-            overlay(Mid(t,2),Mid(t,1),:) = [1 1 0]';
+                overlay(Mid(t,2),Mid(t,1),:) = [1 1 0]';
             if(round(MidSmooth(t,2)) <=0 || round(MidSmooth(t,2)) >YN)
                 continue
             end
@@ -164,7 +180,8 @@ for n = 1:length(allSegs)
         end
         
         for t= 1:length(Bot)
-            overlay(Bot(t,2),Bot(t,1),:) = [1 0 0]';
+                overlay(Bot(t,2),Bot(t,1),:) = [1 0 0]';
+            
             if(round(BotSmooth(t,2)) <=0 || round(BotSmooth(t,2)) >YN)
                 continue
             end

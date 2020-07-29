@@ -39,8 +39,16 @@ montageExtendedOCT(inputDir,scanInfoFile,outputDir)
 % uses ITKSNAP to perform manual labeling of the GC and IP layers. This
 % next stage loads the labels and fits smooth splines to the three borders
 % implied by the two labels.
+
+% Horizontal
 inputDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData');
-smoothManualSegGCIPExtOCT(inputDir)
+origFileNameSuffix = '';
+smoothManualSegGCIPExtOCT(inputDir,origFileNameSuffix)
+
+% Vertical
+inputDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTSingleVerticalData');
+origFileNameSuffix = '_SingleVerticalOCT';
+smoothManualSegGCIPExtOCT(inputDir,origFileNameSuffix)
 
 
 %% Caclulate IP and GC Thickness Values
