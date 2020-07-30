@@ -1,4 +1,4 @@
-function [GCVolPCAScoreExpanded, GCVolPCAScoreExpandedSmoothed, GCVolPCACoeff, GCVolPCAVarExplained] = createVolumePCA(gcVolumePerDegSq,badIdx,XPos_Degs,nDimsToUse,orientation)
+function [GCVolPCAScoreExpanded, GCVolPCAScoreExpandedSmoothed, GCVolPCACoeff, GCVolPCAVarExplained] = createVolumePCA(gcVolumePerDegSq,badIdx,XPos_Degs,nDimsToUse,smoothPCAFactor,orientation)
 
 % Before we do the PCA, nan out the "bad" indices from the data. We won't
 % attempt to reconstruct these points.
@@ -31,14 +31,14 @@ end
 
 % Perform piece-wise spline smoothing of the scores to remove the noisy
 % effects of data imputation
-smoothVal = 0.2; % 0-1, lower is smoother.
+smoothPCAFactor = 0.1; % 0-1, lower is smoother.
 GCVolPCAScoreExpandedSmoothed = GCVolPCAScoreExpanded;
 for cc = 1:size(GCVolPCAScoreExpanded,2)
     for dd = 1:length(domains)
         rd = domains{dd};
         x = XPos_Degs(rd(1):rd(2));
         y = GCVolPCAScoreExpanded(rd(1):rd(2),cc);
-        pp = csaps(x',y,smoothVal);
+        pp = csaps(x',y,smoothPCAFactor);
         GCVolPCAScoreExpandedSmoothed(rd(1):rd(2),cc) = ppval(pp,x');
     end
 end

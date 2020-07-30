@@ -46,6 +46,7 @@ p.addParameter('mmPerDegFileName',fullfile(dropboxBaseDir,'AOSO_analysis','mmPer
 p.addParameter('subjectTableFileName',fullfile(dropboxBaseDir,'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 p.addParameter('anatMeasuresFileName',fullfile(getpref('retinaTOMEAnalysis','projectBaseDir'),'data','visualPathwayAnatMeasures.xlsx'),@ischar);
 p.addParameter('saveDir',fullfile(dropboxBaseDir,'AOSO_analysis','GCPaperFigures_horiz'),@ischar);
+p.addParameter('smoothPCAFactor',0.1,@isscalar);
 p.addParameter('orientation','horiz',@ischar);
 
 % Check the parameters
@@ -79,7 +80,7 @@ nDimsToUse = 6; % number of PCA components to use.
 
 %% Conduct PCA upon the tissue volume data
 % Perform the PCA and smooth components
-[GCVolPCAScoreExpanded, GCVolPCAScoreExpandedSmoothed, GCVolPCACoeff, GCVolPCAVarExplained] = createVolumePCA(gcVolumePerDegSq,badIdx,XPos_Degs,nDimsToUse,p.Results.orientation);
+[GCVolPCAScoreExpanded, GCVolPCAScoreExpandedSmoothed, GCVolPCACoeff, GCVolPCAVarExplained] = createVolumePCA(gcVolumePerDegSq,badIdx,XPos_Degs,nDimsToUse,p.Results.smoothPCAFactor,p.Results.orientation);
 
 % Adjust each coeff with the axial length contribution, also create some
 % synthetic ones
