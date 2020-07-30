@@ -92,7 +92,7 @@ if p.Results.showPlots
     fig1_ShowMontage(dropboxBaseDir, saveDir)
     
     % Plots Relating GC thickness and volume to axial length
-    fig2_ThickAndVolRelationships(XPos_Degs, gcVec, meanGCVecProfile, mmSqPerDegSq, gcVolumePerDegSq, meanGCVolumePerDegSqProfile,comboTable,saveDir)
+ %   fig2_ThickAndVolRelationships(XPos_Degs, gcVec, meanGCVecProfile, mmSqPerDegSq, gcVolumePerDegSq, meanGCVolumePerDegSqProfile,comboTable,saveDir)
     
     % Panel d of figure 2 is a couple of extreme model eyes
     fig2d_ExtremeEyes(saveDir)
