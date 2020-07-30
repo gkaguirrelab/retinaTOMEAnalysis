@@ -14,19 +14,17 @@ function lineAnalysisMain(varargin)
     % Run for the horizontal line data
     dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
     orientation = 'horiz';
-    dataSaveName = fullfile(dropboxBaseDir,'AOSO_analysis','OCTExplorerExtendedHorizontalData','LineAnalysisResults.mat');
     GCIPthicknessFile = fullfile(dropboxBaseDir,'AOSO_analysis','OCTExplorerExtendedHorizontalData','GCIP_thicknessesByDeg');
     saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','GCPaperFigures_horiz');
-    lineAnalysisMain('orientation',orientation,'dataSaveName',dataSaveName,'GCIPthicknessFile',GCIPthicknessFile,'saveDir',saveDir);
+    lineAnalysisMain('orientation',orientation,'GCIPthicknessFile',GCIPthicknessFile,'saveDir',saveDir);
 %}
 %{
     % Run for the vertical line data
     dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
     orientation = 'vert';
-    dataSaveName = fullfile(dropboxBaseDir,'AOSO_analysis','OCTSingleVerticalData','LineAnalysisResults.mat');
     GCIPthicknessFile = fullfile(dropboxBaseDir,'AOSO_analysis','OCTSingleVerticalData','GCIP_thicknessesByDeg');
     saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','GCPaperFigures_vert');
-    lineAnalysisMain('orientation',orientation,'dataSaveName',dataSaveName,'GCIPthicknessFile',GCIPthicknessFile,'saveDir',saveDir);
+    lineAnalysisMain('orientation',orientation,'GCIPthicknessFile',GCIPthicknessFile,'saveDir',saveDir);
 %}
 
 %% Set the dropboxBaseDir
@@ -40,7 +38,6 @@ p = inputParser;
 
 % Optional analysis params
 p.addParameter('showPlots',true,@islogical);
-p.addParameter('dataSaveName',fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','LineAnalysisResults.mat'),@ischar);
 p.addParameter('GCIPthicknessFile',fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','GCIP_thicknessesByDeg'),@ischar);
 p.addParameter('mmPerDegFileName',fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps','mmPerDegPolyFit.mat'),@ischar);
 p.addParameter('subjectTableFileName',fullfile(dropboxBaseDir,'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);

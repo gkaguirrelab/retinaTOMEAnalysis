@@ -1,4 +1,4 @@
-function fig9_SynthProfileAndALRelationship(GCVolPCACoeff,axialLengths,XPos_Degs,comboTable,scoreExpandedSmoothed,nDimsToUse,saveDir)
+function fig9_SynthProfileAndALRelationship(GCVolPCACoeff,axialLengths,XPos_Degs,comboTable,scoreExpandedSmoothed,nDimsToUse,saveDir,orientation)
 
 % Plot the synthesized reconstructions by axial length
 minAL = min(comboTable.Axial_Length_average);
@@ -34,18 +34,23 @@ XPos_mm = zeros(length(XPos_Degs),length(ALs));
 for ii=1:length(ALs)
     mmPerDegPolyFit{ii} = magMap(ALs(ii));
     pp = mmPerDegPolyFit{ii};
-    mmSqPerDegSq = pp([zeros(size(XPos_Degs));-XPos_Degs]').^2;
+    switch orientation
+        case 'horiz'
+            mmSqPerDegSq = pp([-XPos_Degs;zeros(size(XPos_Degs))]').^2;
+        case 'vert'
+            mmSqPerDegSq = pp([zeros(size(XPos_Degs));-XPos_Degs]').^2;
+    end
     synthProfileThick(:,ii) = synthProfileVol(:,ii)./mmSqPerDegSq;
     % Create the XPos_mm for each model
-    horizPos = @(hh) pp(hh, 0);
+    eccenPos = @(hh) pp(hh, 0);
     for xx = 1:length(XPos_Degs)
         if XPos_Degs(xx)==0
             continue
         end
         if XPos_Degs(xx)>0
-            XPos_mm(xx,ii) = integral(horizPos,0,XPos_Degs(xx));
+            XPos_mm(xx,ii) = integral(eccenPos,0,XPos_Degs(xx));
         else
-            XPos_mm(xx,ii) = -integral(horizPos,XPos_Degs(xx),0);
+            XPos_mm(xx,ii) = -integral(eccenPos,XPos_Degs(xx),0);
         end
     end
 end
@@ -58,6 +63,17 @@ xlim([-25 25]);
 title(str)
 setTightFig
 saveas(h,fullfile(saveDir,'fig9','b.pdf'));
+
+% Save a data file that contains the profile of the GC thickness in mm as a
+% function of eccentricity in degrees
+switch orientation
+    case 'horiz'
+        thicknessMmHoriz = squeeze(synthProfileThick(:,2));        
+        save(fullfile(saveDir,'emmetropeThickProfile_horiz.mat'),'XPos_Degs','thicknessMmHoriz');
+    case 'vert'
+        thicknessMmVert = squeeze(synthProfileThick(:,2));        
+        save(fullfile(saveDir,'emmetropeThickProfile_vert.mat'),'XPos_Degs','thicknessMmVert');
+end
 
 % Plot the GC thick functions with support in mm
 h = figure;
