@@ -1,4 +1,4 @@
-function [mmSqPerDegSq,gcVolumePerDegSq,meanGCVolumePerDegSqProfile,volumeTable] = convertThicknessToVolume(p,gcVec,badIdx,subList,XPos_Degs,subjectTable)
+function [mmSqPerDegSq,gcVolumePerDegSq,meanGCVolumePerDegSqProfile,volumeTable] = convertThicknessToVolume(p,gcVec,badIdx,subList,XPos_Degs,subjectTable,orientation)
 %% Convert from mm thickness to tissue volume
 
 % Define some variables
@@ -11,7 +11,12 @@ load(p.Results.mmPerDegFileName,'mmPerDegPolyFit');
 % Loop over subjects
 for ss = 1:length(subList)
     idx = find(subjectTable.AOSO_ID==str2num(subList{ss}));
-    mmSqPerDegSq(:,ss) = mmPerDegPolyFit{idx}([zeros(size(XPos_Degs));-XPos_Degs]').^2;
+    switch orientation
+        case 'horiz'
+            mmSqPerDegSq(:,ss) = mmPerDegPolyFit{idx}([-XPos_Degs;zeros(size(XPos_Degs))]').^2;
+        case 'vert'
+            mmSqPerDegSq(:,ss) = mmPerDegPolyFit{idx}([zeros(size(XPos_Degs));-XPos_Degs]').^2;
+    end
     gcVolumePerDegSq(:,ss) = (gcVec(:,ss)).*mmSqPerDegSq(:,ss);
 end
 

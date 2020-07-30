@@ -8,7 +8,26 @@ function lineAnalysisMain(varargin)
 %
 % The default locations of files should work if the LocalHook for this repo
 % has been properly configured.
-
+%
+% Examples:
+%{
+    % Run for the horizontal line data
+    dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
+    orientation = 'horiz';
+    dataSaveName = fullfile(dropboxBaseDir,'AOSO_analysis','OCTExplorerExtendedHorizontalData','LineAnalysisResults.mat');
+    GCIPthicknessFile = fullfile(dropboxBaseDir,'AOSO_analysis','OCTExplorerExtendedHorizontalData','GCIP_thicknessesByDeg');
+    saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','GCPaperFigures_horiz');
+    lineAnalysisMain('orientation',orientation,'dataSaveName',dataSaveName,'GCIPthicknessFile',GCIPthicknessFile,'saveDir',saveDir);
+%}
+%{
+    % Run for the vertical line data
+    dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
+    orientation = 'vert';
+    dataSaveName = fullfile(dropboxBaseDir,'AOSO_analysis','OCTSingleVerticalData','LineAnalysisResults.mat');
+    GCIPthicknessFile = fullfile(dropboxBaseDir,'AOSO_analysis','OCTSingleVerticalData','GCIP_thicknessesByDeg');
+    saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','GCPaperFigures_vert');
+    lineAnalysisMain('orientation',orientation,'dataSaveName',dataSaveName,'GCIPthicknessFile',GCIPthicknessFile,'saveDir',saveDir);
+%}
 
 %% Set the dropboxBaseDir
 % We need this for the default loations of some the directories
@@ -26,13 +45,15 @@ p.addParameter('GCIPthicknessFile',fullfile(dropboxBaseDir, 'AOSO_analysis','OCT
 p.addParameter('mmPerDegFileName',fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps','mmPerDegPolyFit.mat'),@ischar);
 p.addParameter('subjectTableFileName',fullfile(dropboxBaseDir,'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 p.addParameter('anatMeasuresFileName',fullfile(getpref('retinaTOMEAnalysis','projectBaseDir'),'data','visualPathwayAnatMeasures.xlsx'),@ischar);
+p.addParameter('saveDir',fullfile(dropboxBaseDir,'AOSO_analysis','GCPaperFigures_horiz'),@ischar);
+p.addParameter('orientation','horiz',@ischar);
 
 % Check the parameters
 p.parse(varargin{:});
 
 
 %% Create Save Directory
-saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','GCPaperFigures');
+saveDir = p.Results.saveDir;
 nFigs = 10;
 mkdir(saveDir);
 for ii = 1:nFigs
@@ -46,7 +67,7 @@ end
 
 % Converts GC thickness into GC volume and provide mmSqPerDegSq conversion
 % for each subject
-[mmSqPerDegSq,gcVolumePerDegSq,meanGCVolumePerDegSqProfile,volumeTable] = convertThicknessToVolume(p,gcVec,badIdx,subList,XPos_Degs,subjectTable);
+[mmSqPerDegSq,gcVolumePerDegSq,meanGCVolumePerDegSqProfile,volumeTable] = convertThicknessToVolume(p,gcVec,badIdx,subList,XPos_Degs,subjectTable,p.Results.orientation);
 
 % Join the thickness and volume data table with the subject biometry and
 % demographics table, using the AOSO_ID as the key variable
@@ -58,7 +79,7 @@ nDimsToUse = 6; % number of PCA components to use.
 
 %% Conduct PCA upon the tissue volume data
 % Perform the PCA and smooth components
-[GCVolPCAScoreExpanded, GCVolPCAScoreExpandedSmoothed, GCVolPCACoeff, GCVolPCAVarExplained] = createVolumePCA(gcVolumePerDegSq,badIdx,XPos_Degs,nDimsToUse);
+[GCVolPCAScoreExpanded, GCVolPCAScoreExpandedSmoothed, GCVolPCACoeff, GCVolPCAVarExplained] = createVolumePCA(gcVolumePerDegSq,badIdx,XPos_Degs,nDimsToUse,p.Results.orientation);
 
 % Adjust each coeff with the axial length contribution, also create some
 % synthetic ones
