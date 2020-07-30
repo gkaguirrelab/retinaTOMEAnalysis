@@ -119,7 +119,7 @@ if p.Results.showPlots
     
     % Synthetic profiles that demonstrate the appearance of eyes of
     % different sizes, cast in different coordinate systems
-    fig9_SynthProfileAndALRelationship(GCVolPCACoeff,comboTable.Axial_Length_average,XPos_Degs,comboTable,GCVolPCAScoreExpandedSmoothed,nDimsToUse,saveDir)
+    fig9_SynthProfileAndALRelationship(GCVolPCACoeff,comboTable.Axial_Length_average,XPos_Degs,comboTable,GCVolPCAScoreExpandedSmoothed,nDimsToUse,saveDir,p.Results.orientation)
     
     % Relationship between retinal thickness, volume, and optic chiasm size
     fig10_postRetinalAnatomy(p,GCVolPCACoeff,gcVolumePerDegSq,adjustedGCVolPCACoeff,comboTable,GCVolPCAScoreExpandedSmoothed,nDimsToUse,subList,saveDir)
