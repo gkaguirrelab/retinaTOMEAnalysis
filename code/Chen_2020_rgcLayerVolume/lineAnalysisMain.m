@@ -43,7 +43,7 @@ p.addParameter('mmPerDegFileName',fullfile(dropboxBaseDir,'AOSO_analysis','mmPer
 p.addParameter('subjectTableFileName',fullfile(dropboxBaseDir,'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 p.addParameter('anatMeasuresFileName',fullfile(getpref('retinaTOMEAnalysis','projectBaseDir'),'data','visualPathwayAnatMeasures.xlsx'),@ischar);
 p.addParameter('saveDir',fullfile(dropboxBaseDir,'AOSO_analysis','GCPaperFigures_horiz'),@ischar);
-p.addParameter('smoothPCAFactor',0.1,@isscalar);
+p.addParameter('smoothPCAFactor',0.5,@isscalar);
 p.addParameter('orientation','horiz',@ischar);
 
 % Check the parameters
@@ -92,10 +92,10 @@ if p.Results.showPlots
     fig1_ShowMontage(dropboxBaseDir, saveDir)
     
     % Plots Relating GC thickness and volume to axial length
- %   fig2_ThickAndVolRelationships(XPos_Degs, gcVec, meanGCVecProfile, mmSqPerDegSq, gcVolumePerDegSq, meanGCVolumePerDegSqProfile,comboTable,saveDir)
+    fig2_ThickAndVolRelationships(XPos_Degs, gcVec, meanGCVecProfile, mmSqPerDegSq, gcVolumePerDegSq, meanGCVolumePerDegSqProfile,comboTable,saveDir)
     
     % Panel d of figure 2 is a couple of extreme model eyes
-    fig2d_ExtremeEyes(saveDir)
+%    fig2d_ExtremeEyes(saveDir)
     
     % Show the effect of smoothing on each of the PCA scores
     fig3_EffectOfSmoothingOnPCA(GCVolPCAVarExplained,GCVolPCAScoreExpanded,GCVolPCAScoreExpandedSmoothed,nDimsToUse,saveDir)
