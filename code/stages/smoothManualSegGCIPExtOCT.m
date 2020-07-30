@@ -26,13 +26,16 @@ for n = 1:length(allSegs)
     
     %load the original montaged .nii
     OCTFile = strrep(strrep(currSeg,'_Segmentation',origFileNameSuffix),'.gz','');
+    if contains(OCTFile,'11094_OD')
+        foo =1 ;
+    end
     OCTInfo=niftiinfo(OCTFile);
     OCTImg = niftiread(OCTFile);
     if ndims(OCTImg) == 3
         OCTImg = rot90(OCTImg,-2);
         OCTImg = permute(OCTImg,[2 1 3]);
     else
-        OCTImg = flipud(rot90(OCTImg,-1));        
+        OCTImg = flipud(rot90(OCTImg,-1));
     end
     
     %set the three pieces of the montage
@@ -95,6 +98,9 @@ for n = 1:length(allSegs)
     rgbDims = 3;
     overlay = double(cat(rgbDims,octImAvg,octImAvg,octImAvg));%manual segmentation overlay
     overlaySmooth = double(cat(rgbDims,octImAvg,octImAvg,octImAvg));%smoothed segmentation overlay
+    
+    boundaries = [];
+    boundariesSmooth = [];
     
     %calculate for each piece c
     for c = 1:CC.NumObjects
@@ -161,7 +167,7 @@ for n = 1:length(allSegs)
         
         %draw the boundaries as overlay on the OCT montage
         for t= 1:length(Top)
-                overlay(Top(t,2),Top(t,1),:) = [0 1 0]';
+            overlay(Top(t,2),Top(t,1),:) = [0 1 0]';
             %sometimes smoothing extends past the image, so we ignore these
             %case
             if(round(TopSmooth(t,2)) <=0 || round(TopSmooth(t,2)) >YN)
@@ -171,7 +177,7 @@ for n = 1:length(allSegs)
         end
         %repeat for the other boundaries
         for t= 1:length(Mid)
-                overlay(Mid(t,2),Mid(t,1),:) = [1 1 0]';
+            overlay(Mid(t,2),Mid(t,1),:) = [1 1 0]';
             if(round(MidSmooth(t,2)) <=0 || round(MidSmooth(t,2)) >YN)
                 continue
             end
@@ -180,7 +186,7 @@ for n = 1:length(allSegs)
         end
         
         for t= 1:length(Bot)
-                overlay(Bot(t,2),Bot(t,1),:) = [1 0 0]';
+            overlay(Bot(t,2),Bot(t,1),:) = [1 0 0]';
             
             if(round(BotSmooth(t,2)) <=0 || round(BotSmooth(t,2)) >YN)
                 continue

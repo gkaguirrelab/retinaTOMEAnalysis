@@ -54,7 +54,13 @@ smoothManualSegGCIPExtOCT(inputDir,origFileNameSuffix)
 %% Caclulate IP and GC Thickness Values
 % This stage calculates and saves a .mat file with the thickness of each of
 % the two layers defined by the three boundaries.
+
+% Horizontal
 inputDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData');
+calcExtOCTGCIPThickness(inputDir)
+
+% Vertical
+inputDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTSingleVerticalData');
 calcExtOCTGCIPThickness(inputDir)
 
 
