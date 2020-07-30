@@ -31,7 +31,6 @@ end
 
 % Perform piece-wise spline smoothing of the scores to remove the noisy
 % effects of data imputation
-smoothPCAFactor = 0.1; % 0-1, lower is smoother.
 GCVolPCAScoreExpandedSmoothed = GCVolPCAScoreExpanded;
 for cc = 1:size(GCVolPCAScoreExpanded,2)
     for dd = 1:length(domains)
