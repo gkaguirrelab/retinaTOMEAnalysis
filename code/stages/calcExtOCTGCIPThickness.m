@@ -1,5 +1,5 @@
 function calcExtOCTGCIPThickness(dataDir)
-%Calculate the thickness of the GC and IP layers for the extended OCT 
+%Calculate the thickness of the GC and IP layers for the extended OCT
 %with respect to a constant X support
 %The function produces .mat file in the same directory as the data with the
 %following variables:
@@ -29,50 +29,69 @@ subIDs = char({allFiles(:).name});
 for n = 1:N
     
     for s =1:2
-        if (s == 1)
-            %OD
+        if (s == 1) % OD
             BoundaryFile = fullfile(dataDir,allFiles(n).name,'OD','ManualBoundaries.mat');
-            segTemporal = 1;
-            segCenter = 2;
-            segNasal = 3;
         else
             BoundaryFile = fullfile(dataDir,allFiles(n).name,'OS','ManualBoundaries.mat');
-            segTemporal = 2;
-            segCenter = 3;
-            segNasal = 1;
         end
-
+        
         if(~isfile(BoundaryFile))
             continue
         else
             dataAvailable(n,s) = 1;
         end
         load(BoundaryFile);
-
-        %use segment edges to find fovea/disc centers
-        [foveaL_Loc_x, foveaL_Loc_ind] = max(boundariesSmooth(segTemporal).GC_IP(:,1));
-        foveaL_Loc_y = boundariesSmooth(segTemporal).GC_IP(foveaL_Loc_ind,2);
-        [foveaR_Loc_x, foveaR_Loc_ind] = min(boundariesSmooth(segCenter).GC_IP(:,1));
-        foveaR_Loc_y = boundariesSmooth(segCenter).GC_IP(foveaR_Loc_ind,2);
         
-        [discL_Loc_x, discL_Loc_ind] = max(boundariesSmooth(segCenter).GC_IP(:,1));
-        discL_Loc_y = boundariesSmooth(segCenter).GC_IP(discL_Loc_ind,2);
-        [discR_Loc_x, discR_Loc_ind] = min(boundariesSmooth(segNasal).GC_IP(:,1));
-        discR_Loc_y = boundariesSmooth(segNasal).GC_IP(discR_Loc_ind,2);
+        
+        %use segment edges to find fovea/disc centers
+        nSegs = size(boundariesSmooth,2);
+        switch nSegs
+            case 3
+                if s == 1
+                    segTemporal = 1;
+                    segCenter = 2;
+                    segNasal = 3;
+                else
+                    segTemporal = 2;
+                    segCenter = 3;
+                    segNasal = 1;
+                end
+                
+                [foveaL_Loc_x, foveaL_Loc_ind] = max(boundariesSmooth(segTemporal).GC_IP(:,1));
+                foveaL_Loc_y = boundariesSmooth(segTemporal).GC_IP(foveaL_Loc_ind,2);
+                [foveaR_Loc_x, foveaR_Loc_ind] = min(boundariesSmooth(segCenter).GC_IP(:,1));
+                foveaR_Loc_y = boundariesSmooth(segCenter).GC_IP(foveaR_Loc_ind,2);
+                
+                [~, discL_Loc_ind] = max(boundariesSmooth(segCenter).GC_IP(:,1));
+                discL_Loc_y = boundariesSmooth(segCenter).GC_IP(discL_Loc_ind,2);
+                [~, discR_Loc_ind] = min(boundariesSmooth(segNasal).GC_IP(:,1));
+                discR_Loc_y = boundariesSmooth(segNasal).GC_IP(discR_Loc_ind,2);
+                
+            case 2
+                segTemporal = 1;
+                segCenter = 2;
+                
+                [foveaL_Loc_x, foveaL_Loc_ind] = max(boundariesSmooth(segTemporal).GC_IP(:,1));
+                foveaL_Loc_y = boundariesSmooth(segTemporal).GC_IP(foveaL_Loc_ind,2);
+                [foveaR_Loc_x, foveaR_Loc_ind] = min(boundariesSmooth(segCenter).GC_IP(:,1));
+                foveaR_Loc_y = boundariesSmooth(segCenter).GC_IP(foveaR_Loc_ind,2);
+                
+            otherwise
+                error('Wrong number of segments')
+        end
         
         
         %find the fovea location
         foveaLoc_x = mean([foveaL_Loc_x foveaR_Loc_x]);
         foveaLoc_y = mean([foveaL_Loc_y foveaR_Loc_y]);
-        
-        
+                
         %calculate mask where we actually have boundary information
         support_mask = zeros(size(XPos_Pixels));
         GC_InnerAll=[];
         GC_IPAll = [];
         IP_OuterAll =[];
         
-        for c=1:3
+        for c=1:nSegs
             %center boundaries points
             GC_InnerSeg_c = boundariesSmooth(c).GC_Inner - repmat([foveaLoc_x foveaLoc_y],size(boundariesSmooth(c).GC_Inner,1),1);
             GC_IPSeg_c = boundariesSmooth(c).GC_IP - repmat([foveaLoc_x foveaLoc_y],size(boundariesSmooth(c).GC_IP,1),1);
@@ -113,7 +132,7 @@ for n = 1:N
         Sub_AScanResolution_um(n,s) = AscanRes*1000;
         GCthicknessValuesAtXPos_um(n,s,:) = minthicknessGC*AscanRes*1000;
         IPthicknessValuesAtXPos_um(n,s,:) = minthicknessIP*AscanRes*1000;
-
+        
     end
 end
 
