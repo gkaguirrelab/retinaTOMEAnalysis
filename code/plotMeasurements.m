@@ -7,6 +7,12 @@
 % Obtain the dropBox base directory
 dropboxBaseDir = getpref('retinaTOMEAnalysis','dropboxBaseDir');
 
+% Instantiate a plotlab object
+plotlabOBJ = plotlab();
+
+% Apply the default plotlab recipe
+plotlabOBJ.applyRecipe();   
+
 %% load & place data
 
 % Find and load the files we need
@@ -15,7 +21,6 @@ horizThicknessProfile = fullfile(dropboxBaseDir, 'AOSO_analysis', ...
 load(horizThicknessProfile,'GCthicknessValuesAtXPos_um','XPos_Degs');
 
 % Place data into a structure
-
 thickData(1).label = 'temporal';
 thickData(1).angle = 180;
 thickData(1).supportDeg = abs(XPos_Degs(XPos_Degs<=0));
@@ -32,7 +37,6 @@ vertThicknessProfile = fullfile(dropboxBaseDir, 'AOSO_analysis', ...
 load(vertThicknessProfile,'GCthicknessValuesAtXPos_um','XPos_Degs');
 
 % Place data into a structure
-
 thickData(3).label = 'superior';
 thickData(3).angle = 90;
 thickData(3).supportDeg = abs(XPos_Degs(XPos_Degs<=0));
@@ -45,3 +49,5 @@ thickData(4).thickMM = (GCthicknessValuesAtXPos_um(XPos_Degs>=0)')';
 
 %% plot measurements
 plot(XPos_Degs, squeeze(GCthicknessValuesAtXPos_um(1,1,:)))
+hold on
+plot(XPos_Degs, squeeze(GCthicknessValuesAtXPos_um(1,2,:)))
