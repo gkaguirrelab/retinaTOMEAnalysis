@@ -36,8 +36,10 @@ GCthickData(2).supportDeg = abs(XPos_Degs(XPos_Degs>=0));
 GCthickData(2).thickMM = (GCthicknessValuesAtXPos_um(XPos_Degs>=0)')';
 
 % plot horizontal GC thickness
+avgGC = mean(GCthicknessValuesAtXPos_um, 'omitnan')
+avgGC = mean(avgGC, 'omitnan')
 subplot(2,2,1)
-plot(XPos_Degs, squeeze(GCthicknessValuesAtXPos_um(1,1,:)))
+plot(XPos_Degs, squeeze(avgGC))
 hold on
 
 % place horizontal IP thickness data into a structure
@@ -52,7 +54,10 @@ IPthickData(2).supportDeg = abs(XPos_Degs(XPos_Degs>=0));
 IPthickData(2).thickMM = (IPthicknessValuesAtXPos_um(XPos_Degs>=0)')';
 
 % plot horizontal IP thickness
-plot(XPos_Degs, squeeze(IPthicknessValuesAtXPos_um(1,1,:)))
+avgIP = mean(IPthicknessValuesAtXPos_um, 'omitnan')
+avgIP = mean(avgIP, 'omitnan')
+plot(XPos_Degs, squeeze(avgIP))
+title('Average Thickness Along the Horizontal Meridian')
 legend('GCL','IPL')
 xlabel('Eccentricity') 
 ylabel('Thickness')
@@ -60,9 +65,8 @@ hold off
 
 % plot horizontal GC:GCIP thickness
 subplot(2,2,3)
-plot(XPos_Degs, squeeze(GCthicknessValuesAtXPos_um(1,1,:)) ./ ... 
-    (squeeze(IPthicknessValuesAtXPos_um(1,1,:)) + ... 
-    squeeze(GCthicknessValuesAtXPos_um(1,1,:))))
+plot(XPos_Degs, squeeze(avgGC) ./ (squeeze(avgIP) + squeeze(avgGC)))
+title('Average GCL Ratio Along the Horizontal Meridian')
 legend('GC:GCIP')
 xlabel('Eccentricity') 
 ylabel('GCL:GCIPL Ratio')
@@ -87,8 +91,10 @@ GCthickData(4).supportDeg = abs(XPos_Degs(XPos_Degs>=0));
 GCthickData(4).thickMM = (GCthicknessValuesAtXPos_um(XPos_Degs>=0)')';
 
 % plot vertical GC thickness
+avgGC = mean(GCthicknessValuesAtXPos_um, 'omitnan')
+avgGC = mean(avgGC, 'omitnan')
 subplot(2,2,2)
-plot(XPos_Degs, squeeze(GCthicknessValuesAtXPos_um(1,1,:)))
+plot(XPos_Degs, squeeze(avgGC))
 hold on
 
 % place vertical IP into a structure
@@ -103,7 +109,10 @@ IPthickData(4).supportDeg = abs(XPos_Degs(XPos_Degs>=0));
 IPthickData(4).thickMM = (IPthicknessValuesAtXPos_um(XPos_Degs>=0)')';
 
 % plot vertical IP thickness
-plot(XPos_Degs, squeeze(IPthicknessValuesAtXPos_um(1,1,:)))
+avgIP = mean(IPthicknessValuesAtXPos_um, 'omitnan')
+avgIP = mean(avgIP, 'omitnan')
+plot(XPos_Degs, squeeze(avgIP))
+title('Average Thickness Along the Vertical Meridian')
 legend('GCL','IPL')
 xlabel('Eccentricity') 
 ylabel('Thickness')
@@ -111,9 +120,8 @@ hold off
 
 % plot vertical GC:GCIP thickness
 subplot(2,2,4)
-plot(XPos_Degs, squeeze(GCthicknessValuesAtXPos_um(1,1,:)) ./ ... 
-    (squeeze(IPthicknessValuesAtXPos_um(1,1,:)) + ... 
-    squeeze(GCthicknessValuesAtXPos_um(1,1,:))))
+plot(XPos_Degs, squeeze(avgGC) ./ (squeeze(avgIP) + squeeze(avgGC)))
+title('Average GCL Ratio Along the Vertical Meridian')
 legend('GC:GCIP')
 xlabel('Eccentricity') 
 ylabel('GCL:GCIPL Ratio')
