@@ -61,6 +61,8 @@ title('Average Thickness Along the Horizontal Meridian')
 legend('GCL','IPL')
 xlabel('Eccentricity') 
 ylabel('Thickness')
+xlim([-30 30])
+ylim([0 70])
 hold off
 
 % plot horizontal GC:GCIP thickness
@@ -70,6 +72,8 @@ title('Average GCL Ratio Along the Horizontal Meridian')
 legend('GC:GCIP')
 xlabel('Eccentricity') 
 ylabel('GCL:GCIPL Ratio')
+xlim([-30 30])
+ylim([0 .75])
 
 
 %% plot GCIP vertical thickness
@@ -116,6 +120,8 @@ title('Average Thickness Along the Vertical Meridian')
 legend('GCL','IPL')
 xlabel('Eccentricity') 
 ylabel('Thickness')
+xlim([-30 30])
+ylim([0 70])
 hold off
 
 % plot vertical GC:GCIP thickness
@@ -125,3 +131,5 @@ title('Average GCL Ratio Along the Vertical Meridian')
 legend('GC:GCIP')
 xlabel('Eccentricity') 
 ylabel('GCL:GCIPL Ratio')
+xlim([-30 30])
+ylim([0 .75])
