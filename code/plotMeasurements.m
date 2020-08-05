@@ -24,16 +24,22 @@ horizThicknessProfile = fullfile(dropboxBaseDir, 'AOSO_analysis', ...
 load(horizThicknessProfile,'GCthicknessValuesAtXPos_um', ...
     'IPthicknessValuesAtXPos_um', 'XPos_Degs');
 
-% plot horizontal GC thickness
+% plot horizontal GC thickness (flip the values in right eye so that the
+% optic nerves for both eyes are located on the same x-values)
 avgGC = mean(GCthicknessValuesAtXPos_um, 'omitnan');
-avgGC = mean(avgGC, 'omitnan');
+leftEye = avgGC(1,1,:);
+rightEye = flip(avgGC(1,2,:));
+avgGC = (leftEye + rightEye) ./ 2;
 subplot(2,2,1)
 plot(XPos_Degs, squeeze(avgGC))
 hold on
 
-% plot horizontal IP thickness
+% plot horizontal IP thickness (flip the values in right eye so that the
+% optic nerves for both eyes are located on the same x-values)
 avgIP = mean(IPthicknessValuesAtXPos_um, 'omitnan');
-avgIP = mean(avgIP, 'omitnan');
+leftEye = avgIP(1,1,:);
+rightEye = flip(avgIP(1,2,:));
+avgIP = (leftEye + rightEye) ./ 2;
 plot(XPos_Degs, squeeze(avgIP))
 title('Average Thickness Along the Horizontal Meridian')
 legend('GCL','IPL')
@@ -43,11 +49,14 @@ xlim([-30 30])
 ylim([0 70])
 hold off
 
-% plot horizontal GC:GCIP thickness
+% plot horizontal GC:GCIP thickness (flip the values in right eye so that 
+% the optic nerves for both eyes are located on the same x-values)
 subplot(2,2,3)
 avgGCIP = GCthicknessValuesAtXPos_um + IPthicknessValuesAtXPos_um;
 avgGCIP = mean(avgGCIP, 'omitnan');
-avgGCIP = mean(avgGCIP, 'omitnan');
+leftEye = avgGCIP(1,1,:);
+rightEye = flip(avgGCIP(1,2,:));
+avgGCIP = (leftEye + rightEye) ./ 2;
 plot(XPos_Degs, squeeze(avgGC ./ avgGCIP))
 title('Average GCL Ratio Along the Horizontal Meridian')
 legend('GC:GCIP')
@@ -65,16 +74,23 @@ vertThicknessProfile = fullfile(dropboxBaseDir, 'AOSO_analysis', ...
 load(vertThicknessProfile,'GCthicknessValuesAtXPos_um', ...
     'IPthicknessValuesAtXPos_um', 'XPos_Degs');
 
-% plot vertical GC thickness
+% plot vertical GC thickness (flip the values in right eye so that the
+% optic nerves for both eyes are located on the same x-values)
 avgGC = mean(GCthicknessValuesAtXPos_um, 'omitnan');
-avgGC = mean(avgGC, 'omitnan');
+leftEye = avgGC(1,1,:);
+rightEye = flip(avgGC(1,2,:));
+avgGC = (leftEye + rightEye) ./ 2;
 subplot(2,2,2)
 plot(XPos_Degs, squeeze(avgGC))
 hold on
 
-% plot vertical IP thickness
+% plot vertical IP thickness (flip the values in right eye so that the
+% optic nerves for both eyes are located on the same x-values)
 avgIP = mean(IPthicknessValuesAtXPos_um, 'omitnan');
-avgIP = mean(avgIP, 'omitnan');
+leftEye = avgIP(1,1,:);
+rightEye = flip(avgIP(1,2,:));
+avgIP = (leftEye + rightEye) ./ 2;
+plot(XPos_Degs, squeeze(avgIP))
 plot(XPos_Degs, squeeze(avgIP))
 title('Average Thickness Along the Vertical Meridian')
 legend('GCL','IPL')
@@ -84,11 +100,14 @@ xlim([-30 30])
 ylim([0 70])
 hold off
 
-% plot vertical GC:GCIP thickness
+% plot vertical GC:GCIP thickness (flip the values in right eye so that 
+% the optic nerves for both eyes are located on the same x-values)
 subplot(2,2,4)
 avgGCIP = GCthicknessValuesAtXPos_um + IPthicknessValuesAtXPos_um;
 avgGCIP = mean(avgGCIP, 'omitnan');
-avgGCIP = mean(avgGCIP, 'omitnan');
+leftEye = avgGCIP(1,1,:);
+rightEye = flip(avgGCIP(1,2,:));
+avgGCIP = (leftEye + rightEye) ./ 2;
 plot(XPos_Degs, squeeze(avgGC ./ avgGCIP))
 title('Average GCL Ratio Along the Vertical Meridian')
 legend('GC:GCIP')
