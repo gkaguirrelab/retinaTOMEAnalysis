@@ -84,6 +84,7 @@ meanRatioVecProfile = nanmean(ratioVec,2);
 % measurements from more than a 2/3rds of the subjects.
 badIdx = subCountPerPoint<(length(subList)/3);
 meanGCVecProfile(badIdx)=nan;
+meanIPVecProfile(badIdx)=nan;
 
 % plot horizontal GC thickness
 subplot(2,2,1)
@@ -179,6 +180,7 @@ meanRatioVecProfile = nanmean(ratioVec,2);
 % measurements from more than a 2/3rds of the subjects.
 badIdx = subCountPerPoint<(length(subList)/3);
 meanGCVecProfile(badIdx)=nan;
+meanIPVecProfile(badIdx)=nan;
 
 % plot vertical GC thickness
 subplot(2,2,2)
