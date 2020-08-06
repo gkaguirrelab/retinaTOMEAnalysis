@@ -28,7 +28,7 @@ subList = {};
 thickVec = [];
 gcVec = [];
 ipVec = [];
-ratioVec = [];
+horizRatioVec = [];
 gcipMeanOD = [];
 gcipMeanOS = [];
 
@@ -64,7 +64,7 @@ for ii = 1:50
         
         % Calculate the ratio and thickness vecs
         thickVec(:,end+1) = sum([gcVec(:,end),ipVec(:,end)],2,'includenan');
-        ratioVec(:,end+1) = gcVec(:,end)./thickVec(:,end);
+        horizRatioVec(:,end+1) = gcVec(:,end)./thickVec(:,end);
         
         % Save the m value for each eye and layer
         gcipMeanOD(end+1) = nanmean(gcVecOD+ipVecOD);
@@ -75,24 +75,26 @@ end
 
 % Make some vectors of mean thickness and ratio
 subCountPerPoint = sum(~isnan(thickVec),2);
-meanThickVecProfile = nanmean(thickVec,2);
-meanGCVecProfile = nanmean(gcVec,2);
-meanIPVecProfile = nanmean(ipVec,2);
-meanRatioVecProfile = nanmean(ratioVec,2);
+meanHorizThickVecProfile = nanmean(thickVec,2);
+meanHorizGCVecProfile = nanmean(gcVec,2);
+meanHorizIPVecProfile = nanmean(ipVec,2);
+meanHorizRatioVecProfile = nanmean(horizRatioVec,2);
 
 % Define the "bad" indices across x position as those that are missing
 % measurements from more than a 2/3rds of the subjects.
 badIdx = subCountPerPoint<(length(subList)/3);
-meanGCVecProfile(badIdx)=nan;
-meanIPVecProfile(badIdx)=nan;
+meanHorizGCVecProfile(badIdx)=nan;
+meanHorizIPVecProfile(badIdx)=nan;
+meanHorizRatioVecProfile(badIdx)=nan;
+meanHorizThickVecProfile(badIdx)=nan;
 
 % plot horizontal GC thickness
 subplot(2,2,1)
-plot(XPos_Degs, squeeze(meanGCVecProfile))
+plot(XPos_Degs, squeeze(meanHorizGCVecProfile))
 hold on 
 
 % plot horizontal IP thickness
-plot(XPos_Degs, squeeze(meanIPVecProfile))
+plot(XPos_Degs, squeeze(meanHorizIPVecProfile))
 title('Average Thickness Along the Horizontal Meridian')
 legend('GCL','IPL')
 xlabel('Eccentricity') 
@@ -103,7 +105,7 @@ hold off
 
 % plot horizontal GC:GCIP thickness
 subplot(2,2,3)
-plot(XPos_Degs, squeeze(meanRatioVecProfile))
+plot(XPos_Degs, squeeze(meanHorizRatioVecProfile))
 title('Average GCL Ratio Along the Horizontal Meridian')
 legend('GC:GCIP')
 xlabel('Eccentricity') 
@@ -124,7 +126,7 @@ subList = {};
 thickVec = [];
 gcVec = [];
 ipVec = [];
-ratioVec = [];
+vertRatioVec = [];
 gcipMeanOD = [];
 gcipMeanOS = [];
 
@@ -160,7 +162,7 @@ for ii = 1:50
         
         % Calculate the ratio and thickness vecs
         thickVec(:,end+1) = sum([gcVec(:,end),ipVec(:,end)],2,'includenan');
-        ratioVec(:,end+1) = gcVec(:,end)./thickVec(:,end);
+        vertRatioVec(:,end+1) = gcVec(:,end)./thickVec(:,end);
         
         % Save the m value for each eye and layer
         gcipMeanOD(end+1) = nanmean(gcVecOD+ipVecOD);
@@ -171,24 +173,26 @@ end
 
 % Make some vectors of mean thickness and ratio
 subCountPerPoint = sum(~isnan(thickVec),2);
-meanThickVecProfile = nanmean(thickVec,2);
-meanGCVecProfile = nanmean(gcVec,2);
-meanIPVecProfile = nanmean(ipVec,2);
-meanRatioVecProfile = nanmean(ratioVec,2);
+meanVertThickVecProfile = nanmean(thickVec,2);
+meanVertGCVecProfile = nanmean(gcVec,2);
+meanVertIPVecProfile = nanmean(ipVec,2);
+meanVertRatioVecProfile = nanmean(vertRatioVec,2);
 
 % Define the "bad" indices across x position as those that are missing
 % measurements from more than a 2/3rds of the subjects.
 badIdx = subCountPerPoint<(length(subList)/3);
-meanGCVecProfile(badIdx)=nan;
-meanIPVecProfile(badIdx)=nan;
+meanVertGCVecProfile(badIdx)=nan;
+meanVertIPVecProfile(badIdx)=nan;
+meanVertRatioVecProfile(badIdx)=nan;
+meanVertThickVecProfile(badIdx)=nan;
 
 % plot vertical GC thickness
 subplot(2,2,2)
-plot(XPos_Degs, squeeze(meanGCVecProfile))
+plot(XPos_Degs, squeeze(meanVertGCVecProfile))
 hold on
 
 % plot vertical IP thickness
-plot(XPos_Degs, squeeze(meanIPVecProfile))
+plot(XPos_Degs, squeeze(meanVertIPVecProfile))
 title('Average Thickness Along the Vertical Meridian')
 legend('GCL','IPL')
 xlabel('Eccentricity') 
@@ -197,12 +201,64 @@ xlim([-30 30])
 ylim([0 .07])
 hold off
 
-% plot horizontal GC:GCIP thickness
+% plot vertical GC:GCIP thickness
 subplot(2,2,4)
-plot(XPos_Degs, squeeze(meanRatioVecProfile))
+plot(XPos_Degs, squeeze(meanVertRatioVecProfile))
 title('Average GCL Ratio Along the Vertical Meridian')
 legend('GC:GCIP')
 xlabel('Eccentricity') 
 ylabel('GCL:GCIPL Ratio')
 xlim([-30 30])
 ylim([0 .75])
+
+%% plot GC:GCIP across all four meridians
+f2 = figure;
+
+% create variables for all four meridans (leaves out value at idx 1281 to
+% keep arrays even, which is at a eccentricity of 0 so there is no GCIP there)
+meanTempGCVecProfile = flipud(meanHorizGCVecProfile(1:1280));
+meanTempThickVecProfile = flipud(meanHorizThickVecProfile(1:1280));
+meanAbsTempThickVecProfile = meanTempGCVecProfile ./ (meanTempThickVecProfile .^ 2);
+meanNasalGCVecProfile = meanHorizGCVecProfile(1282:2561);
+meanNasalThickVecProfile = meanHorizThickVecProfile(1282:2561);
+meanAbsNasalThickVecProfile = meanNasalGCVecProfile ./ (meanNasalThickVecProfile .^ 2);
+meanSupGCVecProfile = flipud(meanVertGCVecProfile(1:1280));
+meanSupThickVecProfile = flipud(meanVertThickVecProfile(1:1280));
+meanAbsSupThickVecProfile = meanSupGCVecProfile ./ (meanSupThickVecProfile .^ 2);
+meanInfGCVecProfile = meanVertGCVecProfile(1282:2561);
+meanInfThickVecProfile = meanVertThickVecProfile(1282:2561);
+meanAbsInfThickVecProfile = meanInfGCVecProfile ./ (meanInfThickVecProfile .^ 2);
+
+% get averages across the four meridians
+meanGCVecProfile = meanTempGCVecProfile + meanNasalGCVecProfile + ...
+    meanSupGCVecProfile + meanInfGCVecProfile;
+meanGCVecProfile = meanGCVecProfile ./ 4;
+meanThickVecProfile = meanTempThickVecProfile + meanNasalThickVecProfile + ...
+    meanSupThickVecProfile + meanInfThickVecProfile;
+meanThickVecProfile = meanThickVecProfile ./ 4;
+meanRatioVecProfile = meanGCVecProfile ./ meanThickVecProfile;
+
+posEccentricity = XPos_Degs(1282:2561);
+
+% plot
+subplot(1, 2, 1)
+plot(posEccentricity, squeeze(meanRatioVecProfile))
+title('Average GCL Ratio Along the Four Meridians')
+legend('GC:GCIP')
+xlabel('Eccentricity') 
+ylabel('GCL:GCIPL Ratio')
+xlim([0 30])
+ylim([0 .75])
+
+subplot(1, 2, 2)
+plot(posEccentricity, squeeze(meanAbsTempThickVecProfile))
+hold on
+plot(posEccentricity, squeeze(meanAbsNasalThickVecProfile))
+plot(posEccentricity, squeeze(meanAbsSupThickVecProfile))
+plot(posEccentricity, squeeze(meanAbsInfThickVecProfile))
+title('Average GCL Ratio Along the Four Meridians')
+legend('Temporal', 'Nasal', 'Superior', 'Inferior')
+xlabel('Eccentricity') 
+ylabel('GCL:GCIPL^2 Ratio')
+xlim([0 30])
+hold off
