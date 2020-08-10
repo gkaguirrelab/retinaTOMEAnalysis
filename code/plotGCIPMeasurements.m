@@ -39,6 +39,7 @@ gcipMeanOS = [];
 GCthicknessValuesAtXPos_um(GCthicknessValuesAtXPos_um==0)=nan;
 IPthicknessValuesAtXPos_um(IPthicknessValuesAtXPos_um==0)=nan;
 
+subplot(2,2,3)
 for ii = 1:50
     if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) || ...
             ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,2,:))))
@@ -70,6 +71,9 @@ for ii = 1:50
         gcipMeanOD(end+1) = nanmean(gcVecOD+ipVecOD);
         gcipMeanOS(end+1) = nanmean(gcVecOS+ipVecOS);
         
+        % plot subject
+        plot(XPos_Degs, gcVec(:,end) ./ thickVec(:,end), 'LineWidth', 1)
+        hold on
     end        
 end
 
@@ -88,86 +92,29 @@ meanHorizIPVecProfile(badIdx)=nan;
 meanHorizRatioVecProfile(badIdx)=nan;
 meanHorizThickVecProfile(badIdx)=nan;
 
+% plot horizontal GC:GCIP thickness
+plot(XPos_Degs, squeeze(meanHorizRatioVecProfile), 'color', 'black')
+title('Average GCL Ratio Along the Horizontal Meridian')
+% legend('GC:GCIP Average')
+xlabel('Eccentricity') 
+ylabel('GCL:GCIPL Ratio')
+xlim([-30 30])
+ylim([0 .75])
+hold off
+
 % plot horizontal GC thickness
 subplot(2,2,1)
 plot(XPos_Degs, squeeze(meanHorizGCVecProfile))
 hold on
 
-% plot outliers 11069 and 11076
-if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(22,1,:)))) || ...
-        ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(22,2,:))))
-
-    % Get the data for each layer and eye and convert to mm
-    gcVecOD = squeeze(GCthicknessValuesAtXPos_um(22,1,:))/1000;
-    gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(22,2,:)))/1000;
-    ipVecOD = squeeze(IPthicknessValuesAtXPos_um(22,1,:))/1000;
-    ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(22,2,:)))/1000;
-
-    % Detect if the data from one eye is missing
-    if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
-        subOneGcVec = mean([gcVecOD,gcVecOS],2,'includenan');
-        subOneIpVec = mean([ipVecOD,ipVecOS],2,'includenan');
-    else
-        subOneGcVec = nanmean([gcVecOD,gcVecOS],2);
-        subOneIpVec = nanmean([ipVecOD,ipVecOS],2);
-    end
-
-    % Calculate the thickness vec
-    subOneThickVec = sum([subOneGcVec,subOneIpVec],2,'includenan');
-
-    % plot subject
-    plot(XPos_Degs, subOneGcVec);
-    plot(XPos_Degs, subOneIpVec);
-end
-
-if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(29,1,:)))) || ...
-        ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(29,2,:))))
-
-    % Get the data for each layer and eye and convert to mm
-    gcVecOD = squeeze(GCthicknessValuesAtXPos_um(29,1,:))/1000;
-    gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(29,2,:)))/1000;
-    ipVecOD = squeeze(IPthicknessValuesAtXPos_um(29,1,:))/1000;
-    ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(29,2,:)))/1000;
-
-    % Detect if the data from one eye is missing
-    if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
-        subTwoGcVec = mean([gcVecOD,gcVecOS],2,'includenan');
-        subTwoIpVec = mean([ipVecOD,ipVecOS],2,'includenan');
-    else
-        subTwoGcVec = nanmean([gcVecOD,gcVecOS],2);
-        subTwoIpVec = nanmean([ipVecOD,ipVecOS],2);
-    end
-
-    % Calculate the thickness vec
-    subTwoThickVec = sum([subTwoGcVec,subTwoIpVec],2,'includenan');
-
-    % plot subject
-    plot(XPos_Degs, subTwoGcVec);
-    plot(XPos_Degs, subTwoIpVec);
-end
-
 % plot horizontal IP thickness
 plot(XPos_Degs, squeeze(meanHorizIPVecProfile))
 title('Average Thickness Along the Horizontal Meridian')
-legend('GCL', '11069 GCL', '11069 IPL', '11076 GCL', '11076 IPL', 'IPL')
+legend('GCL', 'IPL')
 xlabel('Eccentricity') 
 ylabel('Thickness (mm)')
 xlim([-30 30])
 ylim([0 .07])
-hold off
-
-% plot horizontal GC:GCIP thickness
-subplot(2,2,3)
-plot(XPos_Degs, squeeze(meanHorizRatioVecProfile))
-hold on
-plot(XPos_Degs, squeeze(subOneGcVec ./ subOneThickVec))
-plot(XPos_Degs, squeeze(subTwoGcVec ./ subTwoThickVec))
-title('Average GCL Ratio Along the Horizontal Meridian')
-legend('GC:GCIP Average', '11069 GC:GCIP', '11076 GC:GCIP')
-xlabel('Eccentricity') 
-ylabel('GCL:GCIPL Ratio')
-xlim([-30 30])
-ylim([0 .75])
 hold off
 
 
@@ -194,6 +141,7 @@ gcipMeanOS = [];
 GCthicknessValuesAtXPos_um(GCthicknessValuesAtXPos_um==0)=nan;
 IPthicknessValuesAtXPos_um(IPthicknessValuesAtXPos_um==0)=nan;
 
+subplot(2,2,4)
 for ii = 1:50
     if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) || ...
             ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,2,:))))
@@ -225,7 +173,10 @@ for ii = 1:50
         gcipMeanOD(end+1) = nanmean(gcVecOD+ipVecOD);
         gcipMeanOS(end+1) = nanmean(gcVecOS+ipVecOS);
         
-    end
+        % plot subject
+        plot(XPos_Degs, gcVec(:,end) ./ thickVec(:,end), 'LineWidth', 1)
+        hold on
+    end        
 end
 
 % Make some vectors of mean thickness and ratio
@@ -243,86 +194,28 @@ meanVertIPVecProfile(badIdx)=nan;
 meanVertRatioVecProfile(badIdx)=nan;
 meanVertThickVecProfile(badIdx)=nan;
 
+% plot vertical GC:GCIP thickness
+plot(XPos_Degs, squeeze(meanVertRatioVecProfile), 'color', 'black')
+title('Average GCL Ratio Along the Vertical Meridian')
+% legend('GC:GCIP Average')
+xlabel('Eccentricity') 
+ylabel('GCL:GCIPL Ratio')
+xlim([-30 30])
+ylim([0 .75])
+
 % plot vertical GC thickness
 subplot(2,2,2)
 plot(XPos_Degs, squeeze(meanVertGCVecProfile))
 hold on
 
-% plot outliers 11069 and 11076
-if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(22,1,:)))) || ...
-        ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(22,2,:))))
-
-    % Get the data for each layer and eye and convert to mm
-    gcVecOD = squeeze(GCthicknessValuesAtXPos_um(22,1,:))/1000;
-    gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(22,2,:)))/1000;
-    ipVecOD = squeeze(IPthicknessValuesAtXPos_um(22,1,:))/1000;
-    ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(22,2,:)))/1000;
-
-    % Detect if the data from one eye is missing
-    if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
-        subOneGcVec = mean([gcVecOD,gcVecOS],2,'includenan');
-        subOneIpVec = mean([ipVecOD,ipVecOS],2,'includenan');
-    else
-        subOneGcVec = nanmean([gcVecOD,gcVecOS],2);
-        subOneIpVec = nanmean([ipVecOD,ipVecOS],2);
-    end
-
-    % Calculate the thickness vec
-    subOneThickVec = sum([subOneGcVec,subOneIpVec],2,'includenan');
-
-    % plot subject
-    plot(XPos_Degs, subOneGcVec);
-    plot(XPos_Degs, subOneIpVec);
-end
-
-if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(29,1,:)))) || ...
-        ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(29,2,:))))
-
-    % Get the data for each layer and eye and convert to mm
-    gcVecOD = squeeze(GCthicknessValuesAtXPos_um(29,1,:))/1000;
-    gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(29,2,:)))/1000;
-    ipVecOD = squeeze(IPthicknessValuesAtXPos_um(29,1,:))/1000;
-    ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(29,2,:)))/1000;
-
-    % Detect if the data from one eye is missing
-    if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
-        subTwoGcVec = mean([gcVecOD,gcVecOS],2,'includenan');
-        subTwoIpVec = mean([ipVecOD,ipVecOS],2,'includenan');
-    else
-        subTwoGcVec = nanmean([gcVecOD,gcVecOS],2);
-        subTwoIpVec = nanmean([ipVecOD,ipVecOS],2);
-    end
-
-    % Calculate the thickness vec
-    subTwoThickVec = sum([subTwoGcVec,subTwoIpVec],2,'includenan');
-
-    % plot subject
-    plot(XPos_Degs, subTwoGcVec);
-    plot(XPos_Degs, subTwoIpVec);
-end
-
 % plot vertical IP thickness
 plot(XPos_Degs, squeeze(meanVertIPVecProfile))
 title('Average Thickness Along the Vertical Meridian')
-legend('GCL', '11069 GCL', '11069 IPL', '11076 GCL', '11076 IPL', 'IPL')
+legend('GCL', 'IPL')
 xlabel('Eccentricity') 
 ylabel('Thickness (mm)')
 xlim([-30 30])
 ylim([0 .07])
-hold off
-
-% plot vertical GC:GCIP thickness
-subplot(2,2,4)
-plot(XPos_Degs, squeeze(meanVertRatioVecProfile))
-hold on
-plot(XPos_Degs, squeeze(subOneGcVec ./ subOneThickVec))
-plot(XPos_Degs, squeeze(subTwoGcVec ./ subTwoThickVec))
-title('Average GCL Ratio Along the Vertical Meridian')
-legend('GC:GCIP Average', '11069 GC:GCIP', '11076 GC:GCIP')
-xlabel('Eccentricity') 
-ylabel('GCL:GCIPL Ratio')
-xlim([-30 30])
-ylim([0 .75])
 hold off
 
 %% plot GC:GCIP across all four meridians
