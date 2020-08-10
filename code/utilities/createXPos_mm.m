@@ -10,6 +10,9 @@ dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
 mmPerDegFileName = fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps','mmPerDegPolyFit.mat');
 load(mmPerDegFileName)
 
+% Clear out any prior version
+clear XPos_mm
+
 % Loop through the horizontal and vertical meridians
 for mm = 1:2
     
@@ -18,13 +21,14 @@ for mm = 1:2
         case 1
             orientation = 'horiz';
             GCIPThickFileName = fullfile(dropboxBaseDir,'AOSO_analysis','OCTExplorerExtendedHorizontalData','GCIP_thicknessesByDeg.mat');
-            load(GCIPThickFileName)
         case 2
             orientation = 'vert';
             GCIPThickFileName = fullfile(dropboxBaseDir,'AOSO_analysis','OCTSingleVerticalData','GCIP_thicknessesByDeg.mat');
-            load(GCIPThickFileName)
     end
-    
+
+    % Load
+    load(GCIPThickFileName)
+
     % Loop through the subjects
     for ii=1:size(GCthicknessValuesAtXPos_um,1)
         
@@ -43,9 +47,9 @@ for mm = 1:2
                 continue
             end
             if XPos_Degs(xx)>0
-                XPos_mm(xx,ii,mm) = integral(eccenPos,0,XPos_Degs(xx));
+                XPos_mm{mm}(xx,ii) = integral(eccenPos,0,XPos_Degs(xx));
             else
-                XPos_mm(xx,ii,mm) = -integral(eccenPos,XPos_Degs(xx),0);
+                XPos_mm{mm}(xx,ii) = -integral(eccenPos,XPos_Degs(xx),0);
             end
         end
     end
