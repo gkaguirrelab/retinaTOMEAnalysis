@@ -279,7 +279,7 @@ load(horizThicknessProfile,'GCthicknessValuesAtXPos_um', ...
     'IPthicknessValuesAtXPos_um', 'XPos_Degs', 'subIDs');
 posEccentricity = XPos_Degs(1282:2561);
 
-mmProfile = fullfile(dropboxBaseDir, 'mmProfile.mat');
+mmProfile = fullfile(dropboxBaseDir, 'AOSO_analysis', 'mmProfile.mat');
 load(mmProfile, 'XPos_mm');
 xPos = XPos_mm{1};
 
