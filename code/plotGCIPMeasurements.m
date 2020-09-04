@@ -7,14 +7,14 @@
 % Obtain the dropBox base directory
 dropboxBaseDir = getpref('retinaTOMEAnalysis','dropboxBaseDir');   
 
-% % Instantiate a plotlab object
-% plotlabOBJ = plotlab();
-%     
-% % Apply the default plotlab recipe 
-% % overriding just the figure size
-% plotlabOBJ.applyRecipe(...
-%   'figureWidthInches', 20, ...
-%   'figureHeightInches', 15);
+% Instantiate a plotlab object
+plotlabOBJ = plotlab();
+    
+% Apply the default plotlab recipe 
+% overriding just the figure size
+plotlabOBJ.applyRecipe(...
+  'figureWidthInches', 20, ...
+  'figureHeightInches', 15);
 
 %% plot GCIP horizontal thickness
 
@@ -86,11 +86,11 @@ meanHorizRatioVecProfile = nanmean(horizRatioVec,2);
 
 % Define the "bad" indices across x position as those that are missing
 % measurements from more than a 2/3rds of the subjects.
-badIdx = subCountPerPoint<(length(subList)/3);
-meanHorizGCVecProfile(badIdx)=nan;
-meanHorizIPVecProfile(badIdx)=nan;
-meanHorizRatioVecProfile(badIdx)=nan;
-meanHorizThickVecProfile(badIdx)=nan;
+horizbadIdx = subCountPerPoint<(length(subList)/3);
+meanHorizGCVecProfile(horizbadIdx)=nan;
+meanHorizIPVecProfile(horizbadIdx)=nan;
+meanHorizRatioVecProfile(horizbadIdx)=nan;
+meanHorizThickVecProfile(horizbadIdx)=nan;
 
 % plot horizontal GC:GCIP thickness
 plot(XPos_Degs, squeeze(meanHorizRatioVecProfile), 'color', 'black')
@@ -188,11 +188,11 @@ meanVertRatioVecProfile = nanmean(vertRatioVec,2);
 
 % Define the "bad" indices across x position as those that are missing
 % measurements from more than a 2/3rds of the subjects.
-badIdx = subCountPerPoint<(length(subList)/3);
-meanVertGCVecProfile(badIdx)=nan;
-meanVertIPVecProfile(badIdx)=nan;
-meanVertRatioVecProfile(badIdx)=nan;
-meanVertThickVecProfile(badIdx)=nan;
+vertbadIdx = subCountPerPoint<(length(subList)/3);
+meanVertGCVecProfile(vertbadIdx)=nan;
+meanVertIPVecProfile(vertbadIdx)=nan;
+meanVertRatioVecProfile(vertbadIdx)=nan;
+meanVertThickVecProfile(vertbadIdx)=nan;
 
 % plot vertical GC:GCIP thickness
 plot(XPos_Degs, squeeze(meanVertRatioVecProfile), 'color', 'black')
@@ -218,62 +218,8 @@ xlim([-30 30])
 ylim([0 .07])
 hold off
 
-%% plot GC:GCIP across all four meridians
-% % this section has a bug in it in that the meridians are flipped in left
-% % vs. right eyes
-% f2 = figure;
-% 
-% % create variables for all four meridans (leaves out value at idx 1281 to
-% % keep arrays even, which is at a eccentricity of 0 so there is no GCIP there)
-% meanTempGCVecProfile = flipud(meanHorizGCVecProfile(1:1280));
-% meanTempThickVecProfile = flipud(meanHorizThickVecProfile(1:1280));
-% meanAbsTempThickVecProfile = meanTempGCVecProfile ./ (meanTempThickVecProfile .^ 2);
-% meanNasalGCVecProfile = meanHorizGCVecProfile(1282:2561);
-% meanNasalThickVecProfile = meanHorizThickVecProfile(1282:2561);
-% meanAbsNasalThickVecProfile = meanNasalGCVecProfile ./ (meanNasalThickVecProfile .^ 2);
-% meanSupGCVecProfile = flipud(meanVertGCVecProfile(1:1280));
-% meanSupThickVecProfile = flipud(meanVertThickVecProfile(1:1280));
-% meanAbsSupThickVecProfile = meanSupGCVecProfile ./ (meanSupThickVecProfile .^ 2);
-% meanInfGCVecProfile = meanVertGCVecProfile(1282:2561);
-% meanInfThickVecProfile = meanVertThickVecProfile(1282:2561);
-% meanAbsInfThickVecProfile = meanInfGCVecProfile ./ (meanInfThickVecProfile .^ 2);
-% 
-% % get averages across the four meridians
-% meanGCVecProfile = meanTempGCVecProfile + meanNasalGCVecProfile + ...
-%     meanSupGCVecProfile + meanInfGCVecProfile;
-% meanGCVecProfile = meanGCVecProfile ./ 4;
-% meanThickVecProfile = meanTempThickVecProfile + meanNasalThickVecProfile + ...
-%     meanSupThickVecProfile + meanInfThickVecProfile;
-% meanThickVecProfile = meanThickVecProfile ./ 4;
-% meanRatioVecProfile = meanGCVecProfile ./ meanThickVecProfile;
-% 
-% posEccentricity = XPos_Degs(1282:2561);
-% 
-% % plot
-% subplot(1, 2, 1)
-% plot(posEccentricity, squeeze(meanRatioVecProfile))
-% title('Average GCL Ratio Along the Four Meridians')
-% legend('GC:GCIP')
-% xlabel('Eccentricity') 
-% ylabel('GCL:GCIPL Ratio')
-% xlim([0 30])
-% ylim([0 .75])
-% 
-% subplot(1, 2, 2)
-% plot(posEccentricity, squeeze(meanAbsTempThickVecProfile))
-% hold on
-% plot(posEccentricity, squeeze(meanAbsNasalThickVecProfile))
-% plot(posEccentricity, squeeze(meanAbsSupThickVecProfile))
-% plot(posEccentricity, squeeze(meanAbsInfThickVecProfile))
-% title('Average GCL Ratio Along the Four Meridians')
-% legend('Temporal', 'Nasal', 'Superior', 'Inferior')
-% xlabel('Eccentricity') 
-% ylabel('GCL:GCIPL^2 Ratio')
-% xlim([0 30])
-% hold off
-
-%% plot individual subjects
-f3 = figure;
+%% plot individual subjects (distance)
+f2 = figure;
 
 load(horizThicknessProfile,'GCthicknessValuesAtXPos_um', ...
     'IPthicknessValuesAtXPos_um', 'XPos_Degs', 'subIDs');
@@ -307,32 +253,16 @@ for ii = 1:50
         % Calculate the thickness vec
         thickVec = sum([gcVec,ipVec],2,'includenan');
         
-        % Prepare vectors
+        % get x-axis values
+        xPosSub = flipud(xPos(1:1280, ii));
+        xPosSub = abs(xPosSub);
+        
+        % plot subject
         gcVec = flipud(gcVec);
         thickVec = flipud(thickVec);
         ipVec = flipud(ipVec);
-        xPosSub = xPos(1282:2561, ii);
-        
-                % Obtain and clean the double ratio vec
-        myVec = gcVec ./ (thickVec .^2);
-        [~,firstPeak] = max(myVec(1:100));
-        myVec(1:firstPeak-1)=nan;
-        myVec(600:end)=nan;
-        
-        % Fit a hyperbolic cosecant function
-        shiftX = min(xPosSub(~isnan(myVec)));
-        firstIdx = find(xPosSub==shiftX);        
-        myFun = @(a,b,c,x) a.*csch((x-shiftX).*b+0.001)+c;
-        goodIdx = ~isnan(myVec);
-        myFit = fit(xPosSub(goodIdx),myVec(goodIdx),myFun,'StartPoint',[0.0904    0.0577    4.8824]);
-        params.temporal.fit(ii,:) = [myFit.a myFit.b myFit.c];
-        params.temporal.shiftX(ii) = shiftX;
-
-        % Plot the subject
-%        plot(xPosSub, myVec);
-        plot(xPosSub(firstIdx:end),myFit(xPosSub(firstIdx:end)));
+        plot(xPosSub, gcVec ./ (thickVec .^2));
         hold on
-        
     end
 end
 title('GCL Ratio Along the Temporal Meridian')
@@ -367,29 +297,10 @@ for ii = 1:50
         % Calculate the thickness vec
         thickVec = sum([gcVec,ipVec],2,'includenan');
         
-        % Prepare vectors
+        % plot subject
         xPosSub = xPos(1282:2561, ii);
-
-            % Obtain and clean the double ratio vec
-        myVec = gcVec ./ (thickVec .^2);
-        [~,firstPeak] = max(myVec(1:100));
-        myVec(1:firstPeak-1)=nan;
-        myVec(600:end)=nan;
-        
-        % Fit a hyperbolic cosecant function
-        shiftX = min(xPosSub(~isnan(myVec)));
-        firstIdx = find(xPosSub==shiftX);        
-        myFun = @(a,b,c,x) a.*csch((x-shiftX).*b+0.001)+c;
-        goodIdx = ~isnan(myVec);
-        myFit = fit(xPosSub(goodIdx),myVec(goodIdx),myFun,'StartPoint',[0.0904    0.0577    4.8824]);
-        params.nasal.fit(ii,:) = [myFit.a myFit.b myFit.c];
-        params.nasal.shiftX(ii) = shiftX;
-        
-        % Plot the subject
-%        plot(xPosSub, myVec);
-        plot(xPosSub(firstIdx:end),myFit(xPosSub(firstIdx:end)));
+        plot(xPosSub, gcVec ./ (thickVec .^2));
         hold on
-        
     end
 end
 title('GCL Ratio Along the Nasal Meridian')
@@ -429,38 +340,19 @@ for ii = 1:50
         % Calculate the thickness vec
         thickVec = sum([gcVec,ipVec],2,'includenan');
         
-        % Prepare vectors
+        % plot subject
         gcVec = flipud(gcVec);
         thickVec = flipud(thickVec);
         ipVec = flipud(ipVec);
         xPosSub = xPos(1282:2561, ii);
-
-            % Obtain and clean the double ratio vec
-        myVec = gcVec ./ (thickVec .^2);
-        [~,firstPeak] = max(myVec(1:100));
-        myVec(1:firstPeak-1)=nan;
-        myVec(600:end)=nan;
-        
-        % Fit a hyperbolic cosecant function
-        shiftX = min(xPosSub(~isnan(myVec)));
-        firstIdx = find(xPosSub==shiftX);        
-        myFun = @(a,b,c,x) a.*csch((x-shiftX).*b+0.001)+c;
-        goodIdx = ~isnan(myVec);
-        myFit = fit(xPosSub(goodIdx),myVec(goodIdx),myFun,'StartPoint',[0.0904    0.0577    4.8824]);
-        params.superior.fit(ii,:) = [myFit.a myFit.b myFit.c];
-        params.superior.shiftX(ii) = shiftX;
-
-                % Plot the subject
-%        plot(xPosSub, myVec);
-        plot(xPosSub(firstIdx:end),myFit(xPosSub(firstIdx:end)));
+        plot(xPosSub, gcVec ./ (thickVec .^2));
         hold on
-        
     end
 end
 title('GCL Ratio Along the Superior Meridian')
 xlabel('Distance (mm)') 
 ylabel('GCL:GCIPL^2 Ratio')
-xlim([0 10])
+xlim([0 5])
 ylim([0 75])
 hold off
 
@@ -489,99 +381,386 @@ for ii = 1:50
         % Calculate the thickness vec
         thickVec = sum([gcVec,ipVec],2,'includenan');
         
-        % Prepare vectors
-        xPosSub = xPos(1282:2561, ii);
+        % get x-axis values
+        xPosSub = flipud(xPos(1:1280, ii));
+        xPosSub = abs(xPosSub);
         
-        % Obtain and clean the double ratio vec
-        myVec = gcVec ./ (thickVec .^2);
-        [~,firstPeak] = max(myVec(1:100));
-        myVec(1:firstPeak-1)=nan;
-        myVec(600:end)=nan;
-        
-        % Fit a hyperbolic cosecant function
-        shiftX = min(xPosSub(~isnan(myVec)));
-        firstIdx = find(xPosSub==shiftX);        
-        myFun = @(a,b,c,x) a.*csch((x-shiftX).*b+0.001)+c;
-        goodIdx = ~isnan(myVec);
-        myFit = fit(xPosSub(goodIdx),myVec(goodIdx),myFun,'StartPoint',[0.0904    0.0577    4.8824]);
-        params.inferior.fit(ii,:) = [myFit.a myFit.b myFit.c];
-        params.inferior.shiftX(ii) = shiftX;
-
-                % Plot the subject
-%        plot(xPosSub, myVec);
-        plot(xPosSub(firstIdx:end),myFit(xPosSub(firstIdx:end)));
+        % plot subject
+        plot(xPosSub, gcVec ./ (thickVec .^2));
         hold on
-        
-        %         figure
-%         plot(xPosSub, myVec);
-%         hold on        
-%         plot(xPosSub(firstIdx:end),myFit(xPosSub(firstIdx:end)),'-r');
-%         foo=1;
     end
 end
 title('GCL Ratio Along the Inferior Meridian')
 xlabel('Distance (mm)') 
 ylabel('GCL:GCIPL^2 Ratio')
-xlim([0 10])
+xlim([0 5])
 ylim([0 75])
 hold off
 
-%% plot single meridian for an individual subject
-% f4 = figure;
-% 
-% load(horizThicknessProfile,'GCthicknessValuesAtXPos_um', ...
-%     'IPthicknessValuesAtXPos_um', 'XPos_Degs', 'subIDs');
-% posEccentricity = XPos_Degs(1282:2561);
-% 
-% subject = 2;
-% 
-% % plot temporal meridian
-% if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(subject,1,:)))) || ...
-%         ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(subject,2,:))))
-% 
-%     % Get the data for each layer and eye and convert to mm
-%     gcVecOD = squeeze(GCthicknessValuesAtXPos_um(subject,1,1:1280))/1000;
-%     gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(subject,2,1282:2561)))/1000;
-%     ipVecOD = squeeze(IPthicknessValuesAtXPos_um(subject,1,1:1280))/1000;
-%     ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(subject,2,1282:2561)))/1000;
-% 
-%     % Detect if the data from one eye is missing
-%     if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
-%         gcVec = mean([gcVecOD,gcVecOS],2,'includenan');
-%         ipVec = mean([ipVecOD,ipVecOS],2,'includenan');
-%     else
-%         gcVec = nanmean([gcVecOD,gcVecOS],2);
-%         ipVec = nanmean([ipVecOD,ipVecOS],2);
-%     end
-% 
-%     % Calculate the thickness vec
-%     thickVec = sum([gcVec,ipVec],2,'includenan');
-%     
-%     gcVec = flipud(gcVec);
-%     thickVec = flipud(thickVec);
-%     ipVec = flipud(ipVec);
-% 
-%     % plot subject
-%     subplot(2, 2, 1)
-%     plot(posEccentricity, gcVec);
-%     title('GCL Thickness')
+
+%% plot standard deviation across subjects for each meridian
+f3 = figure;
+
+load(horizThicknessProfile,'GCthicknessValuesAtXPos_um', ...
+    'IPthicknessValuesAtXPos_um', 'XPos_Degs', 'subIDs');
+posEccentricity = XPos_Degs(1282:2561);
+
+tempThickVec = [];
+tempGcVec = [];
+tempIpVec = [];
+tempRatioVec = [];
+
+subplot(2, 2, 1)
+% plot temporal meridian
+for ii = 1:50
+    if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) || ...
+            ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,2,:))))
+        
+        % Get the data for each layer and eye and convert to mm
+        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,1:1280))/1000;
+        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,1282:2561)))/1000;
+        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,1:1280))/1000;
+        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,1282:2561)))/1000;
+        
+        % Detect if the data from one eye is missing
+        if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
+            gcVec = mean([gcVecOD,gcVecOS],2,'includenan');
+            ipVec = mean([ipVecOD,ipVecOS],2,'includenan');
+        else
+            gcVec = nanmean([gcVecOD,gcVecOS],2);
+            ipVec = nanmean([ipVecOD,ipVecOS],2);
+        end
+        
+        % Calculate the thickness vec and flip vecs
+        thickVec = sum([gcVec,ipVec],2,'includenan');
+        gcVec = flipud(gcVec);
+        thickVec = flipud(thickVec);
+        ipVec = flipud(ipVec);
+        
+        tempGcVec(:, end+1) = gcVec;
+        tempIpVec(:, end+1) = ipVec;
+        tempThickVec(:, end+1) = thickVec;
+        
+        % Calculate the ratio and thickness vecs
+        tempThickVec(:,end+1) = sum([tempGcVec(:,end),tempIpVec(:,end)],2,'includenan');
+        tempRatioVec(:,end+1) = tempGcVec(:,end)./(tempThickVec(:,end) .^ 2);
+    end
+end
+SD = std(tempRatioVec .', 'omitnan');
+meanTempRatioVecProfile = nanmean(tempRatioVec,2);
+errorbar(posEccentricity, meanTempRatioVecProfile, SD, '-s','MarkerSize',...
+    2, 'MarkerEdgeColor','black','MarkerFaceColor','black')
+% plot(posEccentricity, tempRatioVec)
+title('Mean GC:GCIP^2 Along the Temporal Meridian')
+xlabel('Eccentricity') 
+ylabel('GCL:GCIPL^2 Ratio')
+xlim([0 30])
+ylim([0 75])
+
+% plot nasal meridian
+nasThickVec = [];
+nasGcVec = [];
+nasIpVec = [];
+nasRatioVec = [];
+
+subplot(2, 2, 2)
+
+for ii = 1:50
+    if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) || ...
+            ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,2,:))))
+        
+        % Get the data for each layer and eye and convert to mm
+        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,1282:2561))/1000;
+        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,1:1280)))/1000;
+        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,1282:2561))/1000;
+        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,1:1280)))/1000;
+        
+        % Detect if the data from one eye is missing
+        if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
+            gcVec = mean([gcVecOD,gcVecOS],2,'includenan');
+            ipVec = mean([ipVecOD,ipVecOS],2,'includenan');
+        else
+            gcVec = nanmean([gcVecOD,gcVecOS],2);
+            ipVec = nanmean([ipVecOD,ipVecOS],2);
+        end
+        
+        % Calculate the thickness vec
+        thickVec = sum([gcVec,ipVec],2,'includenan');
+        
+        nasGcVec(:, end+1) = gcVec;
+        nasIpVec(:, end+1) = ipVec;
+        nasThickVec(:, end+1) = thickVec;
+        
+        % Calculate the ratio and thickness vecs
+        nasThickVec(:,end+1) = sum([nasGcVec(:,end),nasIpVec(:,end)],2,'includenan');
+        nasRatioVec(:,end+1) = nasGcVec(:,end)./(nasThickVec(:,end) .^ 2);
+    end
+end
+SD = std(nasRatioVec .', 'omitnan');
+meanNasRatioVecProfile = nanmean(nasRatioVec,2);
+errorbar(posEccentricity, meanNasRatioVecProfile, SD, '-s','MarkerSize',...
+    2, 'MarkerEdgeColor','black','MarkerFaceColor','black')
+title('Mean GC:GCIP^2 Along the Nasal Meridian')
+xlabel('Eccentricity') 
+ylabel('GCL:GCIPL^2 Ratio')
+xlim([0 30])
+ylim([0 75])
+
+% plot superior meridian
+load(vertThicknessProfile,'GCthicknessValuesAtXPos_um', ...
+    'IPthicknessValuesAtXPos_um', 'XPos_Degs');
+posEccentricity = XPos_Degs(1282:2561);
+
+supThickVec = [];
+supGcVec = [];
+supIpVec = [];
+supRatioVec = [];
+
+subplot(2, 2, 3)
+for ii = 1:50
+    if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) || ...
+            ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,2,:))))
+        
+        % Get the data for each layer and eye and convert to mm
+        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,1:1280))/1000;
+        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,1282:2561)))/1000;
+        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,1:1280))/1000;
+        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,1282:2561)))/1000;
+        
+        % Detect if the data from one eye is missing
+        if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
+            gcVec = mean([gcVecOD,gcVecOS],2,'includenan');
+            ipVec = mean([ipVecOD,ipVecOS],2,'includenan');
+        else
+            gcVec = nanmean([gcVecOD,gcVecOS],2);
+            ipVec = nanmean([ipVecOD,ipVecOS],2);
+        end
+        
+        % Calculate the thickness vec
+        thickVec = sum([gcVec,ipVec],2,'includenan');
+        gcVec = flipud(gcVec);
+        thickVec = flipud(thickVec);
+        ipVec = flipud(ipVec);
+        
+        supGcVec(:, end+1) = gcVec;
+        supIpVec(:, end+1) = ipVec;
+        supThickVec(:, end+1) = thickVec;
+        
+        % Calculate the ratio and thickness vecs
+        supThickVec(:,end+1) = sum([supGcVec(:,end),supIpVec(:,end)],2,'includenan');
+        supRatioVec(:,end+1) = supGcVec(:,end)./(supThickVec(:,end) .^ 2);
+    end
+end
+SD = std(supRatioVec .', 'omitnan');
+meanSupRatioVecProfile = nanmean(supRatioVec,2);
+errorbar(posEccentricity, meanSupRatioVecProfile, SD, '-s','MarkerSize',...
+    2, 'MarkerEdgeColor','black','MarkerFaceColor','black')
+title('Mean GC:GCIP^2 Along the Superior Meridian')
+xlabel('Eccentricity') 
+ylabel('GCL:GCIPL^2 Ratio')
+xlim([0 20])
+ylim([0 75])
+
+% plot inferior meridian
+infThickVec = [];
+infGcVec = [];
+infIpVec = [];
+infRatioVec = [];
+
+subplot(2, 2, 4)
+
+for ii = 1:50
+    if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) || ...
+            ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,2,:))))
+        
+        % Get the data for each layer and eye and convert to mm
+        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,1282:2561))/1000;
+        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,1:1280)))/1000;
+        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,1282:2561))/1000;
+        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,1:1280)))/1000;
+        
+        % Detect if the data from one eye is missing
+        if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
+            gcVec = mean([gcVecOD,gcVecOS],2,'includenan');
+            ipVec = mean([ipVecOD,ipVecOS],2,'includenan');
+        else
+            gcVec = nanmean([gcVecOD,gcVecOS],2);
+            ipVec = nanmean([ipVecOD,ipVecOS],2);
+        end
+        
+        % Calculate the thickness vec
+        thickVec = sum([gcVec,ipVec],2,'includenan');
+        
+        infGcVec(:, end+1) = gcVec;
+        infIpVec(:, end+1) = ipVec;
+        infThickVec(:, end+1) = thickVec;
+        
+        % Calculate the ratio and thickness vecs
+        infThickVec(:,end+1) = sum([infGcVec(:,end),infIpVec(:,end)],2,'includenan');
+        infRatioVec(:,end+1) = infGcVec(:,end)./(infThickVec(:,end) .^ 2);
+    end
+end
+SD = std(infRatioVec .', 'omitnan');
+meanInfRatioVecProfile = nanmean(infRatioVec,2);
+errorbar(posEccentricity, meanInfRatioVecProfile, SD, '-s','MarkerSize',...
+    2, 'MarkerEdgeColor','black','MarkerFaceColor','black')
+title('Mean GC:GCIP^2 Along the Inferior Meridian')
+xlabel('Eccentricity') 
+ylabel('GCL:GCIPL^2 Ratio')
+xlim([0 20])
+ylim([0 75])
+
+%% plot standard deviation across meridans for individual subjects
+f4 = figure;
+
+sdProfile = [];
+
+for ii = 1:50
+    load(horizThicknessProfile,'GCthicknessValuesAtXPos_um', ...
+    'IPthicknessValuesAtXPos_um', 'XPos_Degs', 'subIDs');
+    posEccentricity = XPos_Degs(1282:2561);
+
+    % temporal meridian
+    if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) || ...
+            ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,2,:))))
+
+        % Get the data for each layer and eye and convert to mm
+        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,1:1280))/1000;
+        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,1282:2561)))/1000;
+        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,1:1280))/1000;
+        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,1282:2561)))/1000;
+
+        % Detect if the data from one eye is missing
+        if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
+            gcVec = mean([gcVecOD,gcVecOS],2,'includenan');
+            ipVec = mean([ipVecOD,ipVecOS],2,'includenan');
+        else
+            gcVec = nanmean([gcVecOD,gcVecOS],2);
+            ipVec = nanmean([ipVecOD,ipVecOS],2);
+        end
+
+        % Calculate the thickness vec and flip vecs
+        thickVec = sum([gcVec,ipVec],2,'includenan');
+        gcVec = flipud(gcVec);
+        thickVec = flipud(thickVec);
+        ipVec = flipud(ipVec);
+
+        tempGcVec = gcVec;
+        tempIpVec = ipVec;
+        tempThickVec = thickVec;
+        tempRatioVec = tempGcVec./(tempThickVec .^ 2);
+    end
+
+    % nasal meridian
+    if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) || ...
+            ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,2,:))))
+
+        % Get the data for each layer and eye and convert to mm
+        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,1282:2561))/1000;
+        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,1:1280)))/1000;
+        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,1282:2561))/1000;
+        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,1:1280)))/1000;
+
+        % Detect if the data from one eye is missing
+        if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
+            gcVec = mean([gcVecOD,gcVecOS],2,'includenan');
+            ipVec = mean([ipVecOD,ipVecOS],2,'includenan');
+        else
+            gcVec = nanmean([gcVecOD,gcVecOS],2);
+            ipVec = nanmean([ipVecOD,ipVecOS],2);
+        end
+
+        % Calculate the thickness vec
+        thickVec = sum([gcVec,ipVec],2,'includenan');
+
+        nasGcVec = gcVec;
+        nasIpVec = ipVec;
+        nasThickVec = thickVec;
+        nasRatioVec = nasGcVec(:,end)./(nasThickVec .^ 2);
+    end
+
+    % superior meridian
+    load(vertThicknessProfile,'GCthicknessValuesAtXPos_um', ...
+        'IPthicknessValuesAtXPos_um', 'XPos_Degs');
+    posEccentricity = XPos_Degs(1282:2561);
+
+    if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) || ...
+            ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,2,:))))
+
+        % Get the data for each layer and eye and convert to mm
+        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,1:1280))/1000;
+        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,1282:2561)))/1000;
+        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,1:1280))/1000;
+        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,1282:2561)))/1000;
+
+        % Detect if the data from one eye is missing
+        if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
+            gcVec = mean([gcVecOD,gcVecOS],2,'includenan');
+            ipVec = mean([ipVecOD,ipVecOS],2,'includenan');
+        else
+            gcVec = nanmean([gcVecOD,gcVecOS],2);
+            ipVec = nanmean([ipVecOD,ipVecOS],2);
+        end
+
+        % Calculate the thickness vec
+        thickVec = sum([gcVec,ipVec],2,'includenan');
+        gcVec = flipud(gcVec);
+        thickVec = flipud(thickVec);
+        ipVec = flipud(ipVec);
+
+        supGcVec = gcVec;
+        supIpVec = ipVec;
+        supThickVec = thickVec;
+        supRatioVec = supGcVec./(supThickVec .^ 2);
+    end
+
+    % inferior meridian
+    if ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,1,:)))) || ...
+            ~all(isnan(squeeze(GCthicknessValuesAtXPos_um(ii,2,:))))
+
+        % Get the data for each layer and eye and convert to mm
+        gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,1282:2561))/1000;
+        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,1:1280)))/1000;
+        ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,1282:2561))/1000;
+        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,1:1280)))/1000;
+
+        % Detect if the data from one eye is missing
+        if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
+            gcVec = mean([gcVecOD,gcVecOS],2,'includenan');
+            ipVec = mean([ipVecOD,ipVecOS],2,'includenan');
+        else
+            gcVec = nanmean([gcVecOD,gcVecOS],2);
+            ipVec = nanmean([ipVecOD,ipVecOS],2);
+        end
+
+        % Calculate the thickness vec
+        thickVec = sum([gcVec,ipVec],2,'includenan');
+
+        infGcVec = gcVec;
+        infIpVec = ipVec;
+        infThickVec = thickVec;
+        infRatioVec = infGcVec./(infThickVec .^ 2);
+    end
+
+     subRatioVec = [tempRatioVec, nasRatioVec, supRatioVec, infRatioVec];
+     SD = std(subRatioVec .', 'omitnan');
+%     meanSubRatioVecProfile = nanmean(subRatioVec, 2);
+%     errorbar(posEccentricity, meanSubRatioVecProfile, SD, '-s','MarkerSize',...
+%         2, 'MarkerEdgeColor','black','MarkerFaceColor','black')
+%     title('Standard Deviation GC:GCIP^2 Across Meridians')
 %     xlabel('Eccentricity') 
-%     ylabel('Thickness')
-%     ylim([0 .07])
-%     subplot(2, 2, 2)
-%     plot(posEccentricity, ipVec);
-%     title('IPL Thickness')
-%     xlabel('Eccentricity') 
-%     ylabel('Thickness')
-%     ylim([0 .07])
-%     subplot(2, 2, 3)
-%     plot(posEccentricity, gcVec ./ thickVec);
-%     title('GC:GCIP Thickness')
-%     xlabel('Eccentricity') 
-%     ylabel('Thickness')
-%     subplot(2, 2, 4)
-%     plot(posEccentricity, gcVec ./ (thickVec .^2));
-%     title('GCL over GCIP')
-%     xlabel('Eccentricity') 
-%     ylabel('GC/(GCIP^2)')
-% end
+%     ylabel('GCL:GCIPL^2 Ratio')
+%     xlim([0 30])
+%     ylim([0 75])
+%     hold on
+    
+    sdProfile(:,end+1) = SD;
+end
+
+sdMeanProfile = nanmean(sdProfile, 2);
+plot(posEccentricity, sdMeanProfile)
+title('Mean Standard Deviation GC:GCIP^2 Across Meridians')
+xlabel('Eccentricity') 
+ylabel('Standard Deviation')
+xlim([0 30])
+ylim([0 10])
