@@ -35,9 +35,18 @@ for ii = 1:50
         
         % Get the data for each layer and eye and convert to mm
         gcVecOD = squeeze(GCthicknessValuesAtXPos_um(ii,1,:))/1000;
-        gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,:)))/1000;
         ipVecOD = squeeze(IPthicknessValuesAtXPos_um(ii,1,:))/1000;
-        ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,:)))/1000;
+        
+        switch p.Results.orientation
+            case 'horiz'
+                gcVecOS = flipud(squeeze(GCthicknessValuesAtXPos_um(ii,2,:)))/1000;
+                ipVecOS = flipud(squeeze(IPthicknessValuesAtXPos_um(ii,2,:)))/1000;
+            case 'vert'
+                gcVecOS = squeeze(GCthicknessValuesAtXPos_um(ii,2,:))/1000;
+                ipVecOS = squeeze(IPthicknessValuesAtXPos_um(ii,2,:))/1000;
+            otherwise
+                error('not a valid orientation')
+        end
         
         % Detect if the data from one eye is missing
         if ~all(isnan(gcVecOD)) && ~all(isnan(gcVecOS))
