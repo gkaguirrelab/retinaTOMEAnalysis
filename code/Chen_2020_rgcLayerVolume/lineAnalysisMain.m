@@ -44,7 +44,7 @@ p.addParameter('subjectTableFileName',fullfile(dropboxBaseDir,'TOME_subject','TO
 p.addParameter('anatMeasuresFileName',fullfile(getpref('retinaTOMEAnalysis','projectBaseDir'),'data','visualPathwayAnatMeasures.xlsx'),@ischar);
 p.addParameter('saveDir',fullfile(dropboxBaseDir,'AOSO_analysis','GCPaperFigures_horiz'),@ischar);
 p.addParameter('smoothPCAFactor',0.5,@isscalar);
-p.addParameter('orientation','horiz',@ischar);
+p.addParameter('orientation','horiz',@ischar); % or vert
 
 % Check the parameters
 p.parse(varargin{:});

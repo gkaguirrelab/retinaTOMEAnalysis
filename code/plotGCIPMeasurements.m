@@ -7,14 +7,14 @@
 % Obtain the dropBox base directory
 dropboxBaseDir = getpref('retinaTOMEAnalysis','dropboxBaseDir');   
 
-% Instantiate a plotlab object
-plotlabOBJ = plotlab();
-    
-% Apply the default plotlab recipe 
-% overriding just the figure size
-plotlabOBJ.applyRecipe(...
-  'figureWidthInches', 20, ...
-  'figureHeightInches', 15);
+% % Instantiate a plotlab object
+% plotlabOBJ = plotlab();
+%     
+% % Apply the default plotlab recipe 
+% % overriding just the figure size
+% plotlabOBJ.applyRecipe(...
+%   'figureWidthInches', 20, ...
+%   'figureHeightInches', 15);
 
 %% plot GCIP horizontal thickness
 
@@ -307,13 +307,32 @@ for ii = 1:50
         % Calculate the thickness vec
         thickVec = sum([gcVec,ipVec],2,'includenan');
         
-        % plot subject
+        % Prepare vectors
         gcVec = flipud(gcVec);
         thickVec = flipud(thickVec);
         ipVec = flipud(ipVec);
         xPosSub = xPos(1282:2561, ii);
-        plot(xPosSub, gcVec ./ (thickVec .^2));
+        
+                % Obtain and clean the double ratio vec
+        myVec = gcVec ./ (thickVec .^2);
+        [~,firstPeak] = max(myVec(1:100));
+        myVec(1:firstPeak-1)=nan;
+        myVec(600:end)=nan;
+        
+        % Fit a hyperbolic cosecant function
+        shiftX = min(xPosSub(~isnan(myVec)));
+        firstIdx = find(xPosSub==shiftX);        
+        myFun = @(a,b,c,x) a.*csch((x-shiftX).*b+0.001)+c;
+        goodIdx = ~isnan(myVec);
+        myFit = fit(xPosSub(goodIdx),myVec(goodIdx),myFun,'StartPoint',[0.0904    0.0577    4.8824]);
+        params.temporal.fit(ii,:) = [myFit.a myFit.b myFit.c];
+        params.temporal.shiftX(ii) = shiftX;
+
+        % Plot the subject
+%        plot(xPosSub, myVec);
+        plot(xPosSub(firstIdx:end),myFit(xPosSub(firstIdx:end)));
         hold on
+        
     end
 end
 title('GCL Ratio Along the Temporal Meridian')
@@ -348,10 +367,29 @@ for ii = 1:50
         % Calculate the thickness vec
         thickVec = sum([gcVec,ipVec],2,'includenan');
         
-        % plot subject
+        % Prepare vectors
         xPosSub = xPos(1282:2561, ii);
-        plot(xPosSub, gcVec ./ (thickVec .^2));
+
+            % Obtain and clean the double ratio vec
+        myVec = gcVec ./ (thickVec .^2);
+        [~,firstPeak] = max(myVec(1:100));
+        myVec(1:firstPeak-1)=nan;
+        myVec(600:end)=nan;
+        
+        % Fit a hyperbolic cosecant function
+        shiftX = min(xPosSub(~isnan(myVec)));
+        firstIdx = find(xPosSub==shiftX);        
+        myFun = @(a,b,c,x) a.*csch((x-shiftX).*b+0.001)+c;
+        goodIdx = ~isnan(myVec);
+        myFit = fit(xPosSub(goodIdx),myVec(goodIdx),myFun,'StartPoint',[0.0904    0.0577    4.8824]);
+        params.nasal.fit(ii,:) = [myFit.a myFit.b myFit.c];
+        params.nasal.shiftX(ii) = shiftX;
+        
+        % Plot the subject
+%        plot(xPosSub, myVec);
+        plot(xPosSub(firstIdx:end),myFit(xPosSub(firstIdx:end)));
         hold on
+        
     end
 end
 title('GCL Ratio Along the Nasal Meridian')
@@ -391,13 +429,32 @@ for ii = 1:50
         % Calculate the thickness vec
         thickVec = sum([gcVec,ipVec],2,'includenan');
         
-        % plot subject
+        % Prepare vectors
         gcVec = flipud(gcVec);
         thickVec = flipud(thickVec);
         ipVec = flipud(ipVec);
         xPosSub = xPos(1282:2561, ii);
-        plot(xPosSub, gcVec ./ (thickVec .^2));
+
+            % Obtain and clean the double ratio vec
+        myVec = gcVec ./ (thickVec .^2);
+        [~,firstPeak] = max(myVec(1:100));
+        myVec(1:firstPeak-1)=nan;
+        myVec(600:end)=nan;
+        
+        % Fit a hyperbolic cosecant function
+        shiftX = min(xPosSub(~isnan(myVec)));
+        firstIdx = find(xPosSub==shiftX);        
+        myFun = @(a,b,c,x) a.*csch((x-shiftX).*b+0.001)+c;
+        goodIdx = ~isnan(myVec);
+        myFit = fit(xPosSub(goodIdx),myVec(goodIdx),myFun,'StartPoint',[0.0904    0.0577    4.8824]);
+        params.superior.fit(ii,:) = [myFit.a myFit.b myFit.c];
+        params.superior.shiftX(ii) = shiftX;
+
+                % Plot the subject
+%        plot(xPosSub, myVec);
+        plot(xPosSub(firstIdx:end),myFit(xPosSub(firstIdx:end)));
         hold on
+        
     end
 end
 title('GCL Ratio Along the Superior Meridian')
@@ -432,10 +489,34 @@ for ii = 1:50
         % Calculate the thickness vec
         thickVec = sum([gcVec,ipVec],2,'includenan');
         
-        % plot subject
+        % Prepare vectors
         xPosSub = xPos(1282:2561, ii);
-        plot(xPosSub, gcVec ./ (thickVec .^2));
+        
+        % Obtain and clean the double ratio vec
+        myVec = gcVec ./ (thickVec .^2);
+        [~,firstPeak] = max(myVec(1:100));
+        myVec(1:firstPeak-1)=nan;
+        myVec(600:end)=nan;
+        
+        % Fit a hyperbolic cosecant function
+        shiftX = min(xPosSub(~isnan(myVec)));
+        firstIdx = find(xPosSub==shiftX);        
+        myFun = @(a,b,c,x) a.*csch((x-shiftX).*b+0.001)+c;
+        goodIdx = ~isnan(myVec);
+        myFit = fit(xPosSub(goodIdx),myVec(goodIdx),myFun,'StartPoint',[0.0904    0.0577    4.8824]);
+        params.inferior.fit(ii,:) = [myFit.a myFit.b myFit.c];
+        params.inferior.shiftX(ii) = shiftX;
+
+                % Plot the subject
+%        plot(xPosSub, myVec);
+        plot(xPosSub(firstIdx:end),myFit(xPosSub(firstIdx:end)));
         hold on
+        
+        %         figure
+%         plot(xPosSub, myVec);
+%         hold on        
+%         plot(xPosSub(firstIdx:end),myFit(xPosSub(firstIdx:end)),'-r');
+%         foo=1;
     end
 end
 title('GCL Ratio Along the Inferior Meridian')
