@@ -95,7 +95,7 @@ if p.Results.showPlots
     fig2_ThickAndVolRelationships(XPos_Degs, gcVec, meanGCVecProfile, mmSqPerDegSq, gcVolumePerDegSq, meanGCVolumePerDegSqProfile,comboTable,saveDir)
     
     % Panel d of figure 2 is a couple of extreme model eyes
-%    fig2d_ExtremeEyes(saveDir)
+    fig2d_ExtremeEyes(saveDir)
     
     % Show the effect of smoothing on each of the PCA scores
     fig3_EffectOfSmoothingOnPCA(GCVolPCAVarExplained,GCVolPCAScoreExpanded,GCVolPCAScoreExpandedSmoothed,nDimsToUse,saveDir)
