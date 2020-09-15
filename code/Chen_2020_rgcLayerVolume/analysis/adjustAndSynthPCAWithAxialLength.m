@@ -1,10 +1,11 @@
 function [adjustedGCVolPCACoeff,synGCVolPCACoeff,synthALRange] = adjustAndSynthPCAWithAxialLength(nDimsToUse,GCVolPCACoeff,axialLengths)
 
 corrCoeffAxialLength = nan(1,nDimsToUse);
+corrCoeffAxialLength_pVal = nan(1,nDimsToUse);
 fprintf('Correlation axial length with PCA coefficients:\n');
 for ii = 1:nDimsToUse
-    corrCoeffAxialLength(ii) = corr(axialLengths,GCVolPCACoeff(:,ii));
-    txt = sprintf('\tPC%d: %2.2f \n',ii,corrCoeffAxialLength(ii));
+    [corrCoeffAxialLength(ii), corrCoeffAxialLength_pVal(ii)] = corr(axialLengths,real(GCVolPCACoeff(:,ii)),'rows','complete');
+    txt = sprintf('\tPC%d: %2.2f with p=%2.4f\n',ii,corrCoeffAxialLength(ii),corrCoeffAxialLength_pVal(ii));
     fprintf(txt);
 end
 

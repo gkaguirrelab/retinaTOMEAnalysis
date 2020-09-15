@@ -174,6 +174,7 @@ for n = 1:length(allSegs)
                 continue
             end
             overlaySmooth(round(TopSmooth(t,2)),TopSmooth(t,1),:) = [0 1 0]';
+            overlaySmooth(round(TopSmooth(t,2))+1,TopSmooth(t,1),:) = [0 1 0]';
         end
         %repeat for the other boundaries
         for t= 1:length(Mid)
@@ -182,6 +183,7 @@ for n = 1:length(allSegs)
                 continue
             end
             overlaySmooth(round(MidSmooth(t,2)),MidSmooth(t,1),:) = [1 1 0]';
+            overlaySmooth(round(MidSmooth(t,2))+1,MidSmooth(t,1),:) = [1 1 0]';
             
         end
         
@@ -192,7 +194,7 @@ for n = 1:length(allSegs)
                 continue
             end
             overlaySmooth(round(BotSmooth(t,2)),BotSmooth(t,1),:) = [1 0 0]';
-            
+            overlaySmooth(round(BotSmooth(t,2))+1,BotSmooth(t,1),:) = [1 0 0]';            
         end
         
         %this is our output data structure saving all three boundaries and
