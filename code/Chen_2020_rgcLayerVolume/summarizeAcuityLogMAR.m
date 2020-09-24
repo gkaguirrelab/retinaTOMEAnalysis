@@ -64,18 +64,18 @@ for ii = 1:length(subjectTable.AOSO_ID)
             
             % The acuity is the proportional distance between the primry
             % and next line expressed as logMAR
-            LogMAR(ii,ee) = -log10(str2double(primaryLine)/20) * ((totalLetters-nLetters)/totalLetters) + ...
-                -log10(str2double(nextLine)/20) * ((nLetters)/totalLetters);
+            LogMAR(ii,ee) = log10(str2double(primaryLine)/20) * ((totalLetters-nLetters)/totalLetters) + ...
+                log10(str2double(nextLine)/20) * ((nLetters)/totalLetters);
             
         else
-            LogMAR(ii,ee) = -log10(str2double(decimal)/20);
+            LogMAR(ii,ee) = log10(str2double(decimal)/20);
         end
         
         % Uncomment to report the calculation for every eye
-        %{
-            str = sprintf(['Subject %d, eye %d, decimal = ' decimal ', logMAR = %2.2f, fractional decimal = %2.2f \n'],ii,ee,LogMAR(ii,ee),20*10^(-LogMAR(ii,ee)));
+%        %{
+            str = sprintf(['Subject %d, eye %d, decimal = ' decimal ', logMAR = %2.2f, fractional decimal = %2.2f \n'],ii,ee,LogMAR(ii,ee),20*10^(LogMAR(ii,ee)));
             fprintf(str);
-        %}
+%        %}
         
     end
     
@@ -85,15 +85,15 @@ end
 str = sprintf('The correlation of LogMAR acuity between the two eyes across subjects is R = %2.2f \n',corr(LogMAR(:,1),LogMAR(:,2)));
 fprintf(str);
 
-str = sprintf('The median LogMAR acuity (±IQR) across subjects (averaged over eyes) is %2.2f ± %2.3f \n',median(mean(LogMAR,2)),iqr(mean(LogMAR,2)));
+str = sprintf('The median LogMAR acuity (±IQR) across subjects (averaged over eyes) is %2.3f ± %2.3f, or %2.2f decimal \n',median(mean(LogMAR,2)),iqr(mean(LogMAR,2)),20*10^(median(mean(LogMAR,2))));
 fprintf(str);
 
 % Report the correlation of acuity with axial length
-str = sprintf('The correlation of LogMAR acuity (averaged over eyes) with axial length is %2.2f \n',corr(mean(LogMAR,2),subjectTable.Axial_Length_average));
+str = sprintf('The correlation of LogMAR acuity (averaged over eyes) with axial length is %2.3f \n',corr(mean(LogMAR,2),subjectTable.Axial_Length_average));
 fprintf(str);
 
 % Report the worst acuity in the population
-str = sprintf('The worst acuity (averaged over eyes) was %2.2f logMAR, or %2.2f decimal \n',min(mean(LogMAR,2)),20*10^(-min(mean(LogMAR,2))));
+str = sprintf('The worst acuity (averaged over eyes) was %2.3f logMAR, or %2.2f decimal \n',max(mean(LogMAR,2)),20*10^(max(mean(LogMAR,2))));
 fprintf(str);
 
 
