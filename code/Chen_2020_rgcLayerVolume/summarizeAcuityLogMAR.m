@@ -73,7 +73,7 @@ for ii = 1:length(subjectTable.AOSO_ID)
         
         % Uncomment to report the calculation for every eye
         %{
-            str = sprintf(['Subject %d, eye %d, decimal = ' decimal ', logMAR = %2.2f, fractional decimal = %2.2f \n'],ii,ee,LogMar(ii,ee),20*10^(-LogMar(ii,ee)));
+            str = sprintf(['Subject %d, eye %d, decimal = ' decimal ', logMAR = %2.2f, fractional decimal = %2.2f \n'],ii,ee,LogMAR(ii,ee),20*10^(-LogMAR(ii,ee)));
             fprintf(str);
         %}
         
@@ -90,6 +90,10 @@ fprintf(str);
 
 % Report the correlation of acuity with axial length
 str = sprintf('The correlation of LogMAR acuity (averaged over eyes) with axial length is %2.2f \n',corr(mean(LogMAR,2),subjectTable.Axial_Length_average));
+fprintf(str);
+
+% Report the worst acuity in the population
+str = sprintf('The worst acuity (averaged over eyes) was %2.2f logMAR, or %2.2f decimal \n',min(mean(LogMAR,2)),20*10^(-min(mean(LogMAR,2))));
 fprintf(str);
 
 
