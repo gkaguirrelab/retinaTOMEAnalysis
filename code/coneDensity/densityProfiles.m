@@ -1,6 +1,5 @@
 clear
 %close all
-clc
 
 downSample = 0.1;
 foveaDilate = 100;
