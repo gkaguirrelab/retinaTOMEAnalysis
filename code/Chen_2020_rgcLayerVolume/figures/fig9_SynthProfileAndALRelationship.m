@@ -70,7 +70,7 @@ end
 % Plot the GC thick functions with support in degrees
 str = sprintf('Synthesized GC thickness profiles for AL = %2.2f, %2.2f, %2.2f',ALs);
 h=profilePlot(XPos_Degs, synthProfileThick, [], 'Eccentricity [deg visual angle]','GC Tissue Thickness [mm]',[],1);
-ylim([0 0.06]);
+ylim([0 0.075]);
 xlim([-25 25]);
 title(str)
 setTightFig
@@ -95,7 +95,7 @@ for ii = 1:length(ALs)
     hold on
 end
 xlabel('Eccentricity [mm]');ylabel('GC Tissue Thickness [mm]');
-ylim([0 0.06]);
+ylim([0 0.075]);
 xlim([-8 8]);
 title(str)
 setTightFig
