@@ -24,6 +24,8 @@ switch orientation
         domains = {[1 tt(1)],[tt(2)+1 tt(3)],[tt(4)+1 length(nanX)]};
     case 'vert'
         domains = {[tt(1)+1 tt(2)],[tt(3)+1 tt(4)]};
+    case 'both'
+        domains = {[1 tt(1)],[tt(2)+1 tt(3)],[tt(4)+1 round(length(nanX)/2) tt(6)+1 tt(7)],[tt(8)+1 tt(9)]};
     otherwise
         error('not a valid orientation');
 end

@@ -51,6 +51,19 @@
 		"type": "git",
 		"update": "",
 		"url": "https:\/\/github.com\/npcottaris\/plotlab.git"
+	},
+	{
+		"flavor": "",
+		"hook": "",
+		"importance": "",
+		"localHookTemplate": "",
+		"name": "flywheelMRSupport",
+		"pathPlacement": "append",
+		"subfolder": "",
+		"toolboxRoot": "",
+		"type": "include",
+		"update": "",
+		"url": ""
 	}
 ]
 
