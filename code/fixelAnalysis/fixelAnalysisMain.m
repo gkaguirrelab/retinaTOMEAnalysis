@@ -122,15 +122,15 @@ end
 % Massage the fixelTable to match up with the comboTable
 fixelTable.Properties.VariableNames{1} = 'TOME_ID';
 fixelTable.TOME_ID = strrep(fixelTable.TOME_ID,'fod_','');
-fixelTable.fc = mean([fixelTable.right_fc_,fixelTable.left_fc_],2);
-fixelTable.fd = mean([fixelTable.right_fd_,fixelTable.left_fd_],2);
-fixelTable.fdc = mean([fixelTable.right_fdc,fixelTable.left_fdc],2);
+fixelSet = {'fc_','fd_','fdc'};
+for ff = 1:length(fixelSet)
+    fixelTable.(fixelSet{ff}) = mean([fixelTable.(['right_' fixelSet{ff}]),fixelTable.(['left_' fixelSet{ff}])],2);
+end
 
 fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TOME_ID),:),fixelTable,'Keys','TOME_ID');
 
 
 %% Report the correlation of fixel values with RGC values
-fixelSet = {'fc','fd','fdc'};
 measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender'};
 
 for ff = 1:length(fixelSet)
@@ -157,7 +157,7 @@ end
 
 %% Model fc by GC values
 
-y = fixelComparisonTable.fc;
+y = fixelComparisonTable.fc_;
 
 % Create an X model
 X = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.meanFitGCVol];
