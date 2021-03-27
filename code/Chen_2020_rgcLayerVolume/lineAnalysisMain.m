@@ -72,6 +72,10 @@ end
 gcTable = join(thicknessTable,volumeTable,'Keys','AOSO_ID');
 comboTable = join(gcTable,subjectTable,'Keys','AOSO_ID');
 
+% Save these variables
+saveName = [saveDir 'gcVolumeData.mat'];
+save(saveName,'gcVolumePerDegSq','badIdx','XPos_Degs','comboTable');
+
 nDimsToUse = 6; % number of PCA components to use.
 
 
