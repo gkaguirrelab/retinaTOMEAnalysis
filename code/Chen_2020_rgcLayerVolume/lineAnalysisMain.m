@@ -39,7 +39,7 @@ p = inputParser;
 % Optional analysis params
 p.addParameter('showPlots',true,@islogical);
 p.addParameter('GCIPthicknessFile',fullfile(dropboxBaseDir, 'AOSO_analysis','OCTExplorerExtendedHorizontalData','GCIP_thicknessesByDeg'),@ischar);
-p.addParameter('mmPerDegFileName',fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps','mmPerDegPolyFit.mat'),@ischar);
+p.addParameter('eyeModelsFileName',fullfile(dropboxBaseDir,'AOSO_analysis','eyeModels','eyeModels.mat'),@ischar);
 p.addParameter('subjectTableFileName',fullfile(dropboxBaseDir,'TOME_subject','TOME-AOSO_SubjectInfo.xlsx'),@ischar);
 p.addParameter('anatMeasuresFileName',fullfile(getpref('retinaTOMEAnalysis','projectBaseDir'),'data','visualPathwayAnatMeasures.xlsx'),@ischar);
 p.addParameter('saveDir',fullfile(dropboxBaseDir,'AOSO_analysis','GCPaperFigures_horiz'),@ischar);

@@ -1,33 +1,40 @@
 function fig2d_ExtremeEyes(saveDir)
 
-sceneGeometry = createSceneGeometry('axialLength',27.57,'sphericalAmetropia',-10.25);
-a0 = [5.45 2.5 0];
+eye = modelEyeParameters('axialLength',27.57,'sphericalAmetropia',-10.25);
+a0 = eye.landmarks.fovea.degField;
 theta = linspace(0,2*pi,20);
 radius=15;
 for ii=1:length(theta)
     x=radius*cos(theta(ii));
     y=radius*sin(theta(ii));
-    [~,X(ii,:)] = calcRetinaFieldPoint( sceneGeometry.eye, a0+[x y 0]);
+    rayPath = calcNodalRayFromField(eye,a0+[x y]);
+    X(ii,:) = rayPath(:,end);
 end
-G = calcRetinaFieldPoint( sceneGeometry.eye, a0);
-[outputRay,rayPath] = calcNodalRay(sceneGeometry.eye,G);
-plotOpticalSystem('surfaceSet',sceneGeometry.refraction.retinaToCamera,'addLighting',true,'rayPath',rayPath,'outputRay',outputRay);
+rayPath = calcNodalRayFromField(eye,a0);
+plotOpticalSystem(eye,'rayPath',rayPath);
 plot3(X(:,1),X(:,2),X(:,3),'.b');
 
 bigEyeRadiusMm = mean(vecnorm((X-mean(X))')');
 
 
-sceneGeometry = createSceneGeometry('axialLength',21.79,'sphericalAmetropia',3.875);
+
+eye = modelEyeParameters('axialLength',21.79,'sphericalAmetropia',3.875);
+a0 = eye.landmarks.fovea.degField;
+theta = linspace(0,2*pi,20);
+radius=15;
 for ii=1:length(theta)
     x=radius*cos(theta(ii));
     y=radius*sin(theta(ii));
-    [~,X(ii,:)] = calcRetinaFieldPoint( sceneGeometry.eye, a0+[x y 0]);
+    rayPath = calcNodalRayFromField(eye,a0+[x y]);
+    X(ii,:) = rayPath(:,end);
 end
-plotOpticalSystem('newFigure',false,'surfaceSet',sceneGeometry.refraction.retinaToStop);
+rayPath = calcNodalRayFromField(eye,a0);
+plotOpticalSystem(eye,'newFigure',false);
 plot3(X(:,1),X(:,2),X(:,3),'.r');
 
 smallEyeRadiusMm = mean(vecnorm((X-mean(X))')');
 
+xlim([-30 10]);
 title('TOME_3031, 3043, SR=-10, 4, axLength=27.57, 21.79');
 set(gca,'color','none')
 drawnow

@@ -28,32 +28,44 @@ xlim([-25 25]);
 setTightFig
 saveas(h,fullfile(saveDir,'fig9','a.pdf'));
 
-% Make a mmPerDegMap for each of these model eyes, and produce the
+% Make a mmPerDeg function for each of these model eyes, and produce the
 % thickness profiles, and thickness profiles by mm
 XPos_mm = zeros(length(XPos_Degs),length(ALs));
-for ii=1:length(ALs)
-    mmPerDegPolyFit{ii} = magMap(ALs(ii));
-    pp = mmPerDegPolyFit{ii};
-    switch orientation
-        case 'horiz'
-            mmSqPerDegSq = pp([-XPos_Degs;zeros(size(XPos_Degs))]').^2;
-        case 'vert'
-            mmSqPerDegSq = pp([zeros(size(XPos_Degs));-XPos_Degs]').^2;
-    end
-    synthProfileThick(:,ii) = synthProfileVol(:,ii)./mmSqPerDegSq;
-    % Create the XPos_mm for each model
-    eccenPos = @(hh) pp(hh, 0);
-    for xx = 1:length(XPos_Degs)
-        if XPos_Degs(xx)==0
-            continue
+
+% Create the down-sampled XPos_Degs that we will measure
+XPos_Support = linspace(1,length(XPos_Degs),100);
+XPos_DegSub = interp1(1:length(XPos_Degs),XPos_Degs,XPos_Support);
+
+% Loop over model eyes
+for ss = 1:length(ALs)
+    eye = modelEyeParameters('axialLength',ALs(ss));
+    foveaCoord = eye.landmarks.fovea.coords';
+    fieldAngularPosition = eye.landmarks.fovea.degField;
+    rayOriginDistance = 1500;
+    angleReferenceCoord = eye.landmarks.incidentNode.coords;
+    distanceReferenceCoord = calcPrincipalPoint(eye);
+    
+    mmPerDeg = nan(size(XPos_DegSub));
+    retinalDistance = nan(size(XPos_DegSub));
+    for ii = 1:length(XPos_DegSub)
+        switch orientation
+            case 'horiz'
+                deltaAngles = [1 0]; % Measure horizontally separated points
+                thisPosition = fieldAngularPosition + [ -XPos_DegSub(ii) 0 ];
+            case 'vert'
+                deltaAngles = [1 0]; % Measure vertically separated points
+                thisPosition = fieldAngularPosition + [ 0 -XPos_DegSub(ii) ];
         end
-        if XPos_Degs(xx)>0
-            XPos_mm(xx,ii) = integral(eccenPos,0,XPos_Degs(xx));
-        else
-            XPos_mm(xx,ii) = -integral(eccenPos,XPos_Degs(xx),0);
-        end
+        rayPath = calcNodalRayFromField(eye,thisPosition,rayOriginDistance,angleReferenceCoord,distanceReferenceCoord);
+        retinalDistance(ii) = sign(XPos_DegSub(ii))*quadric.geodesic(eye.retina.S,[foveaCoord,rayPath(:,end)]);
+        mmPerDeg(ii) = calcMmRetinaPerDeg(eye,thisPosition,deltaAngles,rayOriginDistance,angleReferenceCoord);
+
     end
+    mmSqPerDegSq(:,ss) = interp1(XPos_DegSub,mmPerDeg,XPos_Degs).^2;
+    XPos_mm(:,ss) = interp1(XPos_DegSub,retinalDistance,XPos_Degs);
+    synthProfileThick(:,ss) = synthProfileVol(:,ss)./mmSqPerDegSq(:,ss);
 end
+
 
 % Plot the GC thick functions with support in degrees
 str = sprintf('Synthesized GC thickness profiles for AL = %2.2f, %2.2f, %2.2f',ALs);
@@ -92,49 +104,3 @@ saveas(h,fullfile(saveDir,'fig9','c.pdf'));
 end
 
 
-
-
-function mmPerDegPolyFit = magMap(AL)
-
-% Create the model eye
-eye = modelEyeParameters('axialLength',AL,'calcLandmarkFovea',true);
-
-% Define the visual field domain over which we will make the measure,
-% in degrees relative to the fovea
-horizVals = -30:15:30;
-vertVals = -30:15:30;
-
-% Define an empty matrix to hold the results
-mmPerDeg = nan(length(horizVals),length(vertVals));
-
-% Define the delta deg
-deltaDegEuclidean = 1e-3;
-deltaAngles = [sqrt(deltaDegEuclidean/2) sqrt(deltaDegEuclidean/2)];
-
-% Loop over horizontal and vertical field positions
-for jj = 1:length(horizVals)
-    for kk = 1:length(vertVals)
-        % The position in the field relative to the optical axis of the
-        % eye
-        
-        degField = [horizVals(jj) vertVals(kk)] + eye.landmarks.fovea.degField(1:2);
-        
-        % Obtain the retinal points that are delta degrees on either
-        % side of the specified degree field position
-        [~,X0] = calcRetinaFieldPoint( eye, degField - deltaAngles./2);
-        [~,X1] = calcRetinaFieldPoint( eye, degField + deltaAngles./2);
-        
-        % The difference between X0 and X1 is used to calculate the mm
-        % of retina per degree of visual field for this location
-        mmPerDeg(jj,kk) = norm(X0-X1) / norm(deltaAngles);
-        
-    end
-    
-end
-
-% Fit a polynomial surface to the measure
-[X,Y]=meshgrid(horizVals,vertVals);
-mmPerDegPolyFit = fit([X(:),Y(:)],mmPerDeg(:),'poly33');
-
-
-end
