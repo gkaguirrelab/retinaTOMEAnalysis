@@ -64,16 +64,11 @@ inputDir = fullfile(dropboxBaseDir, 'AOSO_analysis','OCTSingleVerticalData');
 calcExtOCTGCIPThickness(inputDir)
 
 
-%% Create the mmSquarePerDegreeSquare maps
-% We create for each subject a model eye based upon their biometric
-% measurements. We calculate for each model eye the square mm of retina
-% that subtend a square degree of visual angle at several points. This set
-% of measurements is then fit with a polynomial surface. The polynomial
-% allows us to convert mm2 to degree2 for any arbitrary position in the
-% retina. The set of polynomial fits are stored in a single matlab variable
-% called "mmPerDegPolyFit.mat".
-outputDir = fullfile(dropboxBaseDir,'AOSO_analysis','mmPerDegMaps');
-makeMmPerDegMaps(outputDir)
+%% Create the model eyes
+% Create a model eye for each subject. This will be used later to convert
+% from degrees to mm on the retina
+saveDir = fullfile(dropboxBaseDir,'AOSO_analysis','eyeModels');
+makeModelEyes(saveDir)
 
 
 %% Analyze GC IP layers in the extended OCT 
