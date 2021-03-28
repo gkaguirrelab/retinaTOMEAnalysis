@@ -124,7 +124,12 @@ fixelTable.Properties.VariableNames{1} = 'TOME_ID';
 fixelTable.TOME_ID = strrep(fixelTable.TOME_ID,'fod_','');
 fixelSet = {'fc_','fd_','fdc'};
 for ff = 1:length(fixelSet)
-    fixelTable.(fixelSet{ff}) = mean([fixelTable.(['right_' fixelSet{ff}]),fixelTable.(['left_' fixelSet{ff}])],2);
+    % Report the correlation of left and right
+    fixelValR = fixelTable.(['right_' fixelSet{ff}]);
+    fixelValL = fixelTable.(['left_' fixelSet{ff}]);
+    [R,P] = corrcoef(fixelValR,fixelValL);
+    fprintf([fixelSet{ff} ' correlation left with right: %2.2f \n'],R(1,2));
+    fixelTable.(fixelSet{ff}) = mean([fixelValR, fixelValL],2);
 end
 
 fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TOME_ID),:),fixelTable,'Keys','TOME_ID');
