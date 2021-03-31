@@ -162,7 +162,7 @@ end
 
 %% Model fc by GC values
 
-y = fixelComparisonTable.fc_;
+y = log10(fixelComparisonTable.fc_);
 
 % Create an X model
 X = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.meanFitGCVol];
