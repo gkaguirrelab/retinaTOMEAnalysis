@@ -13,11 +13,11 @@ recalculateFlag = false;
 cd('/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images')
 
 % Find the list of result files
-resultFiles=dir('**/confocal/Results/*_confocal_Fouriest_Result.mat');
-dataFileName = 'densityProfileData.mat';
+%resultFiles=dir('**/confocal/Results/*_confocal_Fouriest_Result.mat');
+%dataFileName = 'densityProfileData.mat';
 
-%resultFiles=dir('**/split detection/Results/*_split_Fouriest_Result.mat');
-%dataFileName = 'splitDensityProfileData.mat';
+resultFiles=dir('**/split detection/Results/*_split_Fouriest_Result.mat');
+dataFileName = 'splitDensityProfileData.mat';
 
 
 % Either load or create the data variable
@@ -138,6 +138,9 @@ end
 supportDeg = 0:data{1}.meta.supportDegDelta:data{1}.meta.supportDegDelta*(supportLength-1);
 polarToMeridian = {'Inferior','Nasal','Superior','Temporal'};
 
+badIdx = zeros(size(data));
+data = data(logical(~badIdx));
+
 % Loop over the arms
 for mm = 1:length(polarToMeridian)
     dataMatrix = nan(length(data),supportLength);
@@ -164,6 +167,8 @@ xlim([0 15]);
 ylabel('mean density [cones/deg^2]');
 xlabel('distance from fovea [deg]')
 legend(polarToMeridian,'FontSize',16)
+
+
 
 
 %
