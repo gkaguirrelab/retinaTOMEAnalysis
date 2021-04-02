@@ -3,7 +3,7 @@
 cd('/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images')
 
 % Load the confocal and split data
-dataFileName = 'densityProfileData.mat';
+dataFileName = 'confocalDensityProfileData.mat';
 load(dataFileName)
 confocalData = data;
 
@@ -23,7 +23,7 @@ confocalSupportDeg = 0:confocalData{1}.meta.supportDegDelta:confocalData{1}.meta
 splitSupportDeg = 0:splitData{1}.meta.supportDegDelta:splitData{1}.meta.supportDegDelta*(splitSupportLength-1);
 
 polarToMeridian = {'Inferior','Nasal','Superior','Temporal'};
-
+polarToVal = [270,0,90,180];
 
 figure
 confocalStartIdx = find(confocalSupportDeg > 0.5,1);
@@ -50,7 +50,10 @@ for mm = 1:length(polarToMeridian)
     
     hold on
     tmp = nanmedian(splitDataMatrix);
-    plot(splitSupportDeg(splitStartIdx:end),tmp(splitStartIdx:end),'--');
+    plot(splitSupportDeg(splitStartIdx:end),tmp(splitStartIdx:end),'-');
+    
+%    fitHandle = getSplineFitToConeDensitySqDegVisual(polarToVal(mm));
+%    plot(splitSupportDeg,fitHandle(splitSupportDeg),':k');
     
     title(polarToMeridian{mm});
     ylim([0 7000]);
