@@ -1,31 +1,27 @@
 clear
-%close all
 
+% Hard coded values
 downSample = 0.1;
 foveaDilate = 100;
 angleAccumulate = 45;
-armFilterPointDegrees = 4;
-armFilterDensityThresh = 2000;
-recalculateFlag = false;
-
+armFilterPointsDegrees = [0.5, 4];
+armFilterDensityThresh = [10000, 2000];
 
 % The overal result directory
 cd('/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images')
 
-% Find the list of result files
-%resultFiles=dir('**/confocal/Results/*_confocal_Fouriest_Result.mat');
-%dataFileName = 'densityProfileData.mat';
-
-resultFiles=dir('**/split detection/Results/*_split_Fouriest_Result.mat');
-dataFileName = 'splitDensityProfileData.mat';
-
-
-% Either load or create the data variable
-if ~recalculateFlag
+% We are going to loop through the processing twice, once each for the
+% confocal and split datasets
+for dd = 1:2
     
-    load(dataFileName)
-    
-else
+    switch dd
+        case 1
+            resultFiles=dir('**/confocal/Results/*_confocal_Fouriest_Result.mat');
+            dataFileName = 'confocalDensityProfileData.mat';
+        case 2
+            resultFiles=dir('**/split detection/Results/*_split_Fouriest_Result.mat');
+            dataFileName = 'splitDensityProfileData.mat';
+    end
     
     % Create variables to hold the data
     data = cell(1,length(resultFiles));
@@ -101,12 +97,13 @@ else
             end
             
             % Filter out unreasonable values from beyond the armFilterPointDegrees
-            filterIdx = find(supportDeg > armFilterPointDegrees,1);
-            filterRegion = dataRectangle(:,filterIdx:end);
-            filterRegion(filterRegion(:)>armFilterDensityThresh)=nan;
-            dataRectangle(:,filterIdx:end) = filterRegion;
-            meridianDensity(mm,:)=nanmean(dataRectangle);
-            
+            for ff = 1:length(armFilterPointsDegrees)
+                filterIdx = find(supportDeg > armFilterPointsDegrees(ff),1);
+                filterRegion = dataRectangle(:,filterIdx:end);
+                filterRegion(filterRegion(:)>armFilterDensityThresh(ff))=nan;
+                dataRectangle(:,filterIdx:end) = filterRegion;
+                meridianDensity(mm,:)=nanmean(dataRectangle);
+            end
         end
         
         % Store the data
@@ -130,81 +127,3 @@ else
     save(dataFileName,'data','-v7.3');
     
 end
-
-
-%% Aggregate the profiles
-% Find the longest support deg
-[supportLength,idx] = max(cellfun(@(x) length(x.profile.supportDeg),data));
-supportDeg = 0:data{1}.meta.supportDegDelta:data{1}.meta.supportDegDelta*(supportLength-1);
-polarToMeridian = {'Inferior','Nasal','Superior','Temporal'};
-
-badIdx = zeros(size(data));
-data = data(logical(~badIdx));
-
-% Loop over the arms
-for mm = 1:length(polarToMeridian)
-    dataMatrix = nan(length(data),supportLength);
-    for rr = 1:length(data)
-        tmp = data{rr}.profile.(polarToMeridian{mm});
-        dataMatrix(rr,1:length(tmp))=tmp;
-    end
-    dataAggregate.(polarToMeridian{mm}).median = nanmedian(dataMatrix);
-    dataAggregate.(polarToMeridian{mm}).stdev = nanstd(dataMatrix);
-end
-dataAggregate.supportDeg = supportDeg;
-
-
-%% Display profiles
-figure
-startIdx = find(supportDeg > 0.5,1);
-for mm = 1:length(polarToMeridian)
-    plot(dataAggregate.supportDeg(startIdx:end),dataAggregate.(polarToMeridian{mm}).median(startIdx:end));
-    hold on
-end
-title(sprintf('Across-subject median density in %d degree wedge',angleAccumulate))
-ylim([0 7000]);
-xlim([0 15]);
-ylabel('mean density [cones/deg^2]');
-xlabel('distance from fovea [deg]')
-legend(polarToMeridian,'FontSize',16)
-
-
-
-
-%
-%
-% idxToDisplay = 3;
-% imDensity = data{idxToDisplay}.imDensity;
-% polarDensity = data{idxToDisplay}.polarDensity;
-%
-% %% Display maps
-% figure
-% tiledlayout(1,2,'TileSpacing','Compact','Padding','Compact');
-%
-% nexttile
-% imagesc(imDensity)
-% axis equal
-% axis off
-% title('density map')
-%
-% nexttile
-% imagesc(polarDensity)
-% axis equal
-% axis off
-% title('density polar angle')
-% hold on
-% for mm = 1:4
-%     if mm==4
-%         plot([1 1],[0 meridianWidth],'-r','LineWidth',2);
-%         plot([1 1],[polarDim-meridianWidth polarDim],'-r','LineWidth',2);
-%         plot([1 polarDim],[meridianWidth meridianWidth],'-r');
-%         plot([1 polarDim],[polarDim-meridianWidth polarDim-meridianWidth],'-r');
-%     else
-%         plot([1 1],[meridianIdx*mm-meridianWidth meridianIdx*mm+meridianWidth],'-r','LineWidth',2);
-%         plot([1 polarDim],[meridianIdx*mm-meridianWidth meridianIdx*mm-meridianWidth],'-r');
-%         plot([1 polarDim],[meridianIdx*mm+meridianWidth meridianIdx*mm+meridianWidth],'-r');
-%     end
-% end
-
-%
-
