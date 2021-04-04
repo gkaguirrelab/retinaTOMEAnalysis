@@ -1,11 +1,9 @@
 clear
 
 % Hard coded values
-downSample = 0.1;
+downSample = 0.01;
 foveaDilate = 100;
-angleAccumulate = 45;
-armFilterPointsDegrees = [0.5, 4];
-armFilterDensityThresh = [10000, 2000];
+newDim = 18000; % Dimensions of the density maps
 
 % The overal result directory
 cd('/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images')
@@ -47,10 +45,12 @@ for dd = 1:2
             error(['Unable to determine laterality for ' resultFiles(rr).name]);
         end
         
+        % Extract the subject name
+        tmp = strsplit(fileName,filesep);
+        subName = tmp{end-3};
+
         % Pad the density map so that it is square around the fovea_coords
         imsize = size(density_map);
-        newDim =  max(max([imsize-round(fovea_coords);round(fovea_coords)]))*2;
-        newDim = round(newDim+9,-1); % Ensure that it is a multiple of 10
         offset = round(newDim/2-fovea_coords);
         
         % Set up the density map
@@ -73,6 +73,12 @@ for dd = 1:2
         imDensity = imresize(imDensity,downSample);
         imFovea = imresize(imFovea,downSample);
         
+        % Flip left eye density maps so they are pseudo-right eye
+        if strcmp(laterality,'OS')
+            imDensity = fliplr(imDensity);
+            imFovea = fliplr(imFovea);
+        end
+        
         % Create polar maps
         polarDensity = convertImageMapToPolarMap(imDensity);
         polarFovea = convertImageMapToPolarMap(imFovea);
@@ -82,48 +88,22 @@ for dd = 1:2
         polarDensity(polarFovea > 0.1) = nan;
         
         % Calculate the support in degrees for the polar image
-        supportDeg = (1:polarDim)./(pixelsperdegree*downSample*4);
-        
-        % Loop through the merdians and grab the data rectangle
-        meridianDensity = nan(4,polarDim);
-        meridianIdx = floor(polarDim/4);
-        meridianWidth = round(((polarDim)/360)*angleAccumulate/2);
-        for mm = 1:4
-            if mm==4
-                dataRectangle=[ polarDensity(1:meridianWidth,:); ...
-                    polarDensity(end-meridianWidth:end,:)];
-            else
-                dataRectangle = polarDensity(meridianIdx*mm-meridianWidth:meridianIdx*mm+meridianWidth,:);
-            end
-            
-            % Filter out unreasonable values from beyond the armFilterPointDegrees
-            for ff = 1:length(armFilterPointsDegrees)
-                filterIdx = find(supportDeg > armFilterPointsDegrees(ff),1);
-                filterRegion = dataRectangle(:,filterIdx:end);
-                filterRegion(filterRegion(:)>armFilterDensityThresh(ff))=nan;
-                dataRectangle(:,filterIdx:end) = filterRegion;
-                meridianDensity(mm,:)=nanmean(dataRectangle);
-            end
-        end
+        supportDeg = (1:polarDim)./(pixelsperdegree*downSample*4);        
         
         % Store the data
+        data{rr}.meta.subName = subName;
         data{rr}.meta.filename = resultFiles(rr).name;
         data{rr}.meta.folder = resultFiles(rr).folder;
         data{rr}.meta.laterality = laterality;
         data{rr}.meta.downSample = downSample;
         data{rr}.meta.foveaDilate = foveaDilate;
-        data{rr}.meta.angleAccumulate = angleAccumulate;
         data{rr}.meta.supportDegDelta = supportDeg(1);
         data{rr}.imDensity = imDensity;
         data{rr}.polarDensity = polarDensity;
-        data{rr}.profile.supportDeg = supportDeg;
-        for mm = 1:4
-            data{rr}.profile.(polarToMeridian{mm}) = meridianDensity(mm,:);
-        end
         
     end
     
     % Save the assembled data file
     save(dataFileName,'data','-v7.3');
-    
+
 end
