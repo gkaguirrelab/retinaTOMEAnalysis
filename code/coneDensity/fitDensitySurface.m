@@ -133,6 +133,26 @@ xticklabels(meridianLabels);
 ylabel('log_1_0 density [cones/deg^2]')
 foo=1;
 
+figure
+for mm=1:4
+    subplot(2,2,mm)
+    plot(supportDeg,Y(meridianAngles(mm)+1,:),'.k');
+    hold on
+    plot(supportDeg,Yfit(meridianAngles(mm)+1,:),'-r');  
+    xlabel('Eccentricity [deg]');
+    ylabel('Density [cones/deg^2]');
+    title(meridianLabels{mm});
+end
+
+figure
+meridianSpec = {'-r','--b','-m','--g'};
+for mm=1:4
+    plot(supportDeg,Yfit(meridianAngles(mm)+1,:),meridianSpec{mm},'LineWidth',2);
+    hold on
+end
+xlabel('Eccentricity [deg]');
+ylabel('Density [cones/deg^2]');
+legend(meridianLabels(1:4));
 
 
 
