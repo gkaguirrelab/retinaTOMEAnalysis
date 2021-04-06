@@ -8,7 +8,6 @@ function fixelAnalysisMain(varargin)
 %% Set the dropboxBaseDir
 % We need this for the default loations of some the directories
 dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
-%dropboxBaseDir ='C:\Users\dontm\Dropbox (Aguirre-Brainard Lab)';
 
 
 %% Parse vargin

@@ -6,7 +6,10 @@ foveaDilate = 100;
 newDim = 18000; % Dimensions of the density maps
 
 % The overal result directory
-cd('/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images')
+dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
+
+cd(fullfile(dropboxBaseDir,'Connectome_AOmontages_images'))
+
 
 % We are going to loop through the processing twice, once each for the
 % confocal and split datasets
@@ -49,6 +52,22 @@ for dd = 1:2
         tmp = strsplit(fileName,filesep);
         subName = tmp{end-3};
 
+        % Detect the special case of subject 11051, who wore a -8.5 D
+        % spectacle lens during collection of their adaptive optics images.
+        % Need to adjust for spectaacle magnification
+        if strcmp(subName,'11051_OS') || strcmp(subName,'11051_OD')
+            % Need to resize the density_map, and the foveamask, and adjust
+            % the fovea_coords
+            sg = createSceneGeometry(...
+                'sphericalAmetropia',-8.5000,...
+                'axialLength',25.9250,...
+                'spectacleLens',-8.5);
+            magFactor = 1; % 1/sg.refraction.cameraToRetina.magnification.spectacle;
+            density_map = imresize(density_map,magFactor);
+            foveamask = round(imresize(foveamask,magFactor));
+            fovea_coords = fovea_coords.*magFactor;
+        end
+        
         % Pad the density map so that it is square around the fovea_coords
         imsize = size(density_map);
         offset = round(newDim/2-fovea_coords);
