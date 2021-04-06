@@ -74,9 +74,9 @@ asymptote = nanmean(Y(asymptoteIdx:end));
 
 mBlock0 = [0 0 1.01 1.01];
 
-p0 = [1300, -0.25, 8500, -1.25, asymptote, mBlock0, mBlock0, mBlock0];
-lb = [0,-5,0,-5,asymptote, mBlock0, mBlock0, mBlock0];
-ub = [1e4,0,1e4,asymptote,1e4, mBlock0, mBlock0, mBlock0];
+p0 = [1300, -0.25, 8500, -1.25, asymptote, repmat(mBlock0,1,3)];
+lb = [0,-5,0,-5,asymptote, repmat(mBlock0,1,3)];
+ub = [1e4,0,1e4,asymptote,1e4, repmat(mBlock0,1,3)];
 
 % search
 p = fmincon(myObj,p0,[],[],[],[],lb,ub);
@@ -97,12 +97,12 @@ myObj = @(p) norm(Y(validIdx) - myModel(X(validIdx),P(validIdx),maxSupportDeg,p)
 mBlockLB = [-180 -1 1.01 1.01];
 mBlockUB = [180 1 20 20];
 
-p0 = [p(1:5), mBlock0, mBlock0, mBlock0];
-lb = [p(1:5), mBlockLB, mBlockLB, mBlockLB];
-ub = [p(1:5), mBlockUB, mBlockUB, mBlockUB];
+p0 = [p(1:5), repmat(mBlock0,1,3)];
+lb = [p(1:5), repmat(mBlockLB,1,3)];
+ub = [p(1:5), repmat(mBlockUB,1,3)];
 
 % search
-p = fmincon(myObj,p0);
+p = fmincon(myObj,p0,[],[],[],[],lb,ub);
 
 % generate the model fit
 Yfit = nan(supportLength,supportLength);
