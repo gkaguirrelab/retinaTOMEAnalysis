@@ -62,7 +62,7 @@ for dd = 1:2
                 'sphericalAmetropia',-8.5000,...
                 'axialLength',25.9250,...
                 'spectacleLens',-8.5);
-            magFactor = 1; % 1/sg.refraction.cameraToRetina.magnification.spectacle;
+            magFactor = 1/sg.refraction.cameraToRetina.magnification.spectacle;
             density_map = imresize(density_map,magFactor);
             foveamask = round(imresize(foveamask,magFactor));
             fovea_coords = fovea_coords.*magFactor;
