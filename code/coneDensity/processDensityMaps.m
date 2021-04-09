@@ -1,15 +1,27 @@
 clear
 
 % Hard coded values
-downSample = 0.01;
+downSample = 0.05;
 foveaDilate = 100;
 newDim = 18000; % Dimensions of the density maps
+pixelsperdegree = 642.7000;
+
+% Create a map that will be used to filter "extreme" values
+dParams = [1477 -0.3396 7846 -1.3049 629];
+density = @(x) dParams(1).*exp(dParams(2).*x)+dParams(3).*exp(dParams(4).*x)+dParams(5);
+[R,C] = ndgrid(1:newDim, 1:newDim);
+R = R - newDim/2;
+C = C - newDim/2;
+r = sqrt(R.^2+C.^2) ./ pixelsperdegree;
+r(r<1.25)=nan;
 
 % The overal result directory
 dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
 
 cd(fullfile(dropboxBaseDir,'Connectome_AOmontages_images'))
 
+% Turn off a warning
+warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
 
 % We are going to loop through the processing twice, once each for the
 % confocal and split datasets
@@ -17,11 +29,13 @@ for dd = 1:2
     
     switch dd
         case 1
-            resultFiles=dir('**/confocal/Results/*_confocal_Fouriest_Result.mat');
+            resultFiles=dir('**/confocal/Results_foveated/*_confocal_Fouriest_Result.mat');
             dataFileName = 'confocalDensityProfileData.mat';
+            maxThresh = density(r).*3;
         case 2
-            resultFiles=dir('**/split detection/Results/*_split_Fouriest_Result.mat');
+            resultFiles=dir('**/split detection/Results_foveated/*_split_Fouriest_Result.mat');
             dataFileName = 'splitDensityProfileData.mat';
+            maxThresh = density(r).*2;
     end
     
     % Create variables to hold the data
@@ -35,7 +49,7 @@ for dd = 1:2
         
         % Load the next file
         fileName = fullfile(resultFiles(rr).folder,resultFiles(rr).name);
-        load(fileName);
+        load(fileName);       
         
         % Determine if this a left or right eye
         if contains(resultFiles(rr).name,'_OS_')
@@ -80,6 +94,18 @@ for dd = 1:2
         imDensity=imtranslate(imDensity,offset);
         imDensity(imDensity==0)=nan;
         
+        % Filter the density map to remove extreme values
+        figure('Name',subName,'Position',  [100, 100, 600, 200]);
+        subplot(1,3,1)
+        imagesc(imDensity)
+        axis square
+        axis off
+        imDensity(imDensity>maxThresh)=nan;
+        subplot(1,3,2)
+        imagesc(imDensity)
+        axis square
+        axis off
+        
         % Set up the fovea mask
         imFovea = zeros(newDim,newDim);
         imFovea(1:imsize(1),1:imsize(2))=single(~foveamask);
@@ -105,7 +131,14 @@ for dd = 1:2
         
         % Mask the polarDensity by the polarFovea
         polarDensity(polarFovea > 0.1) = nan;
-        
+
+        % Show the polar density map
+        subplot(1,3,3)
+        imagesc(polarDensity)
+        axis square
+        axis off
+        drawnow
+
         % Calculate the support in degrees for the polar image
         supportDeg = (1:polarDim)./(pixelsperdegree*downSample*4);        
         
@@ -126,3 +159,7 @@ for dd = 1:2
     save(dataFileName,'data','-v7.3');
 
 end
+
+% Turn on a warning
+warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
+

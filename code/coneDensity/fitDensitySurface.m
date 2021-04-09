@@ -18,9 +18,6 @@ conStart = 0.5;
 conStop = 1.6;
 splitStart = 2.1; 
 
-armFilterPointsDegrees = [1.6, 2.1, 4, 6];
-armFilterDensityThresh = [9000, 3000, 2000, 1500];
-
 
 %% Aggregate the profiles
 % Find the longest support deg
@@ -44,29 +41,25 @@ for ss = 1:length(subNames)
     if ~isempty(splitIdx)
         y(:,idxC:end) = splitData{splitIdx}.polarDensity(:,idxC:end);
     end
-    % Filter out unreasonable values from beyond the armFilterPointDegrees
-    for ff = 1:length(armFilterPointsDegrees)
-        filterIdx = find(supportDeg > armFilterPointsDegrees(ff),1);
-        filterRegion = y(:,filterIdx:end);
-        filterRegion(filterRegion(:)>armFilterDensityThresh(ff))=nan;
-        y(:,filterIdx:end) = filterRegion;
-    end
     % Filter out any negative values
     y(y<0)=nan;
     dataMat(:,:,ss)=y;
 end
 
+polarRatio = (size(dataMat,1)+1)/360;
+
 %% Initial fit to mean density profile
 
 % Density, eccentricity, polar angle
 Y = nanmean(nanmean(dataMat,3));
+w = nanmean(sum(~isnan(dataMat),3));
 X = supportDeg;
 P = zeros(size(X));
 
 % objective
 maxSupportDeg = supportDeg(find(~isnan(Y), 1, 'last' ));
 validIdx = ~isnan(Y);
-myObj = @(p) norm(Y(validIdx) - myModel(X(validIdx),P(validIdx),maxSupportDeg,p));
+myObj = @(p) norm( w(validIdx).* (Y(validIdx) - myModel(X(validIdx),P(validIdx),maxSupportDeg,p)) );
 
 % p0 and bounds
 asymptoteIdx = find(supportDeg>10,1);
@@ -74,9 +67,9 @@ asymptote = nanmean(Y(asymptoteIdx:end));
 
 mBlock0 = [0 0 1.01 1.01];
 
-p0 = [1300, -0.25, 8500, -1.25, asymptote, repmat(mBlock0,1,3)];
-lb = [0,-5,0,-5,asymptote, repmat(mBlock0,1,3)];
-ub = [1e4,0,1e4,asymptote,1e4, repmat(mBlock0,1,3)];
+p0 = [1300, -0.25, 8500, -1.25, asymptote, repmat(mBlock0,1,4)];
+lb = [0,-5,0,-5,asymptote, repmat(mBlock0,1,4)];
+ub = [5e4,0,5e4,0,asymptote, repmat(mBlock0,1,4)];
 
 % search
 p = fmincon(myObj,p0,[],[],[],[],lb,ub);
@@ -86,20 +79,21 @@ p = fmincon(myObj,p0,[],[],[],[],lb,ub);
 
 % Density, eccentricity, polar angle
 Y = nanmean(dataMat,3);
+w = sqrt(sum(~isnan(dataMat),3));
 X = repmat(supportDeg,supportLength,1);
 P = repmat(linspace(0,360,supportLength)',1,supportLength);
 
 % objective
 validIdx = ~isnan(Y);
-myObj = @(p) norm(Y(validIdx) - myModel(X(validIdx),P(validIdx),maxSupportDeg,p));
+myObj = @(p) norm( w(validIdx).* (Y(validIdx) - myModel(X(validIdx),P(validIdx),maxSupportDeg,p)) );
 
 % p0 and bounds
 mBlockLB = [-180 -1 1.01 1.01];
 mBlockUB = [180 1 20 20];
 
-p0 = [p(1:5), repmat(mBlock0,1,3)];
-lb = [p(1:5), repmat(mBlockLB,1,3)];
-ub = [p(1:5), repmat(mBlockUB,1,3)];
+p0 = [p(1:5), repmat(mBlock0,1,4)];
+lb = [p(1:5), repmat(mBlockLB,1,4)];
+ub = [p(1:5), repmat(mBlockUB,1,4)];
 
 % search
 p = fmincon(myObj,p0,[],[],[],[],lb,ub);
@@ -108,7 +102,8 @@ p = fmincon(myObj,p0,[],[],[],[],lb,ub);
 Yfit = nan(supportLength,supportLength);
 Yfit(:,:)=myModel(X,P,maxSupportDeg,p);
 
-% plot
+%% plot
+
 figure
 surf(X,P,Yfit,'FaceAlpha',0.5,'EdgeColor','none')
 hold on
@@ -120,25 +115,24 @@ yticklabels(meridianLabels);
 xlabel('Eccentricity [deg]');
 zlabel('Density [cones/deg^2]');
 
-
 figure
-for ii = 10:25:110
-    semilogy(Y(:,ii),'.');
+for ii = [0.375 0.75 1.5 3 6 12]
+    idx = find(supportDeg>ii,1);
+    semilogy(Y(:,idx),'.');
     hold on
-    semilogy(Yfit(:,ii),'-r');
-    text(300,Yfit(45,ii),sprintf('%2.2f°',supportDeg(ii)));
+    semilogy(Yfit(:,idx),'-r');
+    text(300*polarRatio,Yfit(45*polarRatio,idx),sprintf('%2.1f°',supportDeg(idx)));
 end
-xticks(meridianAngles);
+xticks(meridianAngles*polarRatio);
 xticklabels(meridianLabels);
 ylabel('log_1_0 density [cones/deg^2]')
-foo=1;
 
 figure
 for mm=1:4
     subplot(2,2,mm)
-    plot(supportDeg,Y(meridianAngles(mm)+1,:),'.k');
+    plot(supportDeg,Y(meridianAngles(mm)*polarRatio+1,:),'.k');
     hold on
-    plot(supportDeg,Yfit(meridianAngles(mm)+1,:),'-r');  
+    plot(supportDeg,Yfit(meridianAngles(mm)*polarRatio+1,:),'-r');  
     xlabel('Eccentricity [deg]');
     ylabel('Density [cones/deg^2]');
     title(meridianLabels{mm});
@@ -147,7 +141,7 @@ end
 figure
 meridianSpec = {'-r','--b','-m','--g'};
 for mm=1:4
-    plot(supportDeg,Yfit(meridianAngles(mm)+1,:),meridianSpec{mm},'LineWidth',2);
+    plot(supportDeg,Yfit(meridianAngles(mm)*polarRatio+1,:),meridianSpec{mm},'LineWidth',2);
     hold on
 end
 xlabel('Eccentricity [deg]');
@@ -155,6 +149,22 @@ ylabel('Density [cones/deg^2]');
 legend(meridianLabels(1:4));
 
 
+figure
+for gg = 1:4
+    ph = p((gg-1)*4+6);
+    f1 = p((gg-1)*4+7);
+    f2 = p((gg-1)*4+8);
+    f3 = p((gg-1)*4+9);
+    g = f1.*gampdf(supportDeg,f2,f3)./max(gampdf(0:0.01:maxSupportDeg,f2,f3));
+    plot(supportDeg,g)
+    hold on
+end
+legend({'sin1','sin2','sin4','sin8'});
+xlabel('Eccentricity [deg]');
+ylabel('Modulation [a.u.]');
+
+
+foo=1;
 
 
 
@@ -177,15 +187,20 @@ ph3 = p(14);
 f31 = p(15);
 f32 = p(16);
 f33 = p(17);
-
+ph4 = p(18);
+f41 = p(19);
+f42 = p(20);
+f43 = p(21);
 
 g1 = f11.*gampdf(x,f12,f13)./max(gampdf(0:0.01:maxX,f12,f13));
 g2 = f21.*gampdf(x,f22,f23)./max(gampdf(0:0.01:maxX,f22,f23));
 g3 = f31.*gampdf(x,f32,f33)./max(gampdf(0:0.01:maxX,f32,f33));
+g4 = f41.*gampdf(x,f42,f43)./max(gampdf(0:0.01:maxX,f42,f43));
 
 m = g1.*cosd(angle+ph1) + ...
     g2.*cosd(angle.*2+ph2) + ...
-    g3.*cosd(angle.*4+ph3);
+    g3.*cosd(angle.*4+ph3) + ...
+    g4.*cosd(angle.*8+ph4);
 
 density = (m+1).*(a.*exp(b.*x)+c.*exp(d.*x)+e);
 
