@@ -65,6 +65,7 @@ myObj = @(p) norm( w(validIdx).* (Y(validIdx) - myModel(X(validIdx),P(validIdx),
 asymptoteIdx = find(supportDeg>10,1);
 asymptote = nanmean(Y(asymptoteIdx:end));
 
+
 mBlock0 = [0 0 1.01 1.01];
 
 p0 = [1300, -0.25, 8500, -1.25, asymptote, repmat(mBlock0,1,4)];
@@ -79,7 +80,7 @@ p = fmincon(myObj,p0,[],[],[],[],lb,ub);
 
 % Density, eccentricity, polar angle
 Y = nanmean(dataMat,3);
-w = sqrt(sum(~isnan(dataMat),3));
+w = sum(~isnan(dataMat),3);
 X = repmat(supportDeg,supportLength,1);
 P = repmat(linspace(0,360,supportLength)',1,supportLength);
 
@@ -104,12 +105,13 @@ Yfit(:,:)=myModel(X,P,maxSupportDeg,p);
 
 %% plot
 
+meridianLabels = {'Nasal','Superior','Temporal','Inferior','Nasal'};
+meridianAngles = [0 90 180 270 360];
+
 figure
 surf(X,P,Yfit,'FaceAlpha',0.5,'EdgeColor','none')
 hold on
 plot3(X(:),P(:),Y(:),'.k')
-meridianLabels = {'Nasal','Superior','Temporal','Inferior','Nasal'};
-meridianAngles = [0 90 180 270 360];
 yticks(meridianAngles);
 yticklabels(meridianLabels);
 xlabel('Eccentricity [deg]');
@@ -162,6 +164,14 @@ end
 legend({'sin1','sin2','sin4','sin8'});
 xlabel('Eccentricity [deg]');
 ylabel('Modulation [a.u.]');
+
+
+figure
+imagesc(w)
+colorbar
+axis off
+axis square
+title('Weight map');
 
 
 foo=1;
