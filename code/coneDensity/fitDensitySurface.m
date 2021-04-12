@@ -62,15 +62,15 @@ validIdx = ~isnan(Y);
 myObj = @(p) norm( w(validIdx).* (Y(validIdx) - myModel(X(validIdx),P(validIdx),maxSupportDeg,p)) );
 
 % p0 and bounds
-asymptoteIdx = find(supportDeg>10,1);
-asymptote = nanmean(Y(asymptoteIdx:end));
-
-
+asymptote = 0; % In case we want to force a minimum asymptote value
+pBlock0 = [1300, -0.25, 8500, -1.25, asymptote];
+pBlockLB = [0,-5,0,-5,asymptote];
+pBlockUB = [5e4,0,5e4,0,asymptote];
 mBlock0 = [0 0 1.01 1.01];
 
-p0 = [1300, -0.25, 8500, -1.25, asymptote, repmat(mBlock0,1,4)];
-lb = [0,-5,0,-5,asymptote, repmat(mBlock0,1,4)];
-ub = [5e4,0,5e4,0,asymptote, repmat(mBlock0,1,4)];
+p0 = [pBlock0, repmat(mBlock0,1,4)];
+lb = [pBlockLB, repmat(mBlock0,1,4)];
+ub = [pBlockUB, repmat(mBlock0,1,4)];
 
 % search
 p = fmincon(myObj,p0,[],[],[],[],lb,ub);
@@ -89,27 +89,50 @@ validIdx = ~isnan(Y);
 myObj = @(p) norm( w(validIdx).* (Y(validIdx) - myModel(X(validIdx),P(validIdx),maxSupportDeg,p)) );
 
 % p0 and bounds
-mBlockLB = [-180 -1 1.01 1.01];
+mBlockLB = [-180 -1 0.1 0.1];
 mBlockUB = [180 1 20 20];
 
 p0 = [p(1:5), repmat(mBlock0,1,4)];
-lb = [p(1:5), repmat(mBlockLB,1,4)];
-ub = [p(1:5), repmat(mBlockUB,1,4)];
+lb = [pBlockLB, repmat(mBlockLB,1,4)];
+ub = [pBlockUB, repmat(mBlockUB,1,4)];
 
 % search
 p = fmincon(myObj,p0,[],[],[],[],lb,ub);
+
+
+%% Fit an individual subject
+
+% % Data
+% Y = squeeze(dataMat(:,:,3));
+% 
+% % objective
+% validIdx = ~isnan(Y);
+% myObj = @(p) norm( Y(validIdx) - myModel(X(validIdx),P(validIdx),maxSupportDeg,p) );
+% 
+% % p0 and bounds
+% mBlockFit = p(6:end);
+% p0 = [p(1:5), mBlockFit];
+% lb = [pBlockLB, mBlockFit];
+% ub = [pBlockUB, mBlockFit];
+% 
+% % search
+% pSub1 = fmincon(myObj,p0,[],[],[],[],lb,ub);
+
+foo=1;
+
+
+
+%% plot
 
 % generate the model fit
 Yfit = nan(supportLength,supportLength);
 Yfit(:,:)=myModel(X,P,maxSupportDeg,p);
 
-%% plot
-
 meridianLabels = {'Nasal','Superior','Temporal','Inferior','Nasal'};
 meridianAngles = [0 90 180 270 360];
 
 figure
-surf(X,P,Yfit,'FaceAlpha',0.5,'EdgeColor','none')
+surf(X,P,Yfit,'FaceAlpha',0.5,'EdgeColor','none');
 hold on
 plot3(X(:),P(:),Y(:),'.k')
 yticks(meridianAngles);
@@ -127,6 +150,7 @@ for ii = [0.375 0.75 1.5 3 6 12]
 end
 xticks(meridianAngles*polarRatio);
 xticklabels(meridianLabels);
+ylim([10^2.75,10^4]);
 ylabel('log_1_0 density [cones/deg^2]')
 
 figure
@@ -168,9 +192,14 @@ ylabel('Modulation [a.u.]');
 
 figure
 imagesc(w)
-colorbar
-axis off
 axis square
+yticks(meridianAngles*polarRatio);
+yticklabels(meridianLabels);
+deltaDeg = supportDeg(2)-supportDeg(1);
+xticks(round(0:1/deltaDeg:floor(maxSupportDeg)/deltaDeg));
+xticklabels(0:1:floor(maxSupportDeg));
+xlabel('Eccentricity [deg]');
+colorbar
 title('Weight map');
 
 
