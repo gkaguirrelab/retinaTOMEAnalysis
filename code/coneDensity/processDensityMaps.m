@@ -5,6 +5,7 @@ downSample = 0.05;
 foveaDilate = 100;
 newDim = 18000; % Dimensions of the density maps
 pixelsperdegree = 642.7000;
+paraFovealExtent = 2;
 
 % Create a map that will be used to filter "extreme" values
 dParams = [1477 -0.3396 7846 -1.3049 629];
@@ -95,12 +96,14 @@ for dd = 1:2
         imDensity(imDensity==0)=nan;
         
         % Filter the density map to remove extreme values
-        figure('Name',subName,'Position',  [100, 100, 600, 200]);
+        figure('Name',subName,'Position',  [100, 100, 800, 200]);
         subplot(1,3,1)
         imagesc(imDensity)
         axis square
         axis off
+        
         imDensity(imDensity>maxThresh)=nan;
+
         subplot(1,3,2)
         imagesc(imDensity)
         axis square
@@ -128,19 +131,32 @@ for dd = 1:2
         polarDensity = convertImageMapToPolarMap(imDensity);
         polarFovea = convertImageMapToPolarMap(imFovea);
         polarDim = newDim*downSample*2-1;
-        
-        % Mask the polarDensity by the polarFovea
-        polarDensity(polarFovea > 0.1) = nan;
 
-        % Show the polar density map
+        % Show the polar density map pre filtering
         subplot(1,3,3)
         imagesc(polarDensity)
         axis square
         axis off
-        drawnow
 
         % Calculate the support in degrees for the polar image
         supportDeg = (1:polarDim)./(pixelsperdegree*downSample*4);        
+        
+        % Remove decreasing components close to the fovea
+        supportDegIdx = find(supportDeg>paraFovealExtent,1);
+        threshIdx = [];
+        for nn=1:size(polarDensity,1)
+            [~,threshIdx(nn)]=max(polarDensity(nn,1:supportDegIdx));
+        end
+        
+        % Add the filtering ridge
+        hold on
+        plot(threshIdx,1:size(polarDensity,1),'-r');
+        drawnow
+        
+        % Apply the filtering
+        for nn=1:size(polarDensity,1)
+            polarDensity(nn,1:threshIdx)=nan;
+        end
         
         % Store the data
         data{rr}.meta.subName = subName;
