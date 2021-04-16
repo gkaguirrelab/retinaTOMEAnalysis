@@ -8,7 +8,7 @@ function fixelAnalysisMain(varargin)
 %% Set the dropboxBaseDir
 % We need this for the default loations of some the directories
 dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
-
+dropboxBaseDir='C:\Users\ozenc\Dropbox (Aguirre-Brainard Lab)';
 
 %% Parse vargin
 p = inputParser;
@@ -82,7 +82,7 @@ comboTable = join(comboTable,fitVolTable,'Keys','AOSO_ID');
 
 
 % Instantiate a flywheel object
-fw = flywheel.Flywheel(getpref('flywheelMRSupport','flywheelAPIKey'));
+fw = flywheel.Flywheel('upenn.flywheel.io:DTIiZcuXBVlpJmCLZt');
 
 % Download the fixel results
 % To find these, get the ID for the session (which is in the URL of the web
@@ -121,7 +121,97 @@ end
 % Massage the fixelTable to match up with the comboTable
 fixelTable.Properties.VariableNames{1} = 'TOME_ID';
 fixelTable.TOME_ID = strrep(fixelTable.TOME_ID,'fod_','');
-fixelSet = {'fc_','fd_','fdc'};
+
+% Sort rows by subject ID, so that it will be easier to add other measures
+fixelTable = sortrows(fixelTable);
+
+% Add FA and MD to the fixeltable 
+laterality = {'right','left','right','left'};
+analysisIDs = {'6075230dd3ecda2b3a44aeab','60752337c2fb2a09dae9b249','60752432deec8aec9f44b17d','60752499deec8aec9f44b18d'};
+fileNames = {'FA_stats.csv', 'FA_stats.csv', 'MD_stats.csv', 'MD_stats.csv'};
+for ll = 1:length(laterality)
+    saveName = fullfile(p.Results.fixelDataDir,[laterality{ll} '_' fileNames{ll}]);
+    fw.downloadOutputFromAnalysis(analysisIDs{ll},fileNames{ll},saveName);
+        
+    % Now load the file
+    opts = detectImportOptions(saveName);
+    dtiData = readtable(saveName, opts);
+        
+    % Sort the table
+    dtiData = sortrows(dtiData);
+        
+    % Add 
+    subTable = dtiData(:,1:2);
+    subTable.Properties.VariableNames{1} = 'TOME_ID';
+    subTable.Properties.VariableNames{2} = [laterality{ll} '_' fileNames{ll}(1:2)];
+    fixelTable=join(fixelTable,subTable);
+end
+
+%% Collect total intracranial volume from Freesurfer files 
+
+% Get tome subjects
+projects = fw.projects();
+tome = projects{1,1};
+subjects = tome.subjects();
+subjectLength = length(subjects);
+
+% Create a folder in fixelData dir for extracting aseg files from
+% Freesurfer directories
+asegDir = fullfile(p.Results.fixelDataDir, 'asegDir');
+if ~exist(asegDir, 'dir')
+    system(['mkdir' ' ' asegDir]);
+end
+
+% Create empty matrices for subject and intracranialVol
+subjectNames = [];
+intracranialVol = [];
+
+% Loop through subjects
+for sub = 1:subjectLength
+    % If label starts with TOME and it's not TOME_3027 (because that
+    % subject was discarted), process the subject
+    if strcmp(subjects{sub}.label(1:4), 'TOME') && ~strcmp(subjects{sub}.label(6:end), '3027')      
+        % Get subject name and save name where aseg files will be saved
+        subject = subjects{sub,1};
+        subjectLabel = subject.label;
+        subjectNames = [subjectNames; {subjectLabel}];
+        saveName = fullfile(asegDir,[subjectLabel '_aseg.stats']); 
+        
+        % If aseg file does not exist, download it.
+        if ~isfile(saveName)
+            % Get session
+            sessions = subject.sessions();
+            for ses = 1:length(sessions)
+                session = sessions{ses,1};
+                % Get analysis and loop through
+                analyses = session.analyses();
+                for a = 1:length(analyses)
+                    % Find analyses thay contain freesurfer in name
+                    if contains(analyses{a,1}.label, 'freesurfer')
+                        freesurferAnalysisContainer = analyses{a,1};
+                        analysisIdTag = freesurferAnalysisContainer.id;
+                        zipFile = ['freesurfer-recon-all_' subjectLabel '_' analysisIdTag '.zip'];  
+                        % Download only the aseg files from the whole zip
+                        freesurferAnalysisContainer.downloadFileZipMember(zipFile, [subjectLabel '/stats/aseg.stats'], saveName);
+                    end
+                end
+            end
+        end
+        % Load the aseg files for each subject, extract the intrcranial
+        % volume and save it to the intracranial matrix 
+        asegFileLoaded = textread(saveName, '%s');
+        intraCranialVolume = str2num(asegFileLoaded{297});
+        intracranialVol = [intracranialVol; intraCranialVolume];
+    end
+end
+
+% Combine subject and intracranial volume in a table and sort rows.
+intracranialTable = table(subjectNames, intracranialVol);
+intracranialTable = sortrows(intracranialTable);
+intracranialTable.Properties.VariableNames{1} = 'TOME_ID';
+fixelTable=join(fixelTable,intracranialTable);
+
+fixelSet = {'fc_','fd_','fdc', 'FA', 'MD'};
 for ff = 1:length(fixelSet)
     % Report the correlation of left and right
     fixelValR = fixelTable.(['right_' fixelSet{ff}]);
@@ -135,7 +225,7 @@ fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TO
 
 
 %% Report the correlation of fixel values with RGC values
-measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender'};
+measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender','intracranialVol'};
 
 for ff = 1:length(fixelSet)
     y = fixelComparisonTable.(fixelSet{ff});
