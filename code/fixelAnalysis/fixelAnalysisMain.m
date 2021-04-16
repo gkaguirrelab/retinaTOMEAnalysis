@@ -8,7 +8,7 @@ function fixelAnalysisMain(varargin)
 %% Set the dropboxBaseDir
 % We need this for the default loations of some the directories
 dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
-dropboxBaseDir='C:\Users\ozenc\Dropbox (Aguirre-Brainard Lab)';
+% dropboxBaseDir='C:\Users\ozenc\Dropbox (Aguirre-Brainard Lab)';
 
 %% Parse vargin
 p = inputParser;
@@ -82,7 +82,8 @@ comboTable = join(comboTable,fitVolTable,'Keys','AOSO_ID');
 
 
 % Instantiate a flywheel object
-fw = flywheel.Flywheel('upenn.flywheel.io:DTIiZcuXBVlpJmCLZt');
+fw = flywheel.Flywheel(getpref('flywheelMRSupport','flywheelAPIKey');
+% fw = flywheel.Flywheel('upenn.flywheel.io:DTIiZcuXBVlpJmCLZt');
 
 % Download the fixel results
 % To find these, get the ID for the session (which is in the URL of the web
@@ -220,6 +221,10 @@ for ff = 1:length(fixelSet)
     fprintf([fixelSet{ff} ' correlation left with right: %2.2f \n'],R(1,2));
     fixelTable.(fixelSet{ff}) = mean([fixelValR, fixelValL],2);
 end
+
+% Adding intracranial volume to the fixel set here, so that it will also be
+% correlated with measure set variables 
+fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'intracranialVol'};
 
 fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TOME_ID),:),fixelTable,'Keys','TOME_ID');
 
