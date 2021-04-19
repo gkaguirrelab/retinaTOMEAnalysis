@@ -19,7 +19,14 @@ r(r<1.25)=nan;
 % The overal result directory
 dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
 
+% Change to our working directory
 cd(fullfile(dropboxBaseDir,'Connectome_AOmontages_images'))
+
+% Load the foveaCoordsStore if it exists
+fileName = fullfile('densityAnalysis','foveaCoordStore.mat');
+if isfile(fileName)
+    load(fileName,'foveaCoordStore');
+end
 
 % Turn off a warning
 warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
@@ -32,15 +39,14 @@ for dd = 1:2
         case 1
             resultFiles=dir('**/confocal/Results_foveated/*_confocal_Fouriest_Result.mat');
             dataFileName = 'confocalDensityProfileData.mat';
+            tagName = '_confocal';
             maxThresh = density(r).*3;
         case 2
             resultFiles=dir('**/split detection/Results_foveated/*_split_Fouriest_Result.mat');
             dataFileName = 'splitDensityProfileData.mat';
+            tagName = '_split';
             maxThresh = density(r).*2;
     end
-    
-    % Create variables to hold the data
-    data = cell(1,length(resultFiles));
     
     % Loop over the result files
     for rr = 1:length(resultFiles)
@@ -66,6 +72,23 @@ for dd = 1:2
         % Extract the subject name
         tmp = strsplit(fileName,filesep);
         subName = tmp{end-3};
+        
+        % Save the fovea_coords from the confocal, and apply these to the
+        % split
+        switch dd
+            case 1
+                foveaCoordStore.(['s_' subName])=fovea_coords;
+                % Special case 11061_OD
+                if strcmp(subName,'11061_OD')
+                    fovea_coords = [4.6105e3 4.75559e3];
+                end
+                % Special case 11099_OD
+                if strcmp(subName,'11099_OD')
+                    fovea_coords = [8.5285e3, 7.8643e3];
+                end
+            case 2
+                fovea_coords=foveaCoordStore.(['s_' subName]);
+        end        
 
         % Detect the special case of subject 11051, who wore a -8.5 D
         % spectacle lens during collection of their adaptive optics images.
@@ -95,17 +118,25 @@ for dd = 1:2
         imDensity=imtranslate(imDensity,offset);
         imDensity(imDensity==0)=nan;
         
-        % Filter the density map to remove extreme values
+        % Show the initial density map
         figure('Name',subName,'Position',  [100, 100, 800, 200]);
         subplot(1,3,1)
         imagesc(imDensity)
+        hold on
+        plot([1 newDim],round([newDim newDim]/2),'-r');
+        plot(round([newDim newDim]/2),[1 newDim],'-r');
         axis square
         axis off
         
+        % Filter the map for extreme values
         imDensity(imDensity>maxThresh)=nan;
 
+        % Show the filtered map
         subplot(1,3,2)
         imagesc(imDensity)
+        hold on
+        plot([1 newDim],round([newDim newDim]/2),'-r');
+        plot(round([newDim newDim]/2),[1 newDim],'-r');
         axis square
         axis off
         
@@ -159,21 +190,32 @@ for dd = 1:2
         end
         
         % Store the data
-        data{rr}.meta.subName = subName;
-        data{rr}.meta.filename = resultFiles(rr).name;
-        data{rr}.meta.folder = resultFiles(rr).folder;
-        data{rr}.meta.laterality = laterality;
-        data{rr}.meta.downSample = downSample;
-        data{rr}.meta.foveaDilate = foveaDilate;
-        data{rr}.meta.supportDegDelta = supportDeg(1);
-        data{rr}.imDensity = imDensity;
-        data{rr}.polarDensity = polarDensity;
+        data = [];
+        data.meta.subName = subName;
+        data.meta.tagName = tagName;
+        data.meta.filename = resultFiles(rr).name;
+        data.meta.folder = resultFiles(rr).folder;
+        data.meta.laterality = laterality;
+        data.meta.downSample = downSample;
+        data.meta.foveaCoords = fovea_coords;
+        data.meta.foveaDilate = foveaDilate;
+        data.meta.supportDegDelta = supportDeg(1);
+        data.imDensity = imDensity;
+        data.polarDensity = polarDensity;
+        
+        % Save the temp data file
+        fileName = fullfile('densityAnalysis',[subName tagName '.mat']);
+        save(fileName,'data','-v7.3');
+
+        % Save the foveaCoordsStore
+        fileName = fullfile('densityAnalysis','foveaCoordStore.mat');
+        save(fileName,'foveaCoordStore');
+        
+        % Clear the data file
+        clear data
         
     end
     
-    % Save the assembled data file
-    save(dataFileName,'data','-v7.3');
-
 end
 
 % Turn on a warning
