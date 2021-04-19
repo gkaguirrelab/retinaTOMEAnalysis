@@ -82,7 +82,7 @@ comboTable = join(comboTable,fitVolTable,'Keys','AOSO_ID');
 
 
 % Instantiate a flywheel object
-fw = flywheel.Flywheel(getpref('flywheelMRSupport','flywheelAPIKey');
+fw = flywheel.Flywheel(getpref('flywheelMRSupport','flywheelAPIKey'));
 % fw = flywheel.Flywheel('upenn.flywheel.io:DTIiZcuXBVlpJmCLZt');
 
 % Download the fixel results
