@@ -16,8 +16,8 @@ supportLength = 1799;
 maxSupportDeg = 15;
 supportDegDelta = 0.0078;
 conStart = 0.5;
-conStop = 1.6;
-splitStart = 2.1;
+conStop = 1.5;
+splitStart = 1.75;
 nFourier = 3;
 
 
@@ -101,8 +101,8 @@ validIdx = ~isnan(Y);
 myObj = @(p) norm( w(validIdx).* (Y(validIdx) - myModel(X(validIdx),P(validIdx),maxSupportDeg,p)) );
 
 % p0 and bounds
-mBlockLB = [-45 -1 2 0.01];
-mBlockUB = [45 1 10 4];
+mBlockLB = [-30 -1 2 0.01];
+mBlockUB = [30 1 20 4];
 
 p0 = [p(1:5), repmat(mBlock0,1,nFourier)];
 lb = [pBlockLB, repmat(mBlockLB,1,nFourier)];
@@ -114,21 +114,21 @@ p = fmincon(myObj,p0,[],[],[],[],lb,ub);
 
 %% Fit an individual subject
 
-% % Data
-% Y = squeeze(dataMat(:,:,3));
-%
-% % objective
-% validIdx = ~isnan(Y);
-% myObj = @(p) norm( Y(validIdx) - myModel(X(validIdx),P(validIdx),maxSupportDeg,p) );
-%
-% % p0 and bounds
-% mBlockFit = p(6:end);
-% p0 = [p(1:5), mBlockFit];
-% lb = [pBlockLB, mBlockFit];
-% ub = [pBlockUB, mBlockFit];
-%
-% % search
-% pSub1 = fmincon(myObj,p0,[],[],[],[],lb,ub);
+% Data
+Y = squeeze(dataMat(:,:,3));
+
+% objective
+validIdx = ~isnan(Y);
+myObj = @(p) norm( Y(validIdx) - myModel(X(validIdx),P(validIdx),maxSupportDeg,p) );
+
+% p0 and bounds
+mBlockFit = p(6:end);
+p0 = [p(1:5), mBlockFit];
+lb = [pBlockLB, mBlockFit];
+ub = [pBlockUB, mBlockFit];
+
+% search
+pSub1 = fmincon(myObj,p0,[],[],[],[],lb,ub);
 
 foo=1;
 
