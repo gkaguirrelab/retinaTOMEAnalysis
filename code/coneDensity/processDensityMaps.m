@@ -30,6 +30,7 @@ end
 
 % Turn off a warning
 warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
+warning('off','signal:findpeaks:largeMinPeakHeight');
 
 % We are going to loop through the processing twice, once each for the
 % confocal and split datasets
@@ -217,7 +218,7 @@ for dd = 1:2
         
         % Apply the filtering
         for nn=1:size(polarDensity,1)
-            polarDensity(nn,1:threshIdx)=nan;
+            polarDensity(nn,1:threshIdx(nn))=nan;
         end
         
         % Store the data
