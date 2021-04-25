@@ -60,7 +60,7 @@ end
 % Fit the mean
 Y = nanmean(dataMat,3);
 w = sum(~isnan(dataMat),3);
-[p, Yfit, fVal] = fitDensitySurface(Y,w,true,false);
+[p0, Yfit, fVal] = fitDensitySurface(Y,w,true,false);
 
 % Loop through and fit each subject with the reduced model
 pSet = nan(20,length(subNames));
@@ -68,10 +68,11 @@ YfitSet = nan(size(dataMat));
 fValSet= nan(1,length(subNames));
 
 fprintf('fitting...');
+w1 = ones(size(Y));
 for ii = 1:length(subNames)
     Y = squeeze(dataMat(:,:,ii));
     fprintf([num2str(ii),'...']);
-    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii)] = fitDensitySurface(Y);
+    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii)] = fitDensitySurface(Y,w1,true,true,p0);
 end
 fprintf('done\n');
 
