@@ -77,7 +77,6 @@ for dd = 1:2
         % split
         switch dd
             case 1
-                foveaCoordStore.(['s_' subName])=fovea_coords;
                 % Special case 11061_OD
                 if strcmp(subName,'11061_OD')
                     fovea_coords = [4.6105e3 4.75559e3];
@@ -86,6 +85,7 @@ for dd = 1:2
                 if strcmp(subName,'11099_OD')
                     fovea_coords = [8.5285e3, 7.8643e3];
                 end
+                foveaCoordStore.(['s_' subName])=fovea_coords;
             case 2
                 fovea_coords=foveaCoordStore.(['s_' subName]);
         end        
@@ -119,7 +119,7 @@ for dd = 1:2
         imDensity(imDensity==0)=nan;
         
         % Show the initial density map
-        figure('Name',subName,'Position',  [100, 100, 800, 200]);
+        figHandle = figure('Name',subName,'Position',  [100, 100, 800, 200]);
         subplot(1,3,1)
         imagesc(imDensity)
         hold on
@@ -127,6 +127,7 @@ for dd = 1:2
         plot(round([newDim newDim]/2),[1 newDim],'-r');
         axis square
         axis off
+        title('centered')
         
         % Filter the map for extreme values
         imDensity(imDensity>maxThresh)=nan;
@@ -139,6 +140,7 @@ for dd = 1:2
         plot(round([newDim newDim]/2),[1 newDim],'-r');
         axis square
         axis off
+        title('filter periphery')
         
         % Set up the fovea mask
         imFovea = zeros(newDim,newDim);
@@ -168,15 +170,44 @@ for dd = 1:2
         imagesc(polarDensity)
         axis square
         axis off
+        title('filter center; polar')
 
         % Calculate the support in degrees for the polar image
         supportDeg = (1:polarDim)./(pixelsperdegree*downSample*4);        
         
-        % Remove decreasing components close to the fovea
+        % Remove decreasing components close to the fovea in the confocal
+        % images
         supportDegIdx = find(supportDeg>paraFovealExtent,1);
-        threshIdx = [];
-        for nn=1:size(polarDensity,1)
-            [~,threshIdx(nn)]=max(polarDensity(nn,1:supportDegIdx));
+        threshIdx = ones(1,size(polarDensity,1));
+        
+        if dd==1
+            for nn=1:size(polarDensity,1)
+                
+                % Density for this polar angle
+                myVec = polarDensity(nn,1:supportDegIdx);
+                
+                [~,idx] = findpeaks(myVec,'MinPeakHeight',4e3,'MinPeakProminence',500,'MinPeakWidth',10,'NPeaks',3);
+                
+                % Couldn't find a peak. Try this method instead
+                if isempty(idx)
+                    stillSearching = true;
+                    idx = 1;
+                    while stillSearching
+                        if myVec(idx) > max(myVec(idx+1:end))
+                            stillSearching = false;
+                        else
+                            idx=idx+1;
+                            if idx==length(myVec)
+                                stillSearching = false;
+                            end
+                        end
+                    end
+                end
+                
+                % Store the ridge index
+                threshIdx(nn)=idx(end)-1;
+                
+            end
         end
         
         % Add the filtering ridge
@@ -203,13 +234,20 @@ for dd = 1:2
         data.imDensity = imDensity;
         data.polarDensity = polarDensity;
         
-        % Save the temp data file
+        % Save the data file
         fileName = fullfile('densityAnalysis',[subName tagName '.mat']);
         save(fileName,'data','-v7.3');
 
         % Save the foveaCoordsStore
         fileName = fullfile('densityAnalysis','foveaCoordStore.mat');
         save(fileName,'foveaCoordStore');
+
+        % Save the diagnostic image
+        fileName = fullfile('densityAnalysis',[subName tagName '.png']);
+        saveas(figHandle,fileName)
+        
+        % Close the image
+        close(figHandle);
         
         % Clear the data file
         clear data
