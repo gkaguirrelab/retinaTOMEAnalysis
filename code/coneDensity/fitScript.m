@@ -60,7 +60,7 @@ end
 % Fit the mean
 Y = nanmean(dataMat,3);
 w = sum(~isnan(dataMat),3);
-[p0, Yfit, fVal] = fitDensitySurface(Y,w,true,false);
+[p0, Yfit, fVal] = fitDensitySurface(Y,w,false,false);
 
 
 %% plot
@@ -111,7 +111,7 @@ end
 figure
 meridianSpec = {'-r','--b','-m','--g'};
 for mm=1:4
-    semilogy(supportDeg,Yfit(meridianAngles(mm)*polarRatio+1,:),meridianSpec{mm},'LineWidth',2);
+    plot(supportDeg,Yfit(meridianAngles(mm)*polarRatio+1,:),meridianSpec{mm},'LineWidth',2);
     hold on
 end
 xlabel('Eccentricity [deg]');
