@@ -2,39 +2,57 @@ function [p, Yfit, fVal] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel
 % Fit a multi-parameter surface to cone density data
 %
 % Syntax:
-%   output = myFunc(input)
+%   [p, Yfit, fVal] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,p0,supportDeg,maxSupportDeg)
 %
 % Description:
-%   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean euismod
-%   nulla a tempor scelerisque. Maecenas et lobortis est. Donec et turpis
-%   sem. Sed fringilla in metus ut malesuada. Pellentesque nec eros
-%   efficitur, pellentesque nisl vel, dapibus felis. Morbi eu gravida enim.
-%   Sed sodales ipsum eget finibus dapibus. Fusce sagittis felis id orci
-%   egestas, non convallis neque porttitor. Proin ut mi augue. Cras posuere
-%   diam at purus dignissim, vel vestibulum tellus ultrices
+%   A model of cone density across eccentricity and polar angle.
+%   Variationin density across eccentricity is modeled as the sum of two
+%   exponentials, and thus four parameters. Variation across polar angle is
+%   modeled as a multiplicative adjustment of density as a function of
+%   polar angle under the control of Fourier functions. These
+%   functions include:
+%     - a sine and cosine at the fundamental frequency, which model
+%       variation in density between the superior and inferior retina, and
+%       betwween the nasal and temporal retina.
+%     - a cosine at the second frequency, which models variation in density
+%       between the vertical and horizontal meridians
+%     - a cosine at the fourth frequency, which models variation in density
+%       between the meridian and non-meridian angles.
+%
+%   The multiplicative effect of each of these Fourier components is
+%   subject to a magnitude scaler, which itself varies as a function of
+%   eccentricity under the control of a two-parameter gamma function.
+%   Finally, each of the Fourier components may be independently phase
+%   shifted, with the exception of first sine and cosine, which are
+%   assigned the same phase shift.
 %
 % Inputs:
-%   none
-%   foo                   - Scalar. Foo foo foo foo foo foo foo foo foo foo
-%                           foo foo foo foo foo foo foo foo foo foo foo foo
-%                           foo foo foo
-%
-% Optional key/value pairs:
-%   none
-%  'bar'                  - Scalar. Bar bar bar bar bar bar bar bar bar bar
-%                           bar bar bar bar bar bar bar bar bar bar bar bar
-%                           bar bar bar bar bar bar
+%   Y                     - An n x n polar matrix, with the rows being
+%                           eccentricity and the columns polar angle.
+%   w                     - An n x n matrix of weights for the fit.
+%   preFitAvgEccen        - Logical. Determines if the fit is initialized
+%                           by first fitting an exponential to the mean
+%                           density as a function of eccentricity,
+%                           collapsing across polar angle.
+%   simplePolarModel      - Logical. When set to true, the parameters of
+%                           the polar angle variation in density are held
+%                           constant, subject only to an overall
+%                           multiplicative scaling of the strength of the
+%                           modulation, and an angle that can rotate the
+%                           entire polar model.
+%   p0                    - 1x20 vector. The initial values of the model.
+%   supportDeg            - 1xn vector. The support for the data in the 
+%                           eccentricity direction, in units of degrees.
+%   maxSupportDeg         - Scalar. The reference eccentricity location for
+%                           setting up the gamma functions. This may be a
+%                           value that is larger or smaller than the
+%                           maximum value in supportDeg.
 %
 % Outputs:
-%   none
-%   baz                   - Cell. Baz baz baz baz baz baz baz baz baz baz
-%                           baz baz baz baz baz baz baz baz baz baz baz baz
-%                           baz baz baz
+%   p                     - 1x20 vector. The parameters of the model fit.
+%   Yfit                  - nxn matrix. The model fit
+%   fVal                  - Scalar. The fit error.
 %
-% Examples:
-%{
-%}
-
 
 arguments
     Y (:,:) {mustBeNumeric}
