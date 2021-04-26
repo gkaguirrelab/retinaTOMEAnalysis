@@ -45,9 +45,18 @@ for ss = 1:length(subNames)
     
     % Add the split data
     splitFile = fullfile('densityAnalysis',[subNames{ss} '_split.mat']);
+    hasSplit = false;
     if isfile(splitFile)
         load(splitFile,'data');
-        y(:,idxC:end) = data.polarDensity(:,idxC:end);
+        splitBit = data.polarDensity(:,idxC:end);
+        y(:,idxC:end) = splitBit;
+        if sum(~isnan(splitBit(:)))>0
+            hasSplit = true;
+        end
+    end
+    
+    if ~hasSplit
+        fprintf(['No split data for ' subNames{ss} '\n']);
     end
     
     % Filter out any negative values
