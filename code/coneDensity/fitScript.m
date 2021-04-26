@@ -62,20 +62,6 @@ Y = nanmean(dataMat,3);
 w = sum(~isnan(dataMat),3);
 [p0, Yfit, fVal] = fitDensitySurface(Y,w,true,false);
 
-% Loop through and fit each subject with the reduced model
-pSet = nan(20,length(subNames));
-YfitSet = nan(size(dataMat));
-fValSet= nan(1,length(subNames));
-
-fprintf('fitting...');
-w1 = ones(size(Y));
-for ii = 1:length(subNames)
-    Y = squeeze(dataMat(:,:,ii));
-    fprintf([num2str(ii),'...']);
-    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii)] = fitDensitySurface(Y,w1,true,true,p0);
-end
-fprintf('done\n');
-
 
 %% plot
 
@@ -160,4 +146,55 @@ xticklabels(0:1:floor(maxSupportDeg));
 xlabel('Eccentricity [deg]');
 colorbar
 title('Weight map');
+
+
+
+%% Fit each subject with the reduced model
+pSet = nan(20,length(subNames));
+YfitSet = nan(size(dataMat));
+fValSet= nan(1,length(subNames));
+
+fprintf('fitting...');
+w1 = ones(size(Y));
+for ii = 1:length(subNames)
+    Y1 = squeeze(dataMat(:,:,ii));
+    fprintf([num2str(ii),'...']);
+    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii)] = fitDensitySurface(Y1,w1,true,true,p0);
+end
+fprintf('done\n');
+
+
+%% Plot individual subject fits
+for ss=1:length(subNames)
+    Y = squeeze(dataMat(:,:,ss));
+    Yfit = squeeze(YfitSet(:,:,ss));
+    p = pSet(:,ss);
+        
+    figure
+    for ii = [0.375 0.75 1.5 3 6 10]
+        idx = find(supportDeg>ii,1);
+        semilogy(Y(:,idx),'.');
+        hold on
+        semilogy(Yfit(:,idx),'-r');
+        text(300*polarRatio,Yfit(45*polarRatio,idx),sprintf('%2.1f°',supportDeg(idx)));
+    end
+    xticks(meridianAngles*polarRatio);
+    xticklabels(meridianLabels);
+    ylim([10^2,10^4]);
+    ylabel('log_1_0 density [cones/deg^2]')
+    
+    
+    figure
+    for mm=1:4
+        subplot(2,2,mm)
+        plot(supportDeg,Y(round((meridianAngles(mm))*polarRatio+1),:),'.k');
+        hold on
+        plot(supportDeg,Yfit(round((meridianAngles(mm))*polarRatio+1),:),'-r');
+        xlabel('Eccentricity [deg]');
+        ylabel('Density [cones/deg^2]');
+        title(meridianLabels{mm});
+    end
+    
+    pause
+end
 
