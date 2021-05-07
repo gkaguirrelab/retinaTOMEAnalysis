@@ -98,7 +98,7 @@ fw = flywheel.Flywheel(getpref('flywheelMRSupport','flywheelAPIKey'));
 %}
 % Right then left optic tract
 laterality = {'right','left'};
-analysisIDs = {'60525004a51b90af39c85125','60524fe6620334967cd8daf3'};
+analysisIDs = {'6089b2bd1b0f2bd369087017','6089b2bdd46da0ed460e7e60'};
 fileNames = {'fc_stats.csv','fd_stats.csv','fdc_stats.csv'};
 for ll = 1:length(laterality)
     for ff = 1:length(fileNames)
@@ -128,7 +128,7 @@ fixelTable = sortrows(fixelTable);
 
 % Add FA and MD to the fixeltable 
 laterality = {'right','left','right','left'};
-analysisIDs = {'6075230dd3ecda2b3a44aeab','60752337c2fb2a09dae9b249','60752432deec8aec9f44b17d','60752499deec8aec9f44b18d'};
+analysisIDs = {'608b11a6d31ffd00780873df','608b1167e40c5a0a160e830e','608b1120df83012959087092','608b10a65b6976e88abd73c0'};
 fileNames = {'FA_stats.csv', 'FA_stats.csv', 'MD_stats.csv', 'MD_stats.csv'};
 for ll = 1:length(laterality)
     saveName = fullfile(p.Results.fixelDataDir,[laterality{ll} '_' fileNames{ll}]);
@@ -145,6 +145,11 @@ for ll = 1:length(laterality)
     subTable = dtiData(:,1:2);
     subTable.Properties.VariableNames{1} = 'TOME_ID';
     subTable.Properties.VariableNames{2} = [laterality{ll} '_' fileNames{ll}(1:2)];
+    if strcmp(fixelTable{1,1}{1}(1:7), 'preproc')
+        for ii = 1:height(fixelTable)
+            fixelTable{ii,1}{1} = fixelTable{ii,1}{1}(12:end);
+        end
+    end
     fixelTable=join(fixelTable,subTable);
 end
 
@@ -253,7 +258,21 @@ for ff = 1:length(fixelSet)
     end
 end    
 
+% Partial Correlations
+fprintf('\nPartial correlations\n')
+controlFor = {'Height_inches','Weight_pounds','intracranialVol'};
+for ii = 1:length(controlFor)
+    [rho, p] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, fixelComparisonTable.(controlFor{ii}));
+    fprintf(['Partial correlation FC with meanAdjustedGCVol controlled for ' controlFor{ii} ': ' 'rho:' num2str(rho) ', p:' num2str(p) '\n'])
+end
+for ii = 1:length(controlFor)
+    [rho, p] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fd_, fixelComparisonTable.(controlFor{ii}));
+    fprintf(['Partial correlation FD with meanAdjustedGCVol controlled for ' controlFor{ii} ': ' 'rho:' num2str(rho) ', p:' num2str(p) '\n']) 
+end
 
+sizeMatrix = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol];
+[rho, p] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, sizeMatrix);
+fprintf(['\nPartial correlation FC with meanAdjustedGCVol controlled for height,weight,ICV: ' 'rho:' num2str(rho) ', p:' num2str(p) '\n'])
 %% Model fc by GC values
 
 y = log10(fixelComparisonTable.fc_);
