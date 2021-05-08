@@ -12,6 +12,7 @@ confocalFiles=dir('densityAnalysis/*_confocal.mat');
 confocalNames = strrep(extractfield(confocalFiles,'name'),'_confocal.mat','');
 
 supportLength = 1799;
+imRdim = (supportLength+1)/2;
 maxSupportDeg = 15;
 supportDegDelta = 0.0078;
 conStart = 0.5;
@@ -80,6 +81,7 @@ nFourier = 4;
 meridianLabels = {'Nasal','Superior','Temporal','Inferior','Nasal'};
 meridianAngles = [0 90 180 270 360];
 
+% Mean polar data and model fit
 figure
 X = repmat(supportDeg,supportLength,1);
 P = repmat(linspace(0,360,supportLength)',1,supportLength);
@@ -90,7 +92,24 @@ yticks(meridianAngles);
 yticklabels(meridianLabels);
 xlabel('Eccentricity [deg]');
 zlabel('Density [cones/deg^2]');
+view(45,15)
 
+
+% Mean Cartesian data and model fit
+figure
+cartSupportDeg=linspace(-max(supportDeg),max(supportDeg),imRdim);
+[cartXDeg,cartYDeg] = meshgrid(cartSupportDeg,cartSupportDeg);
+cartYfit = convertPolarMapToImageMap(Yfit,'imRdim',imRdim);
+cartYfit(cartYfit<min([Y(:); Yfit(:)]))=nan;
+cartY = convertPolarMapToImageMap(Y,'imRdim',imRdim);
+cartY(cartY<min([Y(:); Yfit(:)]))=nan;
+surf(cartXDeg,cartYDeg,cartYfit,'FaceAlpha',0.5,'EdgeColor','none');
+hold on
+plot3(cartXDeg(:),cartYDeg(:),cartY(:),'.k')
+xlabel('Eccentricity [deg]');
+ylabel('Eccentricity [deg]');
+zlabel('Density [cones/deg^2]');
+view(-135,45)
 
 figure
 for ii = [0.375 0.75 1.5 3 6 10]
