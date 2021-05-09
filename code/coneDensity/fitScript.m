@@ -99,6 +99,58 @@ view(45,15)
 plotFileName = fullfile(sourceDir,'figures','Fig01_meanModelFitPolar.pdf');
 saveas(gcf,plotFileName);
 
+% Illustrate the model surface components
+figure
+for cc = 1:4
+    subplot(2,2,cc)
+    switch cc
+        case 1
+            Ymodel = -cosd(P+p0(5));
+        case 2
+            Ymodel = -sind(P+p0(5));
+        case 3
+            Ymodel = cosd(P.*2+p0(13));
+        case 4
+            Ymodel = cosd(P.*4+p0(17));
+    end
+    surf(X,P,Ymodel,'FaceAlpha',0.5,'EdgeColor','none');
+    yticks(meridianAngles);
+    yticklabels(meridianLabels);
+    xlabel('Eccentricity [deg]');
+    zlabel('Density modulation');
+    view(45,15)
+end
+plotFileName = fullfile(sourceDir,'figures','Fig0X_polarModulationModel.pdf');
+saveas(gcf,plotFileName);
+
+% Illustrate the model surface components
+figure
+for cc = 1:4
+    subplot(2,2,cc)
+    switch cc
+        case 1
+            g = p0(6).*gampdf(X,p0(7),p0(8))./max(gampdf(0:0.01:maxSupportDeg,p0(7),p0(8)));
+            Ymodel = g.*cosd(P+p0(5));
+        case 2
+            g = p0(10).*gampdf(X,p0(11),p0(12))./max(gampdf(0:0.01:maxSupportDeg,p0(11),p0(12)));
+            Ymodel = g.*sind(P+p0(5));
+        case 3
+            g = p0(14).*gampdf(X,p0(15),p0(16))./max(gampdf(0:0.01:maxSupportDeg,p0(15),p0(16)));
+            Ymodel = g.*cosd(P.*2+p0(13));
+        case 4
+            g = p0(18).*gampdf(X,p0(19),p0(20))./max(gampdf(0:0.01:maxSupportDeg,p0(19),p0(20)));
+            Ymodel = g.*cosd(P.*4+p0(17));
+    end
+    surf(X,P,Ymodel,'FaceAlpha',0.5,'EdgeColor','none');
+    yticks(meridianAngles);
+    yticklabels(meridianLabels);
+    xlabel('Eccentricity [deg]');
+    zlabel('Density modulation');
+    view(45,15)
+end
+plotFileName = fullfile(sourceDir,'figures','Fig0X_polarModulationModelWithGamma.pdf');
+saveas(gcf,plotFileName);
+
 % Mean Cartesian data and model fit
 figure
 cartSupportDeg=linspace(-max(supportDeg),max(supportDeg),imRdim);
