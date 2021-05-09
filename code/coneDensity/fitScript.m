@@ -1,14 +1,14 @@
 
 
 % The overal result directory
-cd('/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images')
 
+sourceDir = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images/densityAnalysis/';
 
 % Load the confocal and split data
-splitFiles=dir('densityAnalysis/*_split.mat');
+splitFiles=dir([sourceDir '*_split.mat']);
 splitNames = strrep(extractfield(splitFiles,'name'),'_split.mat','');
 
-confocalFiles=dir('densityAnalysis/*_confocal.mat');
+confocalFiles=dir([sourceDir '*_confocal.mat']);
 confocalNames = strrep(extractfield(confocalFiles,'name'),'_confocal.mat','');
 
 supportLength = 1799;
@@ -31,6 +31,7 @@ idxC = find(supportDeg>=splitStart,1);
 
 subNames = unique([splitNames confocalNames]);
 dataMat = nan(supportLength,supportLength,length(subNames));
+missingSplit = false(length(subNames));
 
 for ss = 1:length(subNames)
     
@@ -38,14 +39,14 @@ for ss = 1:length(subNames)
     y = nan(supportLength,supportLength);
     
     % Add the confocal data
-    conFile = fullfile('densityAnalysis',[subNames{ss} '_confocal.mat']);
+    conFile = fullfile(sourceDir,[subNames{ss} '_confocal.mat']);
     if isfile(conFile)
         load(conFile,'data');
         y(:,idxA:idxB) = data.polarDensity(:,idxA:idxB);
     end
     
     % Add the split data
-    splitFile = fullfile('densityAnalysis',[subNames{ss} '_split.mat']);
+    splitFile = fullfile(sourceDir,[subNames{ss} '_split.mat']);
     hasSplit = false;
     if isfile(splitFile)
         load(splitFile,'data');
@@ -58,6 +59,7 @@ for ss = 1:length(subNames)
     
     if ~hasSplit
         fprintf(['No split data for ' subNames{ss} '\n']);
+        missingSplit(ss) = true;
     end
     
     % Filter out any negative values
@@ -81,6 +83,7 @@ nFourier = 4;
 meridianLabels = {'Nasal','Superior','Temporal','Inferior','Nasal'};
 meridianAngles = [0 90 180 270 360];
 
+
 % Mean polar data and model fit
 figure
 X = repmat(supportDeg,supportLength,1);
@@ -93,7 +96,8 @@ yticklabels(meridianLabels);
 xlabel('Eccentricity [deg]');
 zlabel('Density [cones/deg^2]');
 view(45,15)
-
+plotFileName = fullfile(sourceDir,'figures','Fig01_meanModelFitPolar.pdf');
+saveas(gcf,plotFileName);
 
 % Mean Cartesian data and model fit
 figure
@@ -110,7 +114,10 @@ xlabel('Eccentricity [deg]');
 ylabel('Eccentricity [deg]');
 zlabel('Density [cones/deg^2]');
 view(-135,45)
+plotFileName = fullfile(sourceDir,'figures','Fig02_meanModelFitCartesian.pdf');
+saveas(gcf,plotFileName);
 
+% Polar angle density variation
 figure
 for ii = [0.375 0.75 1.5 3 6 10]
     idx = find(supportDeg>ii,1);
@@ -123,6 +130,8 @@ xticks(meridianAngles*polarRatio);
 xticklabels(meridianLabels);
 ylim([10^2,10^4]);
 ylabel('log_1_0 density [cones/deg^2]')
+plotFileName = fullfile(sourceDir,'figures','Fig03_densityVariationByPolarAngle.pdf');
+saveas(gcf,plotFileName);
 
 
 figure
@@ -135,6 +144,9 @@ for mm=1:4
     ylabel('Density [cones/deg^2]');
     title(meridianLabels{mm});
 end
+plotFileName = fullfile(sourceDir,'figures','Fig04_meanModelFitByMeridian.pdf');
+saveas(gcf,plotFileName);
+
 
 figure
 meridianSpec = {'-r','--b','-m','--g'};
@@ -145,14 +157,16 @@ end
 xlabel('Eccentricity [deg]');
 ylabel('Density [cones/deg^2]');
 legend(meridianLabels(1:4));
+plotFileName = fullfile(sourceDir,'figures','Fig05_modeledDensityByMeridian.pdf');
+saveas(gcf,plotFileName);
 
 
 figure
 for gg = 1:nFourier
-    ph = p((gg-1)*4+5);
-    f1 = p((gg-1)*4+6);
-    f2 = p((gg-1)*4+7);
-    f3 = p((gg-1)*4+8);
+    ph = p0((gg-1)*4+5);
+    f1 = p0((gg-1)*4+6);
+    f2 = p0((gg-1)*4+7);
+    f3 = p0((gg-1)*4+8);
     g = f1.*gampdf(supportDeg,f2,f3)./max(gampdf(0:0.01:maxSupportDeg,f2,f3));
     plot(supportDeg,g)
     hold on
@@ -160,7 +174,10 @@ end
 lengendLabels = {'cos1','sin1','cos2','cos4'};
 legend(lengendLabels(1:nFourier));
 xlabel('Eccentricity [deg]');
-ylabel('Modulation [a.u.]');
+ylabel('Modulation [proportion]');
+plotFileName = fullfile(sourceDir,'figures','Fig06_gammaPDFWeightFunctions.pdf');
+saveas(gcf,plotFileName);
+
 
 
 figure
@@ -174,6 +191,8 @@ xticklabels(0:1:floor(maxSupportDeg));
 xlabel('Eccentricity [deg]');
 colorbar
 title('Weight map');
+plotFileName = fullfile(sourceDir,'figures','Fig07_nSubjectWeightMapPolar.pdf');
+saveas(gcf,plotFileName);
 
 
 
@@ -185,15 +204,55 @@ fValSet= nan(1,length(subNames));
 fprintf('fitting...');
 w1 = ones(size(Y));
 for ii = 1:length(subNames)
+    if missingSplit(ii)
+        continue
+    end
     Y1 = squeeze(dataMat(:,:,ii));
     fprintf([num2str(ii),'...']);
     [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii)] = fitDensitySurface(Y1,w1,true,true,p0);
 end
 fprintf('done\n');
 
+% Save the individual subject fits
+individualFitFile = fullfile(sourceDir,'individualSubjectFits.mat');
+save(individualFitFile,'pSet','YfitSet','fValSet')
+
+
+%% Plot the fit on the nasal meridian for each subject
+figure
+for meridianIdx = 1:4
+    subplot(2,2,meridianIdx)
+    % Add the Curcio profile along the specified meridian
+    CurcioFitConeDensitySqDegVisual = getSplineFitToConeDensitySqDegVisual(meridianAngles(meridianIdx));
+    loglog(supportDeg,CurcioFitConeDensitySqDegVisual(supportDeg),'-r','LineWidth',5);
+    hold on
+    for ss = 1:length(subNames)
+        if missingSplit(ss)
+            continue
+        end
+        Yfit = squeeze(YfitSet(round((meridianAngles(meridianIdx))*polarRatio+1),:,ss));
+        denseRatio(ss) = max(Yfit)/min(Yfit);
+        if denseRatio(ss)>30
+            loglog(supportDeg,Yfit,'-b');
+        else
+            loglog(supportDeg,Yfit,'-k');
+        end
+    end
+    ylabel('log_1_0 density [cones/deg^2]')
+    xlabel('Eccentricity [deg]');
+    title([meridianLabels{meridianIdx} ' meridian subject fits']);
+end
+plotFileName = fullfile(sourceDir,'figures','Fig08_individualSubjectNasalMerdianFits.pdf');
+saveas(gcf,plotFileName);
+
 
 %% Plot individual subject fits
 for ss=1:length(subNames)
+    
+    if missingSplit(ii)
+        continue
+    end
+
     Y = squeeze(dataMat(:,:,ss));
     Yfit = squeeze(YfitSet(:,:,ss));
     p = pSet(:,ss);
