@@ -151,6 +151,27 @@ end
 plotFileName = fullfile(sourceDir,'figures','Fig0X_polarModulationModelWithGamma.pdf');
 saveas(gcf,plotFileName);
 
+% Illustrate the model surface components
+figure
+
+            g = p0(6).*gampdf(X,p0(7),p0(8))./max(gampdf(0:0.01:maxSupportDeg,p0(7),p0(8)));
+            Ymodel = g.*cosd(P+p0(5));
+            g = p0(10).*gampdf(X,p0(11),p0(12))./max(gampdf(0:0.01:maxSupportDeg,p0(11),p0(12)));
+            Ymodel = Ymodel+g.*sind(P+p0(5));
+            g = p0(14).*gampdf(X,p0(15),p0(16))./max(gampdf(0:0.01:maxSupportDeg,p0(15),p0(16)));
+            Ymodel = Ymodel+g.*cosd(P.*2+p0(13));
+            g = p0(18).*gampdf(X,p0(19),p0(20))./max(gampdf(0:0.01:maxSupportDeg,p0(19),p0(20)));
+            Ymodel = Ymodel+g.*cosd(P.*4+p0(17));
+    surf(X,P,Ymodel,'FaceAlpha',0.5,'EdgeColor','none');
+    yticks(meridianAngles);
+    yticklabels(meridianLabels);
+    xlabel('Eccentricity [deg]');
+    zlabel('Density modulation');
+    view(45,15)
+plotFileName = fullfile(sourceDir,'figures','Fig0X_entirePolarModulation.pdf');
+saveas(gcf,plotFileName);
+
+
 % Mean Cartesian data and model fit
 figure
 cartSupportDeg=linspace(-max(supportDeg),max(supportDeg),imRdim);
@@ -161,11 +182,11 @@ cartY = convertPolarMapToImageMap(Y,'imRdim',imRdim);
 cartY(cartY<min([Y(:); Yfit(:)]))=nan;
 surf(cartXDeg,cartYDeg,cartYfit,'FaceAlpha',0.5,'EdgeColor','none');
 hold on
-plot3(cartXDeg(:),cartYDeg(:),cartY(:),'.k')
+%plot3(cartXDeg(:),cartYDeg(:),cartY(:),'.k')
 xlabel('Eccentricity [deg]');
 ylabel('Eccentricity [deg]');
 zlabel('Density [cones/deg^2]');
-view(-135,45)
+view(-140,22)
 plotFileName = fullfile(sourceDir,'figures','Fig02_meanModelFitCartesian.pdf');
 saveas(gcf,plotFileName);
 
@@ -268,6 +289,24 @@ fprintf('done\n');
 % Save the individual subject fits
 individualFitFile = fullfile(sourceDir,'individualSubjectFits.mat');
 save(individualFitFile,'pSet','YfitSet','fValSet')
+
+
+
+%% Plot the Curcio values
+figure
+figure
+meridianSpec = {'-r','--b','-m','--g'};
+for mm=1:4
+    CurcioFitConeDensitySqDegVisual = getSplineFitToConeDensitySqDegVisual(meridianAngles(mm));
+    plot(supportDeg,CurcioFitConeDensitySqDegVisual(supportDeg),meridianSpec{mm});
+    hold on
+end
+xlabel('Eccentricity [deg]');
+ylabel('Density [cones/deg^2]');
+legend(meridianLabels(1:4));
+plotFileName = fullfile(sourceDir,'figures','Fig0x_CurcioValues.pdf');
+saveas(gcf,plotFileName);
+
 
 
 %% Plot the fit on the nasal meridian for each subject
