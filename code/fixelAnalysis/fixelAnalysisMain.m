@@ -98,7 +98,7 @@ fw = flywheel.Flywheel(getpref('flywheelMRSupport','flywheelAPIKey'));
 %}
 % Right then left optic tract
 laterality = {'right','left'};
-analysisIDs = {'6089b2bd1b0f2bd369087017','6089b2bdd46da0ed460e7e60'};
+analysisIDs = {'60a33c76b4a131197e7bfaa8','60a33c7617fcfbb03ffeacf6'};
 fileNames = {'fc_stats.csv','fd_stats.csv','fdc_stats.csv'};
 for ll = 1:length(laterality)
     for ff = 1:length(fileNames)
@@ -128,7 +128,7 @@ fixelTable = sortrows(fixelTable);
 
 % Add FA and MD to the fixeltable 
 laterality = {'right','left','right','left'};
-analysisIDs = {'608b11a6d31ffd00780873df','608b1167e40c5a0a160e830e','608b1120df83012959087092','608b10a65b6976e88abd73c0'};
+analysisIDs = {'60a3517044aedd9b5ef5e603','60a3514a50e3c45f1bfead13','60a3510e038ae96d18f5e69c','60a350c8c711ebba1ca23c44'};
 fileNames = {'FA_stats.csv', 'FA_stats.csv', 'MD_stats.csv', 'MD_stats.csv'};
 for ll = 1:length(laterality)
     saveName = fullfile(p.Results.fixelDataDir,[laterality{ll} '_' fileNames{ll}]);
@@ -270,9 +270,72 @@ for ii = 1:length(controlFor)
     fprintf(['Partial correlation FD with meanAdjustedGCVol controlled for ' controlFor{ii} ': ' 'rho:' num2str(rho) ', p:' num2str(p) '\n']) 
 end
 
-sizeMatrix = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol];
-[rho, p] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, sizeMatrix);
-fprintf(['\nPartial correlation FC with meanAdjustedGCVol controlled for height,weight,ICV: ' 'rho:' num2str(rho) ', p:' num2str(p) '\n'])
+genderMatrix = fixelComparisonTable.Gender;
+for ii = 1:length(genderMatrix)
+    if strcmp(genderMatrix{ii}, 'M')
+        genderMatrix{ii} = 1;
+    else
+        genderMatrix{ii} = 0;
+    end
+end
+        
+sizeMatrixFC = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol cell2mat(genderMatrix)];
+[rho, p] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, sizeMatrixFC);
+fprintf(['\nPartial correlation FC with meanAdjustedGCVol controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(p) '\n'])
+
+sizeMatrixFD = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol cell2mat(genderMatrix)];
+[rho, p] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fd_, sizeMatrixFD);
+fprintf(['\nPartial correlation FD with meanAdjustedGCVol controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(p) '\n'])
+
+% Make controlled correlation plot for FC
+tableFCvsSize = fitlm(sizeMatrixFC, fixelComparisonTable.fc_);
+FCResiduals = tableFCvsSize.Residuals.Pearson;
+
+tableGCvsSize = fitlm(sizeMatrixFC, fixelComparisonTable.meanAdjustedGCVol);
+GCResidualsFC = tableGCvsSize.Residuals.Pearson;
+
+[R,p] = corrcoef(GCResidualsFC, FCResiduals);
+figure;
+% add first plot in 2 x 1 grid    
+scatter(GCResidualsFC, FCResiduals, 'MarkerFaceColor', 'k');
+xlabel ('GCResiduals');
+ylabel('FCResiduals');
+title('FC vs MeanGC controlled for height/weight/ICV/Gender')
+box 'on'
+axis square;
+set(gca,'Ticklength',[0 0])
+%white background
+set(gcf,'color','w');
+refline
+theStringR = sprintf(['R=' ' ' num2str(R(1,2))], GCResidualsFC,  FCResiduals);
+theStringP = sprintf(['P=' ' ' num2str(p(1,2))], GCResidualsFC,  FCResiduals);
+text(1.5, -1.5, theStringR, 'FontSize', 10);
+text(1.5, -1.8, theStringP, 'FontSize', 10);
+
+% Make controlled correlation map for FD
+tableFDvsSize = fitlm(sizeMatrixFD, fixelComparisonTable.fd_);
+FDResiduals = tableFDvsSize.Residuals.Pearson;
+
+tableGCvsSize = fitlm(sizeMatrixFD, fixelComparisonTable.meanAdjustedGCVol);
+GCResidualsFD = tableGCvsSize.Residuals.Pearson;
+
+[R,p] = corrcoef(GCResidualsFD, FDResiduals);
+figure;
+% add first plot in 2 x 1 grid    
+scatter(GCResidualsFD, FDResiduals, 'MarkerFaceColor', 'k');
+xlabel ('GCResiduals');
+ylabel('FDResiduals');
+title('FD vs MeanGC controlled for height/weight/ICV/Gender')
+box 'on'
+axis square;
+set(gca,'Ticklength',[0 0])
+%white background
+set(gcf,'color','w');
+refline
+theStringR = sprintf(['R=' ' ' num2str(R(1,2))], GCResidualsFD,  FDResiduals);
+theStringP = sprintf(['P=' ' ' num2str(p(1,2))], GCResidualsFD,  FDResiduals);
+text(1.5, -2.5, theStringR, 'FontSize', 10);
+text(1.5, -2.8, theStringP, 'FontSize', 10);
 %% Model fc by GC values
 
 y = log10(fixelComparisonTable.fc_);
