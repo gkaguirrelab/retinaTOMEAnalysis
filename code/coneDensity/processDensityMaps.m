@@ -51,12 +51,24 @@ for dd = 1:2
     
     % Loop over the result files
     for rr = 1:length(resultFiles)
-        
-        % Report our progress
-        fprintf([resultFiles(rr).name '\n']);
-        
-        % Load the next file
+                
+        % Identify the next file
         fileName = fullfile(resultFiles(rr).folder,resultFiles(rr).name);
+        
+        % Extract the subject name
+        tmp = strsplit(fileName,filesep);
+        subName = tmp{end-3};
+        
+        % Some machinery to allow us to process just a few subjects at a
+        % time
+        if ~any(strcmp(subName,{'11100_OS','11028_OD','11088_OD','11101_OD','11092_OS'}))
+            continue
+        end
+
+        % Report that we are about to process this subject
+        fprintf([resultFiles(rr).name '\n']);
+
+        % Load the file
         load(fileName);       
         
         % Determine if this a left or right eye
@@ -69,18 +81,16 @@ for dd = 1:2
         else
             error(['Unable to determine laterality for ' resultFiles(rr).name]);
         end
-        
-        % Extract the subject name
-        tmp = strsplit(fileName,filesep);
-        subName = tmp{end-3};
-        
+
         % Save the fovea_coords from the confocal, and apply these to the
         % split
         switch dd
             case 1
                 % Special case 11061_OD
                 if strcmp(subName,'11061_OD')
-                    fovea_coords = [4.6105e3 4.75559e3];
+                    % Update with the coordinates selected by Jessica in
+                    % Slack
+                    fovea_coords = [4959, 4680];
                 end
                 % Special case 11099_OD
                 if strcmp(subName,'11099_OD')
