@@ -289,7 +289,7 @@ end
 
 % Adding intracranial volume to the fixel set here, so that it will also be
 % correlated with measure set variables 
-fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'intracranialVol'};
+fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'intracranialVol', 'LGN'};
 
 fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TOME_ID),:),fixelTable,'Keys','TOME_ID');
 
@@ -464,5 +464,25 @@ theStringR = sprintf(['R=' ' ' num2str(R(1,2))], fixelComparisonTable.fd_,  fixe
 theStringP = sprintf(['P=' ' ' num2str(pval(1,2))], fixelComparisonTable.fd_,  fixelComparisonTable.LGN);
 text(1.5, -2.5, theStringR, 'FontSize', 10);
 text(1.5, -2.8, theStringP, 'FontSize', 10);
+
+%% Plot adjustedGC by LGN values
+
+[R,pval] = corrcoef(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.LGN);
+figure;
+% add first plot in 2 x 1 grid    
+scatter(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.LGN, 'MarkerFaceColor', 'k');
+xlabel ('AdjustedGCVol');
+ylabel('LGNVol');
+title('AdjustedGCVol and LGN')
+box 'on'
+axis square;
+set(gca,'Ticklength',[0 0])
+%white background
+set(gcf,'color','w');
+refline
+theStringR = sprintf(['R=' ' ' num2str(R(1,2))], fixelComparisonTable.fd_,  fixelComparisonTable.LGN);
+theStringP = sprintf(['P=' ' ' num2str(pval(1,2))], fixelComparisonTable.fd_,  fixelComparisonTable.LGN);
+text(2.1*10^-3, 260, theStringR, 'FontSize', 10);
+text(2.1*10^-3, 250, theStringP, 'FontSize', 10);
 end
 
