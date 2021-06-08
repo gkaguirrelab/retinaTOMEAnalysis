@@ -7,8 +7,8 @@ function fixelAnalysisMain(varargin)
 
 %% Set the dropboxBaseDir
 % We need this for the default loations of some the directories
-dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
-% dropboxBaseDir='C:\Users\ozenc\Dropbox (Aguirre-Brainard Lab)';
+% dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
+dropboxBaseDir='C:\Users\ozenc\Dropbox (Aguirre-Brainard Lab)';
 
 %% Parse vargin
 p = inputParser;
@@ -82,8 +82,8 @@ comboTable = join(comboTable,fitVolTable,'Keys','AOSO_ID');
 
 
 % Instantiate a flywheel object
-fw = flywheel.Flywheel(getpref('flywheelMRSupport','flywheelAPIKey'));
-% fw = flywheel.Flywheel('upenn.flywheel.io:DTIiZcuXBVlpJmCLZt');
+% fw = flywheel.Flywheel(getpref('flywheelMRSupport','flywheelAPIKey'));
+fw = flywheel.Flywheel('upenn.flywheel.io:DTIiZcuXBVlpJmCLZt');
 
 % Download the fixel results
 % To find these, get the ID for the session (which is in the URL of the web
@@ -217,6 +217,66 @@ intracranialTable = sortrows(intracranialTable);
 intracranialTable.Properties.VariableNames{1} = 'TOME_ID';
 fixelTable=join(fixelTable,intracranialTable);
 
+% Do LGN correlations here 
+% Download LGN stats from Flywheel if they do not exist 
+projects = fw.projects();
+tome = projects{1};
+subjects = tome.subjects();
+LGNdir = fullfile(p.Results.fixelDataDir, 'LGNVol');
+if ~exist(LGNdir, 'dir')
+   mkdir(LGNdir)
+end
+leftLGN = [];
+rightLGN = [];
+subjectsList = []; 
+for sub = 1:length(subjects)
+    subject = subjects{sub};
+    subjId = subject.label;
+    sessions = subject.sessions();
+    for ses = 1:length(sessions)
+        session = sessions{ses};
+        analyses = session.analyses();
+        if ~isempty(analyses)
+            for ana = 1:length(analyses)
+                analysis = analyses{ana};
+                if startsWith(analysis.label, 'segmentThalamicNuclei')
+                    files = analysis.files();
+                    for f = 1:length(files)
+                        if contains(files{f}.name, '.zip')
+                            zipArchive = files{f};     
+                            fileSave = fullfile(LGNdir, [subjId, '.zip']);   
+                            if ~exist(fileSave(1:end-4), 'dir')
+                                zipArchive.download(fileSave);
+                                unzip(fileSave, fileSave(1:end-4));
+                                delete(fileSave);
+                            end
+                            statFolder = fullfile(fileSave(1:end-4), 'ThalamicNuclei.v12.T1.volumes.txt');
+                            fid = fopen(statFolder);
+                            leftLGNLine = fgetl(fid);
+                            leftLGNVal = str2num(leftLGNLine(10:end));
+                            rightLGNLine = fgetl(fid);
+                            rightLGNVal = str2num(rightLGNLine(11:end));
+                            leftLGN = [leftLGN; leftLGNVal];
+                            rightLGN = [rightLGN; rightLGNVal];
+                            subjectsList = [subjectsList; {subjId}];
+                            fclose(fid);
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+% Combine subject and LGN in a table and sort rows.
+LGN = (leftLGN + rightLGN) / 2;
+LGNTable = table(subjectsList, leftLGN, rightLGN, LGN);
+LGNTable = sortrows(LGNTable);
+LGNTable.Properties.VariableNames{1} = 'TOME_ID';
+LGNTable.Properties.VariableNames{2} = 'left_LGN';
+LGNTable.Properties.VariableNames{3} = 'right_LGN';
+fixelTable=join(fixelTable,LGNTable);
+
 fixelSet = {'fc_','fd_','fdc', 'FA', 'MD'};
 for ff = 1:length(fixelSet)
     % Report the correlation of left and right
@@ -235,7 +295,7 @@ fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TO
 
 
 %% Report the correlation of fixel values with RGC values
-measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender','intracranialVol'};
+measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender','intracranialVol','LGN'};
 
 for ff = 1:length(fixelSet)
     y = fixelComparisonTable.(fixelSet{ff});
@@ -262,12 +322,12 @@ end
 fprintf('\nPartial correlations\n')
 controlFor = {'Height_inches','Weight_pounds','intracranialVol'};
 for ii = 1:length(controlFor)
-    [rho, p] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, fixelComparisonTable.(controlFor{ii}));
-    fprintf(['Partial correlation FC with meanAdjustedGCVol controlled for ' controlFor{ii} ': ' 'rho:' num2str(rho) ', p:' num2str(p) '\n'])
+    [rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, fixelComparisonTable.(controlFor{ii}));
+    fprintf(['Partial correlation FC with meanAdjustedGCVol controlled for ' controlFor{ii} ': ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
 end
 for ii = 1:length(controlFor)
-    [rho, p] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fd_, fixelComparisonTable.(controlFor{ii}));
-    fprintf(['Partial correlation FD with meanAdjustedGCVol controlled for ' controlFor{ii} ': ' 'rho:' num2str(rho) ', p:' num2str(p) '\n']) 
+    [rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fd_, fixelComparisonTable.(controlFor{ii}));
+    fprintf(['Partial correlation FD with meanAdjustedGCVol controlled for ' controlFor{ii} ': ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n']) 
 end
 
 genderMatrix = fixelComparisonTable.Gender;
@@ -279,13 +339,15 @@ for ii = 1:length(genderMatrix)
     end
 end
         
-sizeMatrixFC = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol cell2mat(genderMatrix)];
-[rho, p] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, sizeMatrixFC);
-fprintf(['\nPartial correlation FC with meanAdjustedGCVol controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(p) '\n'])
+% sizeMatrixFC = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol cell2mat(genderMatrix)];
+sizeMatrixFC = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol];
+[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, sizeMatrixFC);
+fprintf(['\nPartial correlation FC with meanAdjustedGCVol controlled for height,weight,ICV: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
 
-sizeMatrixFD = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol cell2mat(genderMatrix)];
-[rho, p] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fd_, sizeMatrixFD);
-fprintf(['\nPartial correlation FD with meanAdjustedGCVol controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(p) '\n'])
+% sizeMatrixFD = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol cell2mat(genderMatrix)];
+sizeMatrixFD = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol];
+[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fd_, sizeMatrixFD);
+fprintf(['\nPartial correlation FD with meanAdjustedGCVol controlled for height,weight,ICV: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
 
 % Make controlled correlation plot for FC
 tableFCvsSize = fitlm(sizeMatrixFC, fixelComparisonTable.fc_);
@@ -294,13 +356,13 @@ FCResiduals = tableFCvsSize.Residuals.Pearson;
 tableGCvsSize = fitlm(sizeMatrixFC, fixelComparisonTable.meanAdjustedGCVol);
 GCResidualsFC = tableGCvsSize.Residuals.Pearson;
 
-[R,p] = corrcoef(GCResidualsFC, FCResiduals);
+[R,pval] = corrcoef(GCResidualsFC, FCResiduals);
 figure;
 % add first plot in 2 x 1 grid    
 scatter(GCResidualsFC, FCResiduals, 'MarkerFaceColor', 'k');
 xlabel ('GCResiduals');
 ylabel('FCResiduals');
-title('FC vs MeanGC controlled for height/weight/ICV/Gender')
+title('FC vs MeanGC controlled for height/weight/ICV')
 box 'on'
 axis square;
 set(gca,'Ticklength',[0 0])
@@ -308,7 +370,7 @@ set(gca,'Ticklength',[0 0])
 set(gcf,'color','w');
 refline
 theStringR = sprintf(['R=' ' ' num2str(R(1,2))], GCResidualsFC,  FCResiduals);
-theStringP = sprintf(['P=' ' ' num2str(p(1,2))], GCResidualsFC,  FCResiduals);
+theStringP = sprintf(['P=' ' ' num2str(pval(1,2))], GCResidualsFC,  FCResiduals);
 text(1.5, -1.5, theStringR, 'FontSize', 10);
 text(1.5, -1.8, theStringP, 'FontSize', 10);
 
@@ -319,7 +381,7 @@ FDResiduals = tableFDvsSize.Residuals.Pearson;
 tableGCvsSize = fitlm(sizeMatrixFD, fixelComparisonTable.meanAdjustedGCVol);
 GCResidualsFD = tableGCvsSize.Residuals.Pearson;
 
-[R,p] = corrcoef(GCResidualsFD, FDResiduals);
+[R,pval] = corrcoef(GCResidualsFD, FDResiduals);
 figure;
 % add first plot in 2 x 1 grid    
 scatter(GCResidualsFD, FDResiduals, 'MarkerFaceColor', 'k');
@@ -333,7 +395,7 @@ set(gca,'Ticklength',[0 0])
 set(gcf,'color','w');
 refline
 theStringR = sprintf(['R=' ' ' num2str(R(1,2))], GCResidualsFD,  FDResiduals);
-theStringP = sprintf(['P=' ' ' num2str(p(1,2))], GCResidualsFD,  FDResiduals);
+theStringP = sprintf(['P=' ' ' num2str(pval(1,2))], GCResidualsFD,  FDResiduals);
 text(1.5, -2.5, theStringR, 'FontSize', 10);
 text(1.5, -2.8, theStringP, 'FontSize', 10);
 %% Model fc by GC values
@@ -363,5 +425,44 @@ ylabel('optic tract fc')
 
 setTightFig
 
+%% Plot fc by LGN values
+
+[R,pval] = corrcoef(fixelComparisonTable.fc_, fixelComparisonTable.LGN);
+figure;
+% add first plot in 2 x 1 grid    
+scatter(fixelComparisonTable.fc_, fixelComparisonTable.LGN, 'MarkerFaceColor', 'k');
+xlabel ('FC');
+ylabel('LGN');
+title('FC vs LGN')
+box 'on'
+axis square;
+set(gca,'Ticklength',[0 0])
+%white background
+set(gcf,'color','w');
+refline
+theStringR = sprintf(['R=' ' ' num2str(R(1,2))], fixelComparisonTable.fc_,  fixelComparisonTable.LGN);
+theStringP = sprintf(['P=' ' ' num2str(pval(1,2))], fixelComparisonTable.fc_,  fixelComparisonTable.LGN);
+text(1.5, -2.5, theStringR, 'FontSize', 10);
+text(1.5, -2.8, theStringP, 'FontSize', 10);
+
+%% Plot fd by LGN values
+
+[R,pval] = corrcoef(fixelComparisonTable.fd_, fixelComparisonTable.LGN);
+figure;
+% add first plot in 2 x 1 grid    
+scatter(fixelComparisonTable.fd_, fixelComparisonTable.LGN, 'MarkerFaceColor', 'k');
+xlabel ('FD');
+ylabel('LGN');
+title('FD vs LGN')
+box 'on'
+axis square;
+set(gca,'Ticklength',[0 0])
+%white background
+set(gcf,'color','w');
+refline
+theStringR = sprintf(['R=' ' ' num2str(R(1,2))], fixelComparisonTable.fd_,  fixelComparisonTable.LGN);
+theStringP = sprintf(['P=' ' ' num2str(pval(1,2))], fixelComparisonTable.fd_,  fixelComparisonTable.LGN);
+text(1.5, -2.5, theStringR, 'FontSize', 10);
+text(1.5, -2.8, theStringP, 'FontSize', 10);
 end
 
