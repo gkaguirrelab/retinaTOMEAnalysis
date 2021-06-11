@@ -61,9 +61,11 @@ for dd = 1:2
         
         % Some machinery to allow us to process just a few subjects at a
         % time
-        if ~any(strcmp(subName,{'11100_OS','11028_OD','11088_OD','11101_OD','11092_OS'}))
-            continue
-        end
+        %{
+            if ~any(strcmp(subName,{'11100_OS','11028_OD','11088_OD','11101_OD','11092_OS'}))
+                continue
+            end
+        %}
 
         % Report that we are about to process this subject
         fprintf([resultFiles(rr).name '\n']);
