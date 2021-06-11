@@ -32,9 +32,9 @@ end
 warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
 warning('off','signal:findpeaks:largeMinPeakHeight');
 
-% We are going to loop through the processing twice, once each for the
-% confocal and split datasets
-for dd = 1:2
+% We are going to loop through the processing thrice, once each for the
+% confocal and split datasets, and for the single fovea image
+for dd = 3:3
     
     switch dd
         case 1
@@ -47,6 +47,11 @@ for dd = 1:2
             dataFileName = 'splitDensityProfileData.mat';
             tagName = '_split';
             maxThresh = density(r).*2;
+        case 3
+            resultFiles=dir('**/confocal/Results_fovea_map/*_Fovea.mat');
+            dataFileName = 'Fovea.mat';
+            tagName = '_fovea';
+            maxThresh = density(r).*4;
     end
     
     % Loop over the result files
@@ -72,6 +77,12 @@ for dd = 1:2
 
         % Load the file
         load(fileName);       
+        
+        % For the "fovea" dataset, the data we need is saved in a variable
+        % called "densim", as opposed to "density_map".
+        if dd==3
+            density_map = densim(:,:,1);
+        end
         
         % Determine if this a left or right eye
         if contains(resultFiles(rr).name,'_OS_')
@@ -100,6 +111,8 @@ for dd = 1:2
                 end
                 foveaCoordStore.(['s_' subName])=fovea_coords;
             case 2
+                fovea_coords=foveaCoordStore.(['s_' subName]);
+            case 3
                 fovea_coords=foveaCoordStore.(['s_' subName]);
         end        
 
@@ -157,7 +170,9 @@ for dd = 1:2
         
         % Set up the fovea mask
         imFovea = zeros(newDim,newDim);
-        imFovea(1:imsize(1),1:imsize(2))=single(~foveamask);
+        if dd~=3
+            imFovea(1:imsize(1),1:imsize(2))=single(~foveamask);
+        end
         imFovea=imtranslate(imFovea,offset);
         
         % Dilate the foveamask
@@ -193,7 +208,7 @@ for dd = 1:2
         supportDegIdx = find(supportDeg>paraFovealExtent,1);
         threshIdx = ones(1,size(polarDensity,1));
         
-        if dd==1
+        if dd==1 || dd==3
             for nn=1:size(polarDensity,1)
                 
                 % Density for this polar angle
@@ -260,7 +275,7 @@ for dd = 1:2
         saveas(figHandle,fileName)
         
         % Close the image
-        close(figHandle);
+        %close(figHandle);
         
         % Clear the data file
         clear data
