@@ -11,13 +11,19 @@ splitNames = strrep(extractfield(splitFiles,'name'),'_split.mat','');
 confocalFiles=dir([sourceDir '*_confocal.mat']);
 confocalNames = strrep(extractfield(confocalFiles,'name'),'_confocal.mat','');
 
+foveaFiles=dir([sourceDir '*_fovea.mat']);
+foveaNames = strrep(extractfield(confocalFiles,'name'),'_fovea.mat','');
+
+
 supportLength = 1799;
 imRdim = (supportLength+1)/2;
 maxSupportDeg = 15;
 supportDegDelta = 0.0078;
-conStart = 0.5;
+conStart = 0.75;
 conStop = 1.5;
 splitStart = 1.75;
+foveaStart = 0;
+foveaStop = 0.75;
 
 % Define the eccentricity support, and the ranges (in degrees) that will be
 % used for the confocal and split detecton data sets
@@ -25,6 +31,8 @@ supportDeg = 0:supportDegDelta:supportDegDelta*(supportLength-1);
 idxA = find(supportDeg>=conStart,1);
 idxB = find(supportDeg>=conStop,1);
 idxC = find(supportDeg>=splitStart,1);
+idxD = find(supportDeg>=foveaStart,1);
+idxE = find(supportDeg>=foveaStop,1);
 
 
 %% Loop through subjects and create the composite polar density image
@@ -32,6 +40,7 @@ idxC = find(supportDeg>=splitStart,1);
 subNames = unique([splitNames confocalNames]);
 dataMat = nan(supportLength,supportLength,length(subNames));
 missingSplit = false(length(subNames));
+missingFovea = false(length(subNames));
 
 for ss = 1:length(subNames)
     
@@ -56,10 +65,25 @@ for ss = 1:length(subNames)
             hasSplit = true;
         end
     end
-    
     if ~hasSplit
         fprintf(['No split data for ' subNames{ss} '\n']);
         missingSplit(ss) = true;
+    end
+    
+    % Add the fovea data
+    foveaFile = fullfile(sourceDir,[subNames{ss} '_fovea.mat']);
+    hasFovea = false;
+    if isfile(foveaFile)
+        load(foveaFile,'data');
+        foveaBit = data.polarDensity(:,idxD:idxE);
+        y(:,idxD:idxE) = foveaBit;
+        if sum(~isnan(foveaBit(:)))>0
+            hasFovea = true;
+        end
+    end    
+    if ~hasFovea
+        fprintf(['No fovea data for ' subNames{ss} '\n']);
+        missingFovea(ss) = true;
     end
     
     % Filter out any negative values

@@ -6,6 +6,7 @@ foveaDilate = 100;
 newDim = 18000; % Dimensions of the density maps
 pixelsperdegree = 642.7000;
 paraFovealExtent = 2;
+foveaIslandSizePixels = 20000;
 
 % Create a map that will be used to filter "extreme" values
 dParams = [1477 -0.3396 7846 -1.3049 629];
@@ -56,7 +57,7 @@ for dd = 3:3
     
     % Loop over the result files
     for rr = 1:length(resultFiles)
-                
+        
         % Identify the next file
         fileName = fullfile(resultFiles(rr).folder,resultFiles(rr).name);
         
@@ -71,12 +72,12 @@ for dd = 3:3
                 continue
             end
         %}
-
+        
         % Report that we are about to process this subject
         fprintf([resultFiles(rr).name '\n']);
-
+        
         % Load the file
-        load(fileName);       
+        load(fileName);
         
         % For the "fovea" dataset, the data we need is saved in a variable
         % called "densim", as opposed to "density_map".
@@ -94,7 +95,7 @@ for dd = 3:3
         else
             error(['Unable to determine laterality for ' resultFiles(rr).name]);
         end
-
+        
         % Save the fovea_coords from the confocal, and apply these to the
         % split
         switch dd
@@ -105,6 +106,12 @@ for dd = 3:3
                     % Slack
                     fovea_coords = [4959, 4680];
                 end
+                % Special case 11083_OD
+                if strcmp(subName,'11083_OD')
+                    % Update with the coordinates selected by Jessica in
+                    % Slack
+                    fovea_coords = [4954 5293];
+                end
                 % Special case 11099_OD
                 if strcmp(subName,'11099_OD')
                     fovea_coords = [8.5285e3, 7.8643e3];
@@ -114,8 +121,8 @@ for dd = 3:3
                 fovea_coords=foveaCoordStore.(['s_' subName]);
             case 3
                 fovea_coords=foveaCoordStore.(['s_' subName]);
-        end        
-
+        end
+        
         % Detect the special case of subject 11051, who wore a -8.5 D
         % spectacle lens during collection of their adaptive optics images.
         % Need to adjust for spectaacle magnification
@@ -128,7 +135,9 @@ for dd = 3:3
                 'spectacleLens',-8.5);
             magFactor = 1/sg.refraction.cameraToRetina.magnification.spectacle;
             density_map = imresize(density_map,magFactor);
-            foveamask = round(imresize(foveamask,magFactor));
+            if dd~=3
+                foveamask = round(imresize(foveamask,magFactor));
+            end
             fovea_coords = fovea_coords.*magFactor;
         end
         
@@ -157,25 +166,25 @@ for dd = 3:3
         
         % Filter the map for extreme values
         imDensity(imDensity>maxThresh)=nan;
-
-        % Show the filtered map
-        subplot(1,3,2)
-        imagesc(imDensity)
-        hold on
-        plot([1 newDim],round([newDim newDim]/2),'-r');
-        plot(round([newDim newDim]/2),[1 newDim],'-r');
-        axis square
-        axis off
-        title('filter periphery')
         
-        % Set up the fovea mask
+        % Show the filtered map
+        if dd==1 || dd==2
+            subplot(1,3,2)
+            imagesc(imDensity)
+            hold on
+            plot([1 newDim],round([newDim newDim]/2),'-r');
+            plot(round([newDim newDim]/2),[1 newDim],'-r');
+            axis square
+            axis off
+            title('filter periphery')
+        end
+        
+        % Translate and dilate the foveamask
         imFovea = zeros(newDim,newDim);
         if dd~=3
             imFovea(1:imsize(1),1:imsize(2))=single(~foveamask);
         end
         imFovea=imtranslate(imFovea,offset);
-        
-        % Dilate the foveamask
         imFovea = imdilate(imFovea,strel('square',foveaDilate));
         
         % Down-sample the maps
@@ -192,16 +201,20 @@ for dd = 3:3
         polarDensity = convertImageMapToPolarMap(imDensity);
         polarFovea = convertImageMapToPolarMap(imFovea);
         polarDim = newDim*downSample*2-1;
-
+        
         % Show the polar density map pre filtering
-        subplot(1,3,3)
+        if dd==1 || dd==2
+            subplot(1,3,3)
+        else
+            subplot(1,3,2)
+        end
         imagesc(polarDensity)
         axis square
         axis off
         title('filter center; polar')
-
+        
         % Calculate the support in degrees for the polar image
-        supportDeg = (1:polarDim)./(pixelsperdegree*downSample*4);        
+        supportDeg = (1:polarDim)./(pixelsperdegree*downSample*4);
         
         % Remove decreasing components close to the fovea in the confocal
         % images
@@ -248,6 +261,39 @@ for dd = 3:3
             polarDensity(nn,1:threshIdx(nn))=nan;
         end
         
+        % For the fovea data, find the blob of pixels around the highest
+        % value
+        if dd==3
+            [maxH,idx]=max(polarDensity(:));
+            H = maxH/2;
+            stillSearching = true;
+            nonNanDensity = polarDensity;
+            nonNanDensity(isnan(nonNanDensity))=0;
+            while stillSearching
+                foveaIsland = nonNanDensity;
+                foveaIsland(foveaIsland<=H)=0;
+                foveaIsland(foveaIsland>H)=1;
+                CC = bwconncomp(foveaIsland);
+                [val,idx]=max(cellfun(@(x) length(x),CC.PixelIdxList));
+                if val<foveaIslandSizePixels
+                    stillSearching = false;
+                    foveaIsland = zeros(size(nonNanDensity));
+                    foveaIsland(CC.PixelIdxList{idx})=1;
+                    polarDensity(foveaIsland==0)=0;
+                    polarDensity(polarDensity==0)=nan;
+                    % Show the fovea blob
+                    subplot(1,3,3)
+                    imagesc(polarDensity)
+                    axis square
+                    axis off
+                    title('foveal blob, polar')
+                    drawnow
+                else
+                    H = H + (maxH/2)./100;
+                end
+            end
+        end
+        
         % Store the data
         data = [];
         data.meta.subName = subName;
@@ -265,17 +311,17 @@ for dd = 3:3
         % Save the data file
         fileName = fullfile('densityAnalysis',[subName tagName '.mat']);
         save(fileName,'data','-v7.3');
-
+        
         % Save the foveaCoordsStore
         fileName = fullfile('densityAnalysis','foveaCoordStore.mat');
         save(fileName,'foveaCoordStore');
-
+        
         % Save the diagnostic image
         fileName = fullfile('densityAnalysis',[subName tagName '.png']);
         saveas(figHandle,fileName)
         
         % Close the image
-        %close(figHandle);
+        close(figHandle);
         
         % Clear the data file
         clear data
