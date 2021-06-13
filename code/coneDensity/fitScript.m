@@ -22,8 +22,8 @@ supportDegDelta = 0.0078;
 conStart = 0.75;
 conStop = 1.5;
 splitStart = 1.75;
-foveaStart = 0;
-foveaStop = 0.75;
+foveaStart = 0.25;
+foveaStop = 0.5;
 
 % Define the eccentricity support, and the ranges (in degrees) that will be
 % used for the confocal and split detecton data sets
@@ -75,8 +75,8 @@ for ss = 1:length(subNames)
     hasFovea = false;
     if isfile(foveaFile)
         load(foveaFile,'data');
-        foveaBit = data.polarDensity(:,idxD:idxE);
-        y(:,idxD:idxE) = foveaBit;
+        foveaBit = data.polarDensity(:,1:idxE);
+        y(:,1:idxE) = foveaBit;
         if sum(~isnan(foveaBit(:)))>0
             hasFovea = true;
         end
@@ -93,9 +93,13 @@ for ss = 1:length(subNames)
 end
 
 
-% Fit the mean
+% Fit the mean. We remove value very close to the fovea as not all subjects
+% have these, leading to a bias of the mean close to the fovea towards
+% those subjects with lower cone densities.
 Y = nanmean(dataMat,3);
 w = sum(~isnan(dataMat),3);
+Y(:,1:idxD)=nan;
+Y(:,1:idxD)=0;
 [p0, Yfit, fVal] = fitDensitySurface(Y,w,false,false);
 
 
