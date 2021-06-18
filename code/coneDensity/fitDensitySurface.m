@@ -1,4 +1,4 @@
-function [p, Yfit, fVal] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
+function [p, Yfit, fVal] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,useAsymptoteConstraint,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
 % Fit a multi-parameter surface to cone density data
 %
 % Syntax:
@@ -59,11 +59,12 @@ arguments
     w (:,:) {mustBeNumeric} = ones(size(Y))
     preFitAvgEccen (1,1) = true;
     simplePolarModel (1,1) = true;
+    useAsymptoteConstraint (1,1) = false;
     p0 (1,20) {mustBeNumeric} = [1.4484e+03, -0.0825, 9.3044e+03, -1.3022, 31.8197, 0.0617, 8.9892, 0.1614, 0, 0.0601, 5.2897, 1.0714, -9.2917, 0.0958, 4.0656, 0.4412, -3.3665, 0.1081, 2.8328, 1.999]
     supportDeg (1,:) {mustBeNumeric} = 0:0.0078:0.0078*(size(Y,1)-1)
     maxSupportDeg (1,1) {mustBeNumeric} = 15
-    refEccen (1,1) = 30 
-    refDensity (1,1) = 500
+    refEccen (1,1) = 12 
+    refDensity (1,1) = 600
 end
 
 %% pBlock and mBlock settings
@@ -76,7 +77,7 @@ pBlockLB = [0,-5,0,-5];
 pBlockUB = [5e4,0,5e4,0];
 
 mBlockLB = [-35 0 2 0.01];
-mBlockUB = [35 1 20 2];
+mBlockUB = [35 1 25 2];
 
 % The number of Fourier components that models variation across polar angle
 nFourier = 4;
@@ -149,7 +150,11 @@ else
 end
 
 % non-linear constraint for the asymptotic cone density
+if useAsymptoteConstraint
 myNonlcon = @(p) asymptoteDensity(p,refEccen,refDensity);
+else
+    myNonlcon = [];
+end
 
 % search
 options = optimoptions('fmincon','Display','off','Algorithm','interior-point','UseParallel',true);

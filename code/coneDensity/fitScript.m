@@ -100,7 +100,7 @@ Y = nanmean(dataMat,3);
 w = sum(~isnan(dataMat),3);
 Y(:,1:idxD)=nan;
 w(:,1:idxD)=0;
-[p0, Yfit, fVal] = fitDensitySurface(Y,w,false,false);
+[p0, Yfit, fVal] = fitDensitySurface(Y,w,false,false,true);
 
 
 %% plot
@@ -151,6 +151,7 @@ end
 plotFileName = fullfile(sourceDir,'figures','Fig0X_polarModulationModel.pdf');
 saveas(gcf,plotFileName);
 
+
 % Illustrate the model surface components
 figure
 for cc = 1:4
@@ -178,6 +179,7 @@ for cc = 1:4
 end
 plotFileName = fullfile(sourceDir,'figures','Fig0X_polarModulationModelWithGamma.pdf');
 saveas(gcf,plotFileName);
+
 
 % Illustrate the model surface components
 figure
@@ -210,7 +212,7 @@ cartY = convertPolarMapToImageMap(Y,'imRdim',imRdim);
 cartY(cartY<min([Y(:); Yfit(:)]))=nan;
 surf(cartXDeg,cartYDeg,cartYfit,'FaceAlpha',0.5,'EdgeColor','none');
 hold on
-%plot3(cartXDeg(:),cartYDeg(:),cartY(:),'.k')
+plot3(cartXDeg(:),cartYDeg(:),cartY(:),'.k')
 xlabel('Eccentricity [deg]');
 ylabel('Eccentricity [deg]');
 zlabel('Density [cones/deg^2]');
@@ -311,7 +313,7 @@ for ii = 1:length(subNames)
     end
     Y1 = squeeze(dataMat(:,:,ii));
     fprintf([num2str(ii),'...']);
-    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii)] = fitDensitySurface(Y1,w1,true,true,p0);
+    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii)] = fitDensitySurface(Y1,w1,true,true,false,p0);
 end
 fprintf('done\n');
 
