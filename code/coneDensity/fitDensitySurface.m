@@ -64,7 +64,7 @@ arguments
     supportDeg (1,:) {mustBeNumeric} = 0:0.0078:0.0078*(size(Y,1)-1)
     maxSupportDeg (1,1) {mustBeNumeric} = 15
     refEccen (1,1) = 12 
-    refDensity (1,1) = 600
+    refDensity (1,1) = 550
 end
 
 %% pBlock and mBlock settings
@@ -77,7 +77,7 @@ pBlockLB = [0,-5,0,-5];
 pBlockUB = [5e4,0,5e4,0];
 
 mBlockLB = [-35 0 2 0.01];
-mBlockUB = [35 1 25 2];
+mBlockUB = [35 1 25 3];
 
 % The number of Fourier components that models variation across polar angle
 nFourier = 4;
