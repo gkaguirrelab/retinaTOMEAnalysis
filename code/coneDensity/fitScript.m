@@ -22,7 +22,7 @@ supportDegDelta = 0.0078;
 conStart = 0.75;
 conStop = 1.5;
 splitStart = 1.75;
-foveaStart = 0.25;
+foveaStart = 0.3;
 foveaStop = 0.5;
 
 % Define the eccentricity support, and the ranges (in degrees) that will be
@@ -99,7 +99,7 @@ end
 Y = nanmean(dataMat,3);
 w = sum(~isnan(dataMat),3);
 Y(:,1:idxD)=nan;
-Y(:,1:idxD)=0;
+w(:,1:idxD)=0;
 [p0, Yfit, fVal] = fitDensitySurface(Y,w,false,false);
 
 
@@ -217,6 +217,7 @@ zlabel('Density [cones/deg^2]');
 view(-140,22)
 plotFileName = fullfile(sourceDir,'figures','Fig02_meanModelFitCartesian.pdf');
 saveas(gcf,plotFileName);
+
 
 % Polar angle density variation
 figure
@@ -375,8 +376,9 @@ for ss=1:length(subNames)
     Y = squeeze(dataMat(:,:,ss));
     Yfit = squeeze(YfitSet(:,:,ss));
     p = pSet(:,ss);
+
+    figHandle = figure();
     
-    figure
     for ii = [0.375 0.75 1.5 3 6 10]
         idx = find(supportDeg>ii,1);
         semilogy(Y(:,idx),'.');
@@ -389,8 +391,12 @@ for ss=1:length(subNames)
     ylim([10^2,10^4]);
     ylabel('log_1_0 density [cones/deg^2]')
     
+    plotFileName = fullfile(sourceDir,'figures','subjects',[subNames{ss} '_polarModelFit.pdf']);
+    saveas(figHandle,plotFileName);
+    close(figHandle);
+
+    figHandle = figure();
     
-    figure
     for mm=1:4
         subplot(2,2,mm)
         plot(supportDeg,Y(round((meridianAngles(mm))*polarRatio+1),:),'.k');
@@ -400,7 +406,11 @@ for ss=1:length(subNames)
         ylabel('Density [cones/deg^2]');
         title(meridianLabels{mm});
     end
+
+    plotFileName = fullfile(sourceDir,'figures','subjects',[subNames{ss} '_MeridianModelFit.pdf']);
+    saveas(figHandle,plotFileName);
+    close(figHandle);
+
     
-    pause
 end
 

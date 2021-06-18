@@ -1,4 +1,4 @@
-function [p, Yfit, fVal] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,p0,supportDeg,maxSupportDeg)
+function [p, Yfit, fVal] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
 % Fit a multi-parameter surface to cone density data
 %
 % Syntax:
@@ -62,6 +62,8 @@ arguments
     p0 (1,20) {mustBeNumeric} = [1.4484e+03, -0.0825, 9.3044e+03, -1.3022, 31.8197, 0.0617, 8.9892, 0.1614, 0, 0.0601, 5.2897, 1.0714, -9.2917, 0.0958, 4.0656, 0.4412, -3.3665, 0.1081, 2.8328, 1.999]
     supportDeg (1,:) {mustBeNumeric} = 0:0.0078:0.0078*(size(Y,1)-1)
     maxSupportDeg (1,1) {mustBeNumeric} = 15
+    refEccen (1,1) = 30 
+    refDensity (1,1) = 500
 end
 
 %% pBlock and mBlock settings
@@ -146,9 +148,12 @@ else
     
 end
 
+% non-linear constraint for the asymptotic cone density
+myNonlcon = @(p) asymptoteDensity(p,refEccen,refDensity);
+
 % search
 options = optimoptions('fmincon','Display','off','Algorithm','interior-point','UseParallel',true);
-[p, fVal] = fmincon(myObj,p0,[],[],[],[],lb,ub,[],options);
+[p, fVal] = fmincon(myObj,p0,[],[],[],[],lb,ub,myNonlcon,options);
 
 if simplePolarModel
     p = pFull(p);
@@ -158,6 +163,22 @@ end
 Yfit = nan(supportLength,supportLength);
 Yfit(:,:)=coneDensityModel(X,P,maxSupportDeg,p);
 
-
 end
 
+
+function [c,ceq] = asymptoteDensity(p,refEccen,refDensity)
+
+% Decompose p into individual variables
+a = p(1);   % scale first exponential
+b = p(2);   % time constant first exponential
+c = p(3);   % scale second exponential
+d = p(4);   % time constant second exponential
+
+% The modeled density at the reference eccentricity
+density = (a.*exp(b.*refEccen)+c.*exp(d.*refEccen));
+
+% Constraint to keep density close to the reference density
+ceq = density - refDensity;
+c = [];
+
+end
