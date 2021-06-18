@@ -300,29 +300,6 @@ saveas(gcf,plotFileName);
 
 
 
-%% Fit each subject with the reduced model
-pSet = nan(20,length(subNames));
-YfitSet = nan(size(dataMat));
-fValSet= nan(1,length(subNames));
-
-fprintf('fitting...');
-w1 = ones(size(Y));
-for ii = 1:length(subNames)
-    if missingSplit(ii)
-        continue
-    end
-    Y1 = squeeze(dataMat(:,:,ii));
-    fprintf([num2str(ii),'...']);
-    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii)] = fitDensitySurface(Y1,w1,true,true,false,p0);
-end
-fprintf('done\n');
-
-% Save the individual subject fits
-individualFitFile = fullfile(sourceDir,'individualSubjectFits.mat');
-save(individualFitFile,'pSet','YfitSet','fValSet')
-
-
-
 %% Plot the Curcio values
 figure
 figure
@@ -338,6 +315,29 @@ legend(meridianLabels(1:4));
 plotFileName = fullfile(sourceDir,'figures','Fig0x_CurcioValues.pdf');
 saveas(gcf,plotFileName);
 
+
+
+
+%% Fit each subject with the reduced model
+pSet = nan(20,length(subNames));
+YfitSet = nan(size(dataMat));
+fValSet= nan(1,length(subNames));
+
+fprintf('fitting...');
+w1 = ones(size(Y));
+for ii = 1:length(subNames)
+    if missingSplit(ii)
+        continue
+    end
+    Y1 = squeeze(dataMat(:,:,ii));
+    fprintf([num2str(ii),'...']);
+    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii)] = fitDensitySurface(Y1,w1,true,true,true,p0);
+end
+fprintf('done\n');
+
+% Save the individual subject fits
+individualFitFile = fullfile(sourceDir,'individualSubjectFits.mat');
+save(individualFitFile,'pSet','YfitSet','fValSet')
 
 
 %% Plot the fit on the nasal meridian for each subject
