@@ -378,7 +378,27 @@ for ss=1:length(subNames)
     Y = squeeze(dataMat(:,:,ss));
     Yfit = squeeze(YfitSet(:,:,ss));
     p = pSet(:,ss);
-
+    
+    
+    
+    % Mean polar data and model fit
+    figHandle = figure();
+    X = repmat(supportDeg,supportLength,1);
+    P = repmat(linspace(0,360,supportLength)',1,supportLength);
+    surf(X,P,Yfit,'FaceAlpha',0.5,'EdgeColor','none');
+    hold on
+    plot3(X(:),P(:),Y(:),'.k')
+    yticks(meridianAngles);
+    yticklabels(meridianLabels);
+    xlabel('Eccentricity [deg]');
+    zlabel('Density [cones/deg^2]');
+    view(45,15)
+    plotFileName = fullfile(sourceDir,'figures','subjects',[subNames{ss} '_polarSurface.pdf']);
+    saveas(figHandle,plotFileName);
+    close(figHandle);
+    
+    
+    % Polar bands and model fit
     figHandle = figure();
     
     for ii = [0.375 0.75 1.5 3 6 10]
@@ -396,7 +416,8 @@ for ss=1:length(subNames)
     plotFileName = fullfile(sourceDir,'figures','subjects',[subNames{ss} '_polarModelFit.pdf']);
     saveas(figHandle,plotFileName);
     close(figHandle);
-
+    
+    % Plot by meridian
     figHandle = figure();
     
     for mm=1:4
@@ -408,11 +429,11 @@ for ss=1:length(subNames)
         ylabel('Density [cones/deg^2]');
         title(meridianLabels{mm});
     end
-
+    
     plotFileName = fullfile(sourceDir,'figures','subjects',[subNames{ss} '_MeridianModelFit.pdf']);
     saveas(figHandle,plotFileName);
     close(figHandle);
-
+    
     
 end
 
