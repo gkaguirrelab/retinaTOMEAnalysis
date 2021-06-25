@@ -1,4 +1,4 @@
-function [p, Yfit, fVal] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,useAsymptoteConstraint,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
+function [p, Yfit, fVal, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,useAsymptoteConstraint,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
 % Fit a multi-parameter surface to cone density data
 %
 % Syntax:
@@ -6,7 +6,7 @@ function [p, Yfit, fVal] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel
 %
 % Description:
 %   A model of cone density across eccentricity and polar angle.
-%   Variationin density across eccentricity is modeled as the sum of two
+%   Variation in density across eccentricity is modeled as the sum of two
 %   exponentials, and thus four parameters. Variation across polar angle is
 %   modeled as a multiplicative adjustment of density as a function of
 %   polar angle under the control of Fourier functions. These
@@ -52,6 +52,11 @@ function [p, Yfit, fVal] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel
 %   p                     - 1x20 vector. The parameters of the model fit.
 %   Yfit                  - nxn matrix. The model fit
 %   fVal                  - Scalar. The fit error.
+%   polarMultiplier       - Scalar. When simplePolarModel is set to true,
+%                           this is the multiplicative scaler that is
+%                           applied to the effect of polar angle upon the
+%                           fit. If simplePolarModel is set to false, then
+%                           this will have a value of nan.
 %
 
 arguments
@@ -161,7 +166,10 @@ options = optimoptions('fmincon','Display','off','Algorithm','interior-point','U
 [p, fVal] = fmincon(myObj,p0,[],[],[],[],lb,ub,myNonlcon,options);
 
 if simplePolarModel
+    polarMultiplier = p(6);
     p = pFull(p);
+else
+    polarMultiplier = nan;
 end
 
 % generate the model fit
