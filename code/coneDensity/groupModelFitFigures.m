@@ -160,7 +160,7 @@ xticklabels(0:1:floor(maxSupportDeg));
 xlabel('Eccentricity [deg]');
 colorbar
 title('Weight map');
-plotFileName = fullfile(sourceDir,'figures','Fig0X_nSubjectWeightMapPolar.pdf');
+plotFileName = fullfile(sourceDir,'figures','Fig07_nSubjectWeightMapPolar.pdf');
 saveas(gcf,plotFileName);
 
 
