@@ -7,8 +7,8 @@ function fixelAnalysisMain(varargin)
 
 %% Set the dropboxBaseDir
 % We need this for the default loations of some the directories
-% dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
-dropboxBaseDir='C:\Users\ozenc\Dropbox (Aguirre-Brainard Lab)';
+dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
+% dropboxBaseDir='/home/ozzy/Dropbox (Aguirre-Brainard Lab)';
 
 %% Parse vargin
 p = inputParser;
@@ -248,7 +248,7 @@ for sub = 1:subjectLength
         fclose(fid);
         
         % Load bayes varea images and calculate volume from V1 voxels
-        image = MRIRead(bayesPrfSaveName);
+        image = MRIread(bayesPrfSaveName);
         voxelVolume = prod(image.volres);
         numberOfV1Voxels = sum(image.vol(:) == 1);
         V1Vol = numberOfV1Voxels * voxelVolume;
@@ -289,11 +289,11 @@ for ff = 1:length(fixelSet)
 end
 
 % Variables to compare 
-fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'intracranialVol', 'LGN', 'meanAdjustedGCVol'};
+fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'intracranialVol', 'LGN', 'meanAdjustedGCVol', 'V1volume'};
 fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TOME_ID),:),fixelTable,'Keys','TOME_ID');
 
 % Variables to compare against
-measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender','intracranialVol','LGN'};
+measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender','intracranialVol','LGN', 'V1volume'};
 
 %% Report the correlation of fixel values with RGC values
 for ff = 1:length(fixelSet)
