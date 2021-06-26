@@ -173,7 +173,6 @@ subjectNames = [];
 intracranialVol = [];
 leftLGN = [];
 rightLGN = [];
-V1volume = [];
 
 % Loop through subjects
 for sub = 1:subjectLength
@@ -247,12 +246,7 @@ for sub = 1:subjectLength
         rightLGN = [rightLGN; rightLGNVal];
         fclose(fid);
         
-        % Load bayes varea images and calculate volume from V1 voxels
-        image = MRIRead(bayesPrfSaveName);
-        voxelVolume = prod(image.volres);
-        numberOfV1Voxels = sum(image.vol(:) == 1);
-        V1Vol = numberOfV1Voxels * voxelVolume;
-        V1volume = [V1volume; V1Vol];
+        % Load Nifti
     end
 end
 
@@ -271,11 +265,7 @@ LGNTable.Properties.VariableNames{2} = 'left_LGN';
 LGNTable.Properties.VariableNames{3} = 'right_LGN';
 fixelTable=join(fixelTable,LGNTable);
 
-% Combine subject and V1 volume in a table and sort rows.
-V1Table = table(subjectNames, V1volume);
-V1Table = sortrows(V1Table);
-V1Table.Properties.VariableNames{1} = 'TOME_ID';
-fixelTable=join(fixelTable,V1Table);
+
 
 %% Correlation of left right
 fixelSet = {'fc_','fd_','fdc', 'FA', 'MD'};
