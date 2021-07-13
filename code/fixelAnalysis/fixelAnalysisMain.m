@@ -312,6 +312,7 @@ V1Table.Properties.VariableNames{1} = 'TOME_ID';
 fixelTable=join(fixelTable,V1Table);
 
 %% Correlation of left right
+fprintf('\n<strong>Correlation of left right hemisphere measurements of diffusion variables\n</strong>')
 fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation'};
 for ff = 1:length(fixelSet)
     % Report the correlation of left and right
@@ -322,6 +323,7 @@ for ff = 1:length(fixelSet)
     fixelTable.(fixelSet{ff}) = mean([fixelValR, fixelValL],2);
 end
 
+%% Report the correlation of fixel values with RGC values
 % Variables to compare 
 fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'intracranialVol', 'LGN', 'meanAdjustedGCVol', 'V1volume'};
 fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TOME_ID),:),fixelTable,'Keys','TOME_ID');
@@ -329,7 +331,7 @@ fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TO
 % Variables to compare against
 measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender','intracranialVol','LGN', 'V1volume'};
 
-%% Report the correlation of fixel values with RGC values
+fprintf('\n<strong>Correlation of each variable\n</strong>')
 for ff = 1:length(fixelSet)
     y = fixelComparisonTable.(fixelSet{ff});
     nBoots = 1000;
@@ -382,18 +384,8 @@ for ff = 1:length(fixelSet)
     ValicvR = [];
 end    
 
-%% Partial Correlations
-fprintf('\nPartial correlations\n')
-controlFor = {'Height_inches','Weight_pounds','intracranialVol'};
-for ii = 1:length(controlFor)
-    [rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, fixelComparisonTable.(controlFor{ii}));
-    fprintf(['Partial correlation FC with meanAdjustedGCVol controlled for ' controlFor{ii} ': ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
-end
-for ii = 1:length(controlFor)
-    [rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fd_, fixelComparisonTable.(controlFor{ii}));
-    fprintf(['Partial correlation FD with meanAdjustedGCVol controlled for ' controlFor{ii} ': ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n']) 
-end
-
+%% Report partial correlation results
+% Reshape gender matrix so Males will be one and females will be zero
 genderMatrix = fixelComparisonTable.Gender;
 for ii = 1:length(genderMatrix)
     if strcmp(genderMatrix{ii}, 'M')
@@ -402,66 +394,99 @@ for ii = 1:length(genderMatrix)
         genderMatrix{ii} = 0;
     end
 end
-        
-% sizeMatrixFC = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol cell2mat(genderMatrix)];
-sizeMatrixFC = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol];
-[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, sizeMatrixFC);
-fprintf(['\nPartial correlation FC with meanAdjustedGCVol controlled for height,weight,ICV: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
+genderMatrix = cell2mat(genderMatrix);
 
-% sizeMatrixFD = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol cell2mat(genderMatrix)];
-sizeMatrixFD = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol];
-[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fd_, sizeMatrixFD);
-fprintf(['\nPartial correlation FD with meanAdjustedGCVol controlled for height,weight,ICV: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
+% Define size matrix 
+sizeMatrix = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.intracranialVol, genderMatrix];
 
-% Make controlled correlation plot for FC
-tableFCvsSize = fitlm(sizeMatrixFC, fixelComparisonTable.fc_);
-FCResiduals = tableFCvsSize.Residuals.Pearson;
+fprintf('\n<strong>Correlation of GC volume with all structures</strong>')
+[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, sizeMatrix);
+fprintf(['\nPartial correlation meanAdjustedGCVol with opticTractFC controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.LGN, sizeMatrix);
+fprintf(['\nPartial correlation meanAdjustedGCVol with LGN controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_opticRadiation, sizeMatrix);
+fprintf(['\nPartial correlation meanAdjustedGCVol with opticRadiationFC controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.V1volume, sizeMatrix);
+fprintf(['\nPartial correlation meanAdjustedGCVol with V1Volume controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
 
-tableGCvsSize = fitlm(sizeMatrixFC, fixelComparisonTable.meanAdjustedGCVol);
-GCResidualsFC = tableGCvsSize.Residuals.Pearson;
+fprintf('\n<strong>Correlation of adjacent structures</strong>')
+[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, sizeMatrix);
+fprintf(['\nPartial correlation meanAdjustedGCVol with opticTractFC controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+[rho, pval] = partialcorr(fixelComparisonTable.fc_, fixelComparisonTable.LGN, sizeMatrix);
+fprintf(['\nPartial correlation opticTractFC with LGN controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+[rho, pval] = partialcorr(fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, sizeMatrix);
+fprintf(['\nPartial correlation LGN with OpticRadiationFC controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+[rho, pval] = partialcorr(fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1volume, sizeMatrix);
+fprintf(['\nPartial correlation OpticRadiationFC with V1 Volume controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
 
-[R,pval] = corrcoef(GCResidualsFC, FCResiduals);
-figure;
-% add first plot in 2 x 1 grid    
-scatter(GCResidualsFC, FCResiduals, 'MarkerFaceColor', 'k');
-xlabel ('Relative GC volume to size');
-ylabel('Relative optic tract FC to size');
-title('FC vs MeanGC controlled for height/weight/ICV')
-box 'on'
-axis square;
-set(gca,'Ticklength',[0 0])
-%white background
-set(gcf,'color','w');
-refline
-theStringR = sprintf(['R=' ' ' num2str(sprintf('%.3f', R(1,2)))], GCResidualsFC,  FCResiduals);
-theStringP = sprintf(['P=' ' ' num2str(sprintf('%.3f', pval(1,2)))], GCResidualsFC,  FCResiduals);
-text(1.8, -2, theStringR, 'FontSize', 10);
-text(1.8, -2.2, theStringP, 'FontSize', 10);
+%% Controlled correlation plots showing the correlation of adjacent regions
+x = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation];
+y = [fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1volume];
+xName = {'meanAdjustedGCVol', 'OpticTractFC', 'LGN Volume', 'OpticRadiationFC'};
+yName = {'OpticTractFC','LGN Volume', 'OpticRadiationFC', 'V1 Volume'}; 
 
-% Make controlled correlation map for FD
-tableFDvsSize = fitlm(sizeMatrixFD, fixelComparisonTable.fd_);
-FDResiduals = tableFDvsSize.Residuals.Pearson;
+for ii = 1:length(xName)
+    corrTablex = fitlm(sizeMatrix, x(1:end, ii));
+    residualsx = corrTablex.Residuals.Pearson;
 
-tableGCvsSize = fitlm(sizeMatrixFD, fixelComparisonTable.meanAdjustedGCVol);
-GCResidualsFD = tableGCvsSize.Residuals.Pearson;
+    corrTabley = fitlm(sizeMatrix, y(1:end, ii));
+    residualsy = corrTabley.Residuals.Pearson;
 
-[R,pval] = corrcoef(GCResidualsFD, FDResiduals);
-figure;
-% add first plot in 2 x 1 grid    
-scatter(GCResidualsFD, FDResiduals, 'MarkerFaceColor', 'k');
-xlabel ('Relative GC volume to size');
-ylabel('Relative mean optic tract FD to size');
-title('FD vs MeanGC controlled for height/weight/ICV/Gender')
-box 'on'
-axis square;
-set(gca,'Ticklength',[0 0])
-%white background
-set(gcf,'color','w');
-refline
-theStringR = sprintf(['R=' ' ' num2str(sprintf('%.3f', R(1,2)))], GCResidualsFD,  FDResiduals);
-theStringP = sprintf(['P=' ' ' num2str(sprintf('%.3f', pval(1,2)))], GCResidualsFD,  FDResiduals);
-text(1.5, -2.5, theStringR, 'FontSize', 10);
-text(1.5, -2.8, theStringP, 'FontSize', 10);
+    [R,pval] = corrcoef(residualsx, residualsy);
+    figure;
+    % add first plot in 2 x 1 grid    
+    scatter(residualsx, residualsy, 'MarkerFaceColor', 'k');
+    xlim([-3 3])
+    ylim([-3 3])
+    xlabel(['Relative ' xName(ii) ' to size']);
+    ylabel(['Relative ' yName(ii) ' to size']);
+    title([xName(ii) ' vs ' yName(ii) ' controlled for height/weight/ICV/Gender'])
+    box 'on'
+    axis square;
+    set(gca,'Ticklength',[0 0])
+    %white background
+    set(gcf,'color','w');
+    refline
+    theStringR = sprintf(['R=' ' ' num2str(sprintf('%.3f', R(1,2)))], residualsx,  residualsy);
+    theStringP = sprintf(['P=' ' ' num2str(sprintf('%.3f', pval(1,2)))], residualsx,  residualsy);
+    text(1, -2, theStringR, 'FontSize', 10);
+    text(1, -2.2, theStringP, 'FontSize', 10);
+end
+
+%% Controlled correlation plots showing the correlation between GC and everything else
+x = [fixelComparisonTable.meanAdjustedGCVol,fixelComparisonTable.meanAdjustedGCVol,fixelComparisonTable.meanAdjustedGCVol,fixelComparisonTable.meanAdjustedGCVol];
+y = [fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1volume];
+xName = {'meanAdjustedGCVol', 'meanAdjustedGCVol', 'meanAdjustedGCVol', 'meanAdjustedGCVol'};
+yName = {'OpticTractFC','LGN Volume', 'OpticRadiationFC', 'V1 Volume'}; 
+
+for ii = 1:length(xName)
+    corrTablex = fitlm(sizeMatrix, x(1:end, ii));
+    residualsx = corrTablex.Residuals.Pearson;
+
+    corrTabley = fitlm(sizeMatrix, y(1:end, ii));
+    residualsy = corrTabley.Residuals.Pearson;
+
+    [R,pval] = corrcoef(residualsx, residualsy);
+    figure;
+    % add first plot in 2 x 1 grid    
+    scatter(residualsx, residualsy, 'MarkerFaceColor', 'k');
+    xlim([-3 3])
+    ylim([-3 3])
+    xlabel(['Relative ' xName(ii) ' to size']);
+    ylabel(['Relative ' yName(ii) ' to size']);
+    title([xName(ii) ' vs ' yName(ii) ' controlled for height/weight/ICV/Gender'])
+    box 'on'
+    axis square;
+    set(gca,'Ticklength',[0 0])
+    %white background
+    set(gcf,'color','w');
+    refline
+    theStringR = sprintf(['R=' ' ' num2str(sprintf('%.3f', R(1,2)))], residualsx,  residualsy);
+    theStringP = sprintf(['P=' ' ' num2str(sprintf('%.3f', pval(1,2)))], residualsx,  residualsy);
+    text(1, -2, theStringR, 'FontSize', 10);
+    text(1, -2.2, theStringP, 'FontSize', 10);
+end
+
 %% Model fc by GC values
 
 y = log10(fixelComparisonTable.fc_);
