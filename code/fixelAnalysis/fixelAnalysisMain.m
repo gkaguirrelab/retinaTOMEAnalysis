@@ -7,8 +7,8 @@ function fixelAnalysisMain(varargin)
 
 %% Set the dropboxBaseDir
 % We need this for the default loations of some the directories
-dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
-% dropboxBaseDir='/home/ozzy/Dropbox (Aguirre-Brainard Lab)';
+% dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
+dropboxBaseDir='/home/ozzy/Dropbox (Aguirre-Brainard Lab)';
 
 %% Parse vargin
 p = inputParser;
@@ -45,7 +45,6 @@ else
 end
 
 nDimsToUse = 6; % number of PCA components to use.
-
 
 % Concatenate the horizontal and vertical for the purposes of the PCA
 % analysis and axial length correction
@@ -125,6 +124,41 @@ fixelTable.TOME_ID = strrep(fixelTable.TOME_ID,'fod_','');
 
 % Sort rows by subject ID, so that it will be easier to add other measures
 fixelTable = sortrows(fixelTable);
+
+% Right then left optic radiation
+laterality = {'right','left'};
+analysisIDs = {'60ed117b6d2438c15c96c6bd','60ed1153dcf573726496c77d'};
+fileNames = {'fc_stats.csv','fd_stats.csv','fdc_stats.csv'};
+for ll = 1:length(laterality)
+    for ff = 1:length(fileNames)
+        opticRadiationFolder = fullfile(p.Results.fixelDataDir, 'opticRadiation');
+        if ~exist(opticRadiationFolder, 'dir')
+            system(['mkdir' ' ' opticRadiationFolder]);
+        end
+        saveName = fullfile(opticRadiationFolder,[laterality{ll} '_opticRadiation_' fileNames{ff}]);
+        fw.downloadOutputFromAnalysis(analysisIDs{ll},fileNames{ff},saveName);
+        
+        % Now load the file
+        opts = detectImportOptions(saveName);
+        fixelData = readtable(saveName, opts);
+        if ll==1 && ff==1
+            fixelTableRadiation = fixelData(:,1:2);
+            fixelTableRadiation.Properties.VariableNames{2} = [laterality{ll} '_' fileNames{ff}(1:3) 'opticRadiation'];
+        else
+            subTable = fixelData(:,1:2);
+            subTable.Properties.VariableNames{2} = [laterality{ll} '_' fileNames{ff}(1:3) 'opticRadiation'];
+            fixelTableRadiation=join(fixelTableRadiation,subTable);
+        end
+    end
+end
+
+% Massage the fixelTable to match up with the comboTable
+fixelTableRadiation.Properties.VariableNames{1} = 'TOME_ID';
+fixelTableRadiation.TOME_ID = strrep(fixelTableRadiation.TOME_ID,'fod_','');
+
+% Sort rows by subject ID, so that it will be easier to add other measures
+fixelTableRadiation = sortrows(fixelTableRadiation);
+fixelTable = join(fixelTable, fixelTableRadiation);
 
 % Add FA and MD to the fixeltable 
 laterality = {'right','left','right','left'};
@@ -278,7 +312,7 @@ V1Table.Properties.VariableNames{1} = 'TOME_ID';
 fixelTable=join(fixelTable,V1Table);
 
 %% Correlation of left right
-fixelSet = {'fc_','fd_','fdc', 'FA', 'MD'};
+fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation'};
 for ff = 1:length(fixelSet)
     % Report the correlation of left and right
     fixelValR = fixelTable.(['right_' fixelSet{ff}]);
@@ -289,7 +323,7 @@ for ff = 1:length(fixelSet)
 end
 
 % Variables to compare 
-fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'intracranialVol', 'LGN', 'meanAdjustedGCVol', 'V1volume'};
+fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'intracranialVol', 'LGN', 'meanAdjustedGCVol', 'V1volume'};
 fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TOME_ID),:),fixelTable,'Keys','TOME_ID');
 
 % Variables to compare against
