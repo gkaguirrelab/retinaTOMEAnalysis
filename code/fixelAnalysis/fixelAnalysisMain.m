@@ -224,7 +224,8 @@ for sub = 1:subjectLength
         subjectNames = [subjectNames; {subjectLabel}];
         asegSaveName = fullfile(subjectFolder,[subjectLabel '_aseg.stats']);
         LGNSaveName = fullfile(subjectFolder,[subjectLabel '_ThalamicNuclei.v12.T1.volumes.txt']);
-        bayesPrfSaveName = fullfile(subjectFolder,[subjectLabel '_inferred_varea.mgz']);
+        bayesPrfSaveNameLeft = fullfile(subjectFolder,['lh.' subjectLabel '_inferred_varea.mgz']);
+        bayesPrfSaveNameRight = fullfile(subjectFolder,['rh.' subjectLabel '_inferred_varea.mgz']);
         
         % Do the next block if any of the stat files do not exist in the path
         if ~isfile(asegSaveName) || ~isfile(LGNSaveName) || ~isfile(bayesPrfSaveName)
@@ -257,8 +258,9 @@ for sub = 1:subjectLength
                     if ~isfile(bayesPrfSaveName)
                         if contains(analyses{a,1}.label, 'bayesprf')
                             freesurferAnalysisContainer = analyses{a,1};
-                            zipFile = [subjectLabel '_inferred_volume.zip'];
-                            freesurferAnalysisContainer.downloadFileZipMember(zipFile, 'inferred_varea.mgz', bayesPrfSaveName);
+                            zipFile = [subjectLabel '_inferred_surface.zip'];
+                            freesurferAnalysisContainer.downloadFileZipMember(zipFile, ['lh.' subjectLabel '_inferred_varea.mgz'], bayesPrfSaveNameLeft);
+                            freesurferAnalysisContainer.downloadFileZipMember(zipFile, ['rh.' subjectLabel '_inferred_varea.mgz'], bayesPrfSaveNameRight);
                         end
                     end
                 end
