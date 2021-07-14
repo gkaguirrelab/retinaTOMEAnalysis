@@ -451,6 +451,7 @@ for ii = 1:length(xName)
     theStringP = sprintf(['P=' ' ' num2str(sprintf('%.3f', pval(1,2)))], residualsx,  residualsy);
     text(1, -2, theStringR, 'FontSize', 10);
     text(1, -2.2, theStringP, 'FontSize', 10);
+    
 end
 
 %% Controlled correlation plots showing the correlation between GC and everything else
@@ -485,6 +486,43 @@ for ii = 1:length(xName)
     theStringP = sprintf(['P=' ' ' num2str(sprintf('%.3f', pval(1,2)))], residualsx,  residualsy);
     text(1, -2, theStringR, 'FontSize', 10);
     text(1, -2.2, theStringP, 'FontSize', 10);
+end
+
+%% Mediation value 
+x = [fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation];
+y = [fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1volume];
+z = fixelComparisonTable.meanAdjustedGCVol;
+xName = {'OpticTractFC', 'LGN Volume', 'OpticRadiationFC'};
+yName = {'LGN Volume', 'OpticRadiationFC', 'V1 Volume'}; 
+zName = {'meanAdjustedGCVol','meanAdjustedGCVol','meanAdjustedGCVol'};
+
+corrTablez = fitlm(sizeMatrix, z);
+residualsz = corrTablez.Residuals.Pearson;
+
+for ii = 1:length(xName)
+    corrTablex = fitlm(sizeMatrix, x(1:end, ii));
+    residualsx = corrTablex.Residuals.Pearson;
+
+    corrTabley = fitlm(sizeMatrix, y(1:end, ii));
+    residualsy = corrTabley.Residuals.Pearson;
+    
+    figure
+    mediation(residualsx, residualsy, residualsz, 'plots', 'names', {xName(ii) yName(ii) zName(ii)}, 'dosave')
+    currentFolder = pwd;
+    pathDiagramPng = fullfile(currentFolder, 'Path_DIagram.png');
+    pathDiagramFig = fullfile(currentFolder, 'Path_DIagram.fig');
+    scatterPng = fullfile(currentFolder, 'Mediation_Scatterplots.png');
+    scatterFig = fullfile(currentFolder, 'Mediation_Scatterplots.fig');
+    textFile = fullfile(currentFolder, 'Mediation_Output.txt');
+    mediationPlots = fullfile(p.Results.fixelDataDir, 'mediationPlots');
+    if ~exist(mediationPlots, 'dir')
+        system(['mkdir' ' ' mediationPlots]);
+    end
+    system(['mv ' pathDiagramPng ' ' fullfile(mediationPlots, [x(ii) '_vs_' y(ii) '_PathDiagram' '.png'])])
+    system(['mv ' pathDiagramFig ' ' fullfile(mediationPlots, [x(ii) '_vs_' y(ii) '_PathDiagram' '.fig'])])
+    system(['mv ' scatterPng ' ' fullfile(mediationPlots, [x(ii) '_vs_' y(ii) '_Scatter' '.png'])])
+    system(['mv ' scatterFig ' ' fullfile(mediationPlots, [x(ii) '_vs_' y(ii) '_Scatter' '.fig'])])
+    system(['mv ' textFile ' ' fullfile(mediationPlots, [x(ii) '_vs_' y(ii) '_Output' '.txt'])])
 end
 
 %% Model fc by GC values

@@ -1,0 +1,13 @@
+Mediation scatterplots:
+Replications:   1
+Covariates controlled for in all regressions:   0 predictors
+Additional mediators controlled for in outcome predictions:   1 predictors
+Cannot find figure with tag Slope_Plot to save.  Maybe figure was not created, or it was closed?
+Cannot find figure with tag Histogram_Plot to save.  Maybe figure was not created, or it was closed?
+Cannot find figure with tag HRF_Plot to save.  Maybe figure was not created, or it was closed?
+Cannot find figure with tag Individual Effects to save.  Maybe figure was not created, or it was closed?
+
+ans =
+
+    0.3126   -0.0600    0.6285    0.6098   -0.0187
+
