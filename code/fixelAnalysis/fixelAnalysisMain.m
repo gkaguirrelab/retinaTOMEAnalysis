@@ -492,8 +492,8 @@ end
 x = [fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation];
 y = [fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1volume];
 z = fixelComparisonTable.meanAdjustedGCVol;
-xName = {'OpticTractFC', 'LGN Volume', 'OpticRadiationFC'};
-yName = {'LGN Volume', 'OpticRadiationFC', 'V1 Volume'}; 
+xName = {'OpticTractFC', 'LGNVolume', 'OpticRadiationFC'};
+yName = {'LGNVolume', 'OpticRadiationFC', 'V1Volume'}; 
 zName = {'meanAdjustedGCVol','meanAdjustedGCVol','meanAdjustedGCVol'};
 
 corrTablez = fitlm(sizeMatrix, z);
@@ -506,11 +506,10 @@ for ii = 1:length(xName)
     corrTabley = fitlm(sizeMatrix, y(1:end, ii));
     residualsy = corrTabley.Residuals.Pearson;
     
-    figure
     mediation(residualsx, residualsy, residualsz, 'plots', 'names', {xName(ii) yName(ii) zName(ii)}, 'dosave')
     currentFolder = pwd;
-    pathDiagramPng = fullfile(currentFolder, 'Path_DIagram.png');
-    pathDiagramFig = fullfile(currentFolder, 'Path_DIagram.fig');
+    pathDiagramPng = fullfile(currentFolder, 'Path_Diagram.png');
+    pathDiagramFig = fullfile(currentFolder, 'Path_Diagram.fig');
     scatterPng = fullfile(currentFolder, 'Mediation_Scatterplots.png');
     scatterFig = fullfile(currentFolder, 'Mediation_Scatterplots.fig');
     textFile = fullfile(currentFolder, 'Mediation_Output.txt');
@@ -518,11 +517,11 @@ for ii = 1:length(xName)
     if ~exist(mediationPlots, 'dir')
         system(['mkdir' ' ' mediationPlots]);
     end
-    system(['mv ' pathDiagramPng ' ' fullfile(mediationPlots, [x(ii) '_vs_' y(ii) '_PathDiagram' '.png'])])
-    system(['mv ' pathDiagramFig ' ' fullfile(mediationPlots, [x(ii) '_vs_' y(ii) '_PathDiagram' '.fig'])])
-    system(['mv ' scatterPng ' ' fullfile(mediationPlots, [x(ii) '_vs_' y(ii) '_Scatter' '.png'])])
-    system(['mv ' scatterFig ' ' fullfile(mediationPlots, [x(ii) '_vs_' y(ii) '_Scatter' '.fig'])])
-    system(['mv ' textFile ' ' fullfile(mediationPlots, [x(ii) '_vs_' y(ii) '_Output' '.txt'])])
+    system(['mv ' pathDiagramPng ' ' fullfile(mediationPlots, [xName{ii} '_vs_' yName{ii} '_PathDiagram' '.png'])]);
+    system(['mv ' pathDiagramFig ' ' fullfile(mediationPlots, [xName{ii} '_vs_' yName{ii} '_PathDiagram' '.fig'])]);
+    system(['mv ' scatterPng ' ' fullfile(mediationPlots, [xName{ii} '_vs_' yName{ii} '_Scatter' '.png'])]);
+    system(['mv ' scatterFig ' ' fullfile(mediationPlots, [xName{ii} '_vs_' yName{ii} '_Scatter' '.fig'])]);
+    system(['mv ' textFile ' ' fullfile(mediationPlots, [xName{ii} '_vs_' yName{ii} '_Output' '.txt'])]);
 end
 
 %% Model fc by GC values
