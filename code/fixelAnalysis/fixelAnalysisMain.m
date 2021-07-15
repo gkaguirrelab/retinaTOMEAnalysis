@@ -207,7 +207,8 @@ subjectNames = [];
 intracranialVol = [];
 leftLGN = [];
 rightLGN = [];
-V1volume = [];
+V1surfaceLeft = [];
+V1surfaceRight = [];
 
 % Loop through subjects
 for sub = 1:subjectLength
@@ -223,12 +224,14 @@ for sub = 1:subjectLength
         end
         subjectNames = [subjectNames; {subjectLabel}];
         asegSaveName = fullfile(subjectFolder,[subjectLabel '_aseg.stats']);
+        lhWhite = fullfile(subjectFolder,[subjectLabel '_lh.white']);
+        rhWhite = fullfile(subjectFolder,[subjectLabel '_rh.white']);        
         LGNSaveName = fullfile(subjectFolder,[subjectLabel '_ThalamicNuclei.v12.T1.volumes.txt']);
         bayesPrfSaveNameLeft = fullfile(subjectFolder,['lh.' subjectLabel '_inferred_varea.mgz']);
         bayesPrfSaveNameRight = fullfile(subjectFolder,['rh.' subjectLabel '_inferred_varea.mgz']);
         
         % Do the next block if any of the stat files do not exist in the path
-        if ~isfile(asegSaveName) || ~isfile(LGNSaveName) || ~isfile(bayesPrfSaveName)
+        if ~isfile(asegSaveName) || ~isfile(LGNSaveName) || ~isfile(bayesPrfSaveNameLeft) || ~isfile(lhWhite)
             sessions = subject.sessions();
             for ses = 1:length(sessions)
                 session = sessions{ses,1};
@@ -236,13 +239,15 @@ for sub = 1:subjectLength
                 analyses = session.analyses();
                 for a = 1:length(analyses)
                     % Find analyses that contain freesurfer in the name
-                    if ~isfile(asegSaveName)
+                    if ~isfile(asegSaveName) || ~isfile(lhWhite) || ~isfile(rhWhite)
                         if contains(analyses{a,1}.label, 'freesurfer')  
                             freesurferAnalysisContainer = analyses{a,1};
                             analysisIdTag = freesurferAnalysisContainer.id;
                             zipFile = ['freesurfer-recon-all_' subjectLabel '_' analysisIdTag '.zip'];  
                             % Download only the aseg files from the whole zip
                             freesurferAnalysisContainer.downloadFileZipMember(zipFile, [subjectLabel '/stats/aseg.stats'], asegSaveName);
+                            freesurferAnalysisContainer.downloadFileZipMember(zipFile, [subjectLabel '/surf/lh.white'], lhWhite);
+                            freesurferAnalysisContainer.downloadFileZipMember(zipFile, [subjectLabel '/surf/rh.white'], rhWhite);
                         end
                     end
                     % Find analyses that contain segmentThalamicNuclei in
@@ -255,7 +260,7 @@ for sub = 1:subjectLength
                         end
                     end
                     % Find analyses that contain bayesPRF in the name
-                    if ~isfile(bayesPrfSaveName)
+                    if ~isfile(bayesPrfSaveNameLeft)
                         if contains(analyses{a,1}.label, 'bayesprf')
                             freesurferAnalysisContainer = analyses{a,1};
                             zipFile = [subjectLabel '_inferred_surface.zip'];
@@ -283,12 +288,21 @@ for sub = 1:subjectLength
         rightLGN = [rightLGN; rightLGNVal];
         fclose(fid);
         
-        % Load bayes varea images and calculate volume from V1 voxels
-        image = MRIread(bayesPrfSaveName);
-        voxelVolume = prod(image.volres);
-        numberOfV1Voxels = sum(image.vol(:) == 1);
-        V1Vol = numberOfV1Voxels * voxelVolume;
-        V1volume = [V1volume; V1Vol];
+        % Left V1 surface area
+        [vertLeft,faceLeft] = freesurfer_read_surf(lhWhite);
+        [vareaMapLeft, M, mr_parms, volsz] = load_mgh(bayesPrfSaveNameLeft);
+        vareaMapLeft = squeeze(vareaMapLeft);
+        vertIdxLeft = find(vareaMapLeft==1);
+        V1SurfaceAreaLeft = calcSurfaceArea(vertLeft,faceLeft,vertIdxLeft);     
+        V1surfaceLeft = [V1surfaceLeft; V1SurfaceAreaLeft];
+        
+        % Right V1 surface area
+        [vertRight,faceRight] = freesurfer_read_surf(rhWhite);
+        [vareaMapRight, M, mr_parms, volsz] = load_mgh(bayesPrfSaveNameRight);
+        vareaMapRight = squeeze(vareaMapRight);
+        vertIdxRight = find(vareaMapRight==1);
+        V1SurfaceAreaRight = calcSurfaceArea(vertRight,faceRight,vertIdxRight);     
+        V1surfaceRight = [V1surfaceRight; V1SurfaceAreaRight];
     end
 end
 
@@ -308,7 +322,8 @@ LGNTable.Properties.VariableNames{3} = 'right_LGN';
 fixelTable=join(fixelTable,LGNTable);
 
 % Combine subject and V1 volume in a table and sort rows.
-V1Table = table(subjectNames, V1volume);
+V1surface = (V1surfaceLeft + V1surfaceRight) / 2;
+V1Table = table(subjectNames, V1surface);
 V1Table = sortrows(V1Table);
 V1Table.Properties.VariableNames{1} = 'TOME_ID';
 fixelTable=join(fixelTable,V1Table);
@@ -327,11 +342,11 @@ end
 
 %% Report the correlation of fixel values with RGC values
 % Variables to compare 
-fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'intracranialVol', 'LGN', 'meanAdjustedGCVol', 'V1volume'};
+fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'intracranialVol', 'LGN', 'meanAdjustedGCVol', 'V1surface'};
 fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TOME_ID),:),fixelTable,'Keys','TOME_ID');
 
 % Variables to compare against
-measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender','intracranialVol','LGN', 'V1volume'};
+measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender','intracranialVol','LGN', 'V1surface'};
 
 fprintf('\n<strong>Correlation of each variable\n</strong>')
 for ff = 1:length(fixelSet)
@@ -408,8 +423,8 @@ fprintf(['\nPartial correlation meanAdjustedGCVol with opticTractFC controlled f
 fprintf(['\nPartial correlation meanAdjustedGCVol with LGN controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
 [rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_opticRadiation, sizeMatrix);
 fprintf(['\nPartial correlation meanAdjustedGCVol with opticRadiationFC controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
-[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.V1volume, sizeMatrix);
-fprintf(['\nPartial correlation meanAdjustedGCVol with V1Volume controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
+[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.V1surface, sizeMatrix);
+fprintf(['\nPartial correlation meanAdjustedGCVol with V1surface controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
 
 fprintf('\n<strong>Correlation of adjacent structures</strong>')
 [rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, sizeMatrix);
@@ -418,14 +433,14 @@ fprintf(['\nPartial correlation meanAdjustedGCVol with opticTractFC controlled f
 fprintf(['\nPartial correlation opticTractFC with LGN controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
 [rho, pval] = partialcorr(fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, sizeMatrix);
 fprintf(['\nPartial correlation LGN with OpticRadiationFC controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
-[rho, pval] = partialcorr(fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1volume, sizeMatrix);
-fprintf(['\nPartial correlation OpticRadiationFC with V1 Volume controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
+[rho, pval] = partialcorr(fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1surface, sizeMatrix);
+fprintf(['\nPartial correlation OpticRadiationFC with V1surface controlled for height,weight,ICV,gender: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
 
 %% Controlled correlation plots showing the correlation of adjacent regions
 x = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation];
-y = [fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1volume];
+y = [fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1surface];
 xName = {'meanAdjustedGCVol', 'OpticTractFC', 'LGN Volume', 'OpticRadiationFC'};
-yName = {'OpticTractFC','LGN Volume', 'OpticRadiationFC', 'V1 Volume'}; 
+yName = {'OpticTractFC','LGN Volume', 'OpticRadiationFC', 'V1surface'}; 
 
 for ii = 1:length(xName)
     corrTablex = fitlm(sizeMatrix, x(1:end, ii));
@@ -458,9 +473,9 @@ end
 
 %% Controlled correlation plots showing the correlation between GC and everything else
 x = [fixelComparisonTable.meanAdjustedGCVol,fixelComparisonTable.meanAdjustedGCVol,fixelComparisonTable.meanAdjustedGCVol,fixelComparisonTable.meanAdjustedGCVol];
-y = [fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1volume];
+y = [fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1surface];
 xName = {'meanAdjustedGCVol', 'meanAdjustedGCVol', 'meanAdjustedGCVol', 'meanAdjustedGCVol'};
-yName = {'OpticTractFC','LGN Volume', 'OpticRadiationFC', 'V1 Volume'}; 
+yName = {'OpticTractFC','LGN Volume', 'OpticRadiationFC', 'V1surface'}; 
 
 for ii = 1:length(xName)
     corrTablex = fitlm(sizeMatrix, x(1:end, ii));
@@ -492,10 +507,10 @@ end
 
 %% Mediation value 
 x = [fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation];
-y = [fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1volume];
+y = [fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1surface];
 z = fixelComparisonTable.meanAdjustedGCVol;
 xName = {'OpticTractFC', 'LGNVolume', 'OpticRadiationFC'};
-yName = {'LGNVolume', 'OpticRadiationFC', 'V1Volume'}; 
+yName = {'LGNVolume', 'OpticRadiationFC', 'V1surface'}; 
 zName = {'meanAdjustedGCVol','meanAdjustedGCVol','meanAdjustedGCVol'};
 
 corrTablez = fitlm(sizeMatrix, z);
@@ -668,5 +683,30 @@ for b = 1:length(barItems)
     ylabel('R')
     title([barNames{b} ' and size correlations'])
 end
+end
+
+%% LOCAL FUNCTIONS
+
+function surfaceArea = calcSurfaceArea(vert,face,vertIdx)
+
+% Find the faces that are composed entirely of vertices in the index
+faceIdx = find(all(ismember(face,vertIdx)'));
+
+v1 = vert(face(faceIdx,2),:)-vert(face(faceIdx,1),:);
+v2 = vert(face(faceIdx,3),:)-vert(face(faceIdx,2),:);
+cp = 0.5*cross(v1,v2);
+surfaceAreaAll = sum(sqrt(dot(cp,cp,2)));
+
+% Find the faces that are composed of any vertices in the index
+faceIdx = find(any(ismember(face,vertIdx)'));
+
+v1 = vert(face(faceIdx,2),:)-vert(face(faceIdx,1),:);
+v2 = vert(face(faceIdx,3),:)-vert(face(faceIdx,2),:);
+cp = 0.5*cross(v1,v2);
+surfaceAreaAny = sum(sqrt(dot(cp,cp,2)));
+
+% Report the average of these two
+surfaceArea = (surfaceAreaAll+surfaceAreaAny)/2;
+
 end
 
