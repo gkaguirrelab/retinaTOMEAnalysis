@@ -1,0 +1,140 @@
+
+------------------------------------------------------------------------
+CAT12.8-Beta r1860: 3/10:      /home/ozzy/Desktop/allmprages/TOME_3013.n
+------------------------------------------------------------------------
+SANLM denoising (medium):                                            73s
+APP: Rough bias correction:                                       
+  Initialize                                                         10s
+  Estimate background                                                 8s
+  Initial correction                                                 17s
+  Refine background                                                   9s
+  Final correction                                                   15s
+  Final scaling                                                      10s
+                                                                     78s
+Correct center-of-mass                                                8s
+Affine registration                                                  11s
+SPM preprocessing 1 (estimate 1 - TPM registration):                 97s
+SPM preprocessing 1 (estimate 2):                                    52s
+SPM preprocessing 2 (write):                                      
+  Write Segmentation                                                 23s
+  Update Segmentation                                                22s
+  Update Skull-Stripping                                             65s
+  Update probability maps                                            12s
+                                                                    122s
+Global intensity correction:                                         28s
+SANLM denoising after intensity normalization (medium):              24s
+Fast Optimized Shooting registration                                 60s
+Local adaptive segmentation (LASstr=0.50):                        
+  Prepare maps                                                        9s
+  Prepare partitions                                                  4s
+  Prepare segments (LASmod = 1.02)                                   23s
+  Estimate local tissue thresholds (WM)                              26s
+  Estimate local tissue thresholds (GM)                              35s
+  Estimate local tissue thresholds (CSF/BG)                           9s
+  Intensity transformation                                        
+    0s
+  SANLM denoising after LAS (medium)                                 43s
+                                                                    152s
+ROI segmentation (partitioning):                                  
+  Atlas -> subject space                                             19s
+  Major structures                                                    9s
+  Ventricle detection                                                18s
+  Blood vessel detection                                             17s
+  WMH detection (WMHCstr=0.50 > WMHCstr'=0.08)                       39s
+  Manual stroke lesion detection                                      0s
+  Closing of deep structures                                          4s
+  Side alignment                                                      9s
+  Final corrections                                                  10s
+                                                                    124s
+Blood vessel correction (BVCstr=0.50):                                3s
+Amap using initial SPM12 segmentations (MRF filter strength 0.06):   39s
+    AMAP peaks: [CSF,GM,WM] = [0.36±0.06,0.68±0.08,0.99±0.04]
+Final cleanup (gcutstr=0.25):                                     
+  Level 1 cleanup (ROI estimation)                                    6s
+  Level 1 cleanup (brain masking)                                     4s
+  Level 2 cleanup (CSF correction)                                    2s
+  Level 3 cleanup (CSF/WM PVE)                                        3s
+                                                                     15s
+Optimized Shooting registration with 2.50:-0.25:1.50 mm (regstr=0.50):
+  Template: "/home/ozzy/Documents/MATLAB/toolboxes/spm12/toolbox/cat12/templates_MNI152NLin2009cAsym/Template_0_GS.nii"
+    1 | 2.50 | 0.0873  0.0000  0.0873 |  32.0000 
+    2 | 2.50 | 0.0836  0.0015  0.0851 |  29.4886 
+    3 | 2.50 | 0.0824  0.0023  0.0848 |  26.9772 
+    4 | 2.50 | 0.0819  0.0027  0.0845 |  24.6107 
+    5 | 2.50 | 0.0814  0.0029  0.0843 |  22.6548 
+    6 | 2.50 | 0.0810  0.0030  0.0841 |  20.6989 
+    7 | 2.50 | 0.0806  0.0032  0.0838 |  18.9688 
+    8 | 2.50 | 0.0802  0.0034  0.0835 |  17.4455 
+    9 | 2.50 | 0.0797  0.0035  0.0832 |  15.9223 
+   10 | 2.50 | 0.0793  0.0036  0.0829 |  14.6627 
+   11 | 2.50 | 0.0788  0.0038  0.0826 |  13.4764 
+   12 | 2.50 | 0.0784  0.0039  0.0822 |  12.3015 
+   13 | 2.50 | 0.0779  0.0040  0.0819 |  11.3776 
+   14 | 2.50 | 0.0774  0.0041  0.0815 |  10.4537 
+   15 | 2.25 | 0.0777  0.0043  0.0819 |   9.5920 
+   16 | 2.25 | 0.0738  0.0062  0.0800 |   8.8725 
+   29 | 2.00 | 0.0748  0.0028  0.0776 |   3.3283 
+   30 | 2.00 | 0.0676  0.0057  0.0733 |   3.1221 
+   31 | 2.00 | 0.0651  0.0068  0.0719 |   2.9160 
+   43 | 1.75 | 0.0638  0.0039  0.0678 |   1.5785 
+   44 | 1.75 | 0.0594  0.0063  0.0656 |   1.5194 
+   45 | 1.75 | 0.0578  0.0071  0.0649 |   1.4626 
+   57 | 1.50 | 0.0562  0.0052  0.0614 |   1.0900 
+   58 | 1.50 | 0.0530  0.0073  0.0603 |   1.0730 
+   59 | 1.50 | 0.0519  0.0079  0.0599 |   1.0579 
+Shooting registration with 2.50:-0.25:1.50 mm takes:                186s
+  Prepare output                                                     14s
+                                                                    200s
+  Jacobian determinant (RMS):  0.139075 
+           Template Matching:  0.155805 
+Write result maps:                                                   11s
+Surface and thickness estimation:                                 
+lh:
+  Thickness estimation (0.50 mm³):                                
+    WM distance:                                                     40s
+    CSF distance:                                                    14s
+    PBT2x thickness:                                                 48s
+                                                                    107s
+  Create initial surface                                             51s
+  Topology correction:                                              104s
+  Surface refinement:                                                67s
+  Reduction of surface collisions with optimization:                 43s
+  Spherical mapping with areal smoothing                             73s
+  Spherical registration                                            226s
+rh:
+  Thickness estimation (0.50 mm³):                                
+    WM distance:                                                     36s
+    CSF distance:                                                    12s
+    PBT2x thickness:                                                 35s
+                                                                     88s
+  Create initial surface                                             39s
+  Topology correction:                                               96s
+  Surface refinement:                                                70s
+  Reduction of surface collisions with optimization:                 39s
+  Spherical mapping with areal smoothing                             66s
+  Spherical registration                                            208s
+Final surface processing results: 
+  Average thickness:                          2.5943 ± 0.6610 mm
+  Euler characteristic / defect size:         16 / 0.25%
+  Display thickness:          /home/ozzy/Desktop/allmprages/surf/lh.thickness.TOME_3013
+  Display thickness:          /home/ozzy/Desktop/allmprages/surf/rh.thickness.TOME_3013
+  Show surfaces in orthview:  /home/ozzy/Desktop/allmprages/TOME_3013.nii
+  Surface ROI estimation:                                          1379s
+Surface and thickness estimation takes:                            1379s
+ROI estimation:                                                   
+  ROI estimation of 'cobra' atlas                                     9s
+  ROI estimation of 'neuromorphometrics' atlas                       32s
+  Write results                                                      32s
+                                                                     41s
+Quality check:                                                        5s
+Print 'Graphics' figure to: 
+  /home/ozzy/Desktop/allmprages/report/catreport_TOME_3013.pdf
+
+------------------------------------------------------------------------
+CAT preprocessing takes 43 minute(s) and 6 second(s).
+Image Quality Rating (IQR):  88.17% (B+)
+Segmentations are saved in /home/ozzy/Desktop/allmprages/mri
+Reports are saved in /home/ozzy/Desktop/allmprages/report
+Labels are saved in /home/ozzy/Desktop/allmprages/label
+------------------------------------------------------------------------
+
