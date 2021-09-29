@@ -370,7 +370,7 @@ fixelTable=join(fixelTable,TIVtable);
 
 %% Correlation of left right values
 fprintf('\n<strong>Correlation of left right hemisphere measurements of diffusion variables\n</strong>')
-fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'LGN_HCP', 'V1surface', 'V1thickness'};
+fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'LGN', 'V1surface', 'V1thickness'};
 for ff = 1:length(fixelSet)
     % Report the correlation of left and right
     fixelValR = fixelTable.(['right_' fixelSet{ff}]);
@@ -441,6 +441,60 @@ for ff = 1:length(fixelSet)
     ValicvR = [];
 end
 
+%% PCA of the biometric variables 
+pcaMat = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.TIV];
+categoryNames = ["height"; "weight"; "ICV"];
+
+[wcoeff,score,latent,tsquared,explained] = pca(pcaMat,'VariableWeights','variance');
+coefforth = inv(diag(std(pcaMat)))*wcoeff;
+
+I = coefforth'*coefforth;
+I(1:3,1:3)
+
+cscores = zscore(pcaMat)*coefforth;
+
+figure()
+pareto(explained)
+xlabel('Principal Component')
+ylabel('Variance Explained (%)')
+
+figure()
+biplot(coefforth(:,1:2),'Scores',score(:,1:2),'Varlabels',categoryNames);
+
+PC1 = score(:,1);
+PC2 = score(:,2);
+
+%% Controlled correlation plots showing the correlation of adjacent regions
+x = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation];
+y = [fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1surface];
+xName = {'meanAdjustedGCVol', 'OpticTractFC', 'LGN Volume', 'OpticRadiationFC'};
+yName = {'OpticTractFC','LGN Volume', 'OpticRadiationFC', 'V1surface'}; 
+
+for ii = 1:length(xName)
+    corrTablex = fitlm(PC1, x(1:end, ii));
+    residualsx = corrTablex.Residuals.Pearson;
+
+    corrTabley = fitlm(PC1, y(1:end, ii));
+    residualsy = corrTabley.Residuals.Pearson;
+
+    mdl = fitlm(residualsx, residualsy);
+    mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
+    niterations = 10000;
+    interval = bootci(niterations,{mycorr,residualsx,residualsy});
+    RL = interval(1);
+    RU = interval(2);
+    
+    % add first plot in 2 x 1 grid  
+    figure
+    plot(mdl, 'Marker', 'o', 'MarkerEdgeColor','black', 'MarkerFaceColor',[0, 0, 0])
+    title([xName(ii) ' and ' yName(ii) ' controlled for biometric size index'])
+    xlabel([xName(ii)]);
+    ylabel([yName(ii)]);  
+    theStringR = sprintf(['N=42, R=' num2str(sprintf('%.2f', mdl.Coefficients{2,1})) ', ' 'p=' num2str(sprintf('%.2f', mdl.Coefficients.pValue(2)))], residualsx,  residualsy);
+    text(-2.8, 2.5, theStringR, 'FontSize', 10);
+    xlim([-3 3])
+    ylim([-3 3])
+end
 
 end
 %% LOCAL FUNCTIONS
