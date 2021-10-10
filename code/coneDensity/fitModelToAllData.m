@@ -129,6 +129,10 @@ save(individualFitFile,'pSet','YfitSet','fValSet','polarMultiplierSet','dataMat'
 
 
 %% Plot individual subject diagnostic plots
+meridianLabels = {'Nasal','Superior','Temporal','Inferior','Nasal'};
+meridianAngles = [0 90 180 270 360];
+polarRatio = (size(dataMat,1)+1)/360;
+
 for ss=1:length(subNames)
     
     if missingSplit(ii)

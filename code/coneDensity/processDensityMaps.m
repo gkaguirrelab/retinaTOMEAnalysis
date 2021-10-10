@@ -35,7 +35,7 @@ warning('off','signal:findpeaks:largeMinPeakHeight');
 
 % We are going to loop through the processing thrice, once each for the
 % confocal and split datasets, and for the single fovea image
-for dd = 3:3
+for dd = 1:3
     
     switch dd
         case 1
