@@ -135,7 +135,7 @@ polarRatio = (size(dataMat,1)+1)/360;
 
 for ss=1:length(subNames)
     
-    if missingSplit(ii)
+    if missingSplit(ss)
         continue
     end
     
