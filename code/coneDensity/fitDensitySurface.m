@@ -9,8 +9,8 @@ function [p, Yfit, fVal, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen
 %   Variation in density across eccentricity is modeled as the sum of two
 %   exponentials, and thus four parameters. Variation across polar angle is
 %   modeled as a multiplicative adjustment of density as a function of
-%   polar angle under the control of Fourier functions. These
-%   functions include:
+%   polar angle under the control of Fourier functions. These functions
+%   include:
 %     - a sine and cosine at the fundamental frequency, which model
 %       variation in density between the superior and inferior retina, and
 %       betwween the nasal and temporal retina.
@@ -81,7 +81,7 @@ end
 pBlockLB = [0,-5,0,-5];
 pBlockUB = [5e4,0,5e4,0];
 
-mBlockLB = [-35 0 2 0.01];
+mBlockLB = [-35 -1 2 0.01];
 mBlockUB = [35 1 25 3];
 
 % The number of Fourier components that models variation across polar angle
@@ -131,7 +131,7 @@ validIdx = ~isnan(Y);
 if simplePolarModel
     
     % p0 and bounds
-    lb = [pBlockLB, -30 0];
+    lb = [pBlockLB, -30 -2];
     ub = [pBlockUB, 30 2];
     
     % assemble p function
