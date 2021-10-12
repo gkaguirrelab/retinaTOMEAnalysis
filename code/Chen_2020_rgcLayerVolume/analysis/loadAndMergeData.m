@@ -69,8 +69,12 @@ for ii = 1:50
     end
 end
 
-% Report the correlation of mean thickness between eyes across subjects
-str = sprintf('The correlation of mean GC thickness between eyes across subjects is R = %2.2f \n',corr(gcOD',gcOS','Rows','complete'));
+% Bootstrap the CI and report the correlation of mean gc thickness between
+% eyes across subjects
+mycorr = @(X,Y) corr(X,Y,'Rows','complete');
+niterations = 10000;
+interval = bootci(niterations,{mycorr,gcOD',gcOS'});
+str = sprintf('The correlation of mean GC thickness between eyes across subjects is R = %2.2f [95 CI: %2.2f, %2.2f] \n',corr(gcOD',gcOS','Rows','complete'),interval);
 fprintf(str);
 
 % Make some vectors of mean thickness and ratio
