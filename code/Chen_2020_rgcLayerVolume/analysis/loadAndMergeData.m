@@ -16,8 +16,8 @@ thickVec = [];
 gcVec = [];
 ipVec = [];
 ratioVec = [];
-gcipMeanOD = [];
-gcipMeanOS = [];
+gcOD = [];
+gcOS = [];
 
 % Obtain the GC thickness and ratio functions for each subject. While we
 % are at it, confirm that there is a substantial correlation across
@@ -63,14 +63,14 @@ for ii = 1:50
         ratioVec(:,end+1) = gcVec(:,end)./thickVec(:,end);
         
         % Save the m value for each eye and layer
-        gcipMeanOD(end+1) = nanmean(gcVecOD+ipVecOD);
-        gcipMeanOS(end+1) = nanmean(gcVecOS+ipVecOS);
+        gcOD(end+1) = nanmean(gcVecOD);
+        gcOS(end+1) = nanmean(gcVecOS);
         
     end
 end
 
 % Report the correlation of mean thickness between eyes across subjects
-str = sprintf('The correlation of mean GCIPL thickness between eyes across subjects is R = %2.2f \n',corr(gcipMeanOD',gcipMeanOS','Rows','complete'));
+str = sprintf('The correlation of mean GC thickness between eyes across subjects is R = %2.2f \n',corr(gcOD',gcOS','Rows','complete'));
 fprintf(str);
 
 % Make some vectors of mean thickness and ratio
