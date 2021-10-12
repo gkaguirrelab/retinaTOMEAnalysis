@@ -165,10 +165,16 @@ for ss=1:length(subNames)
     figHandle = figure();    
     for ii = [0.0938 0.1875 0.375 0.75 1.5 3 6 10 20]
         idx = find(supportDeg>ii,1);
-        semilogy(Y(:,idx),'.');
-        hold on
-        semilogy(Yfit(:,idx),'-r');
-        text(300*polarRatio,Yfit(45*polarRatio,idx),sprintf('%2.1f°',supportDeg(idx)));
+        if isempty(idx)
+            density = coneDensityModel(ii,0,maxSupportDeg,pSet(:,ss));
+            semilogy(repmat(density,1,size(dataMat,1)),'-r');
+            text(300*polarRatio,density,sprintf('%2.1f°',supportDeg(idx)));
+        else
+            semilogy(Y(:,idx),'.');
+            hold on
+            semilogy(Yfit(:,idx),'-r');
+            text(300*polarRatio,Yfit(45*polarRatio,idx),sprintf('%2.1f°',supportDeg(idx)));
+        end
     end
     xticks(meridianAngles*polarRatio);
     xticklabels(meridianLabels);
