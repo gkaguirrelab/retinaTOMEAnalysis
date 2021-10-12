@@ -1,8 +1,8 @@
-function [p, Yfit, fVal, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,useAsymptoteConstraint,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
+function [p, Yfit, fVal, RSquared, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,useAsymptoteConstraint,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
 % Fit a multi-parameter surface to cone density data
 %
 % Syntax:
-%   [p, Yfit, fVal] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,p0,supportDeg,maxSupportDeg)
+%   [p, Yfit, fVal, RSquared, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,useAsymptoteConstraint,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
 %
 % Description:
 %   A model of cone density across eccentricity and polar angle.
@@ -52,6 +52,7 @@ function [p, Yfit, fVal, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen
 %   p                     - 1x20 vector. The parameters of the model fit.
 %   Yfit                  - nxn matrix. The model fit
 %   fVal                  - Scalar. The fit error.
+%   RSquared              - Scalar. Another expression of the fit error.
 %   polarMultiplier       - Scalar. When simplePolarModel is set to true,
 %                           this is the multiplicative scaler that is
 %                           applied to the effect of polar angle upon the
@@ -68,8 +69,8 @@ arguments
     p0 (1,20) {mustBeNumeric} = [2.0072e+03, -0.1079, 1.4437e+04, -1.9325, 35.0000, 0.0635, 10.4377, 0.1361, 32.4056, 0.0278, 2.4968, 3.0000, -10.5220, 0.0949, 2.9280, 0.7202, -4.4283, 0.0647, 6.1025, 0.3186]
     supportDeg (1,:) {mustBeNumeric} = 0:0.0078:0.0078*(size(Y,1)-1)
     maxSupportDeg (1,1) {mustBeNumeric} = 15
-    refEccen (1,1) = 12 
-    refDensity (1,1) = 550
+    refEccen (1,1) = 20
+    refDensity (1,1) = 350
 end
 
 %% pBlock and mBlock settings
@@ -176,6 +177,10 @@ end
 Yfit = nan(supportLength,supportLength);
 Yfit(:,:)=coneDensityModel(X,P,maxSupportDeg,p);
 
+% Calculate the R-squared value
+goodIdx = ~isnan(Y(:));
+RSquared = corr(Yfit(goodIdx),Y(goodIdx))^2;
+
 end
 
 
@@ -190,8 +195,8 @@ d = p(4);   % time constant second exponential
 % The modeled density at the reference eccentricity
 density = (a.*exp(b.*refEccen)+c.*exp(d.*refEccen));
 
-% Constraint to keep density close to the reference density
-ceq = density - refDensity;
-c = [];
+% Constraint to keep density above the reference density
+c = refDensity - density;
+ceq = [];
 
 end

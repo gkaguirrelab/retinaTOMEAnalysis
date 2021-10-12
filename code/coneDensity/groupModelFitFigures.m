@@ -13,7 +13,7 @@ meridianAngles = [0 90 180 270 360];
 % Load the individual subject fit
 sourceDir = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images/densityAnalysis/';
 individualFitFile = fullfile(sourceDir,'individualSubjectFits.mat');
-load(individualFitFile,'pSet','YfitSet','fValSet','polarMultiplierSet','dataMat','subNames')
+load(individualFitFile,'pSet','YfitSet','fValSet','RSquaredSet','polarMultiplierSet','dataMat','subNames')
 
 % Create the X and P support, the mean data, and the fit
 X = repmat(supportDeg,supportLength,1);
@@ -168,6 +168,12 @@ saveas(gcf,plotFileName);
 figure
 histogram(count)
 xlabel('integrated cone density')
+ylabel('counts [subjects]')
+
+
+figure
+histogram(RSquaredSet)
+xlabel('R squared')
 ylabel('counts [subjects]')
 
 

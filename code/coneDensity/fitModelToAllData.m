@@ -110,6 +110,8 @@ w(:,1:idxD)=0;
 pSet = nan(20,length(subNames));
 YfitSet = nan(size(dataMat));
 fValSet= nan(1,length(subNames));
+RSquaredSet= nan(1,length(subNames));
+polarMultiplierSet= nan(1,length(subNames));
 
 fprintf('fitting...');
 w1 = ones(size(Y));
@@ -119,13 +121,13 @@ for ii = 1:length(subNames)
     end
     Y1 = squeeze(dataMat(:,:,ii));
     fprintf([num2str(ii),'...']);
-    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), polarMultiplierSet(ii)] = fitDensitySurface(Y1,w1,true,true,false,p0);
+    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(ii), polarMultiplierSet(ii)] = fitDensitySurface(Y1,w1,true,true,false,p0);
 end
 fprintf('done\n');
 
 % Save the individual subject fits
 individualFitFile = fullfile(sourceDir,'individualSubjectFits.mat');
-save(individualFitFile,'pSet','YfitSet','fValSet','polarMultiplierSet','dataMat','subNames')
+save(individualFitFile,'pSet','YfitSet','fValSet','RSquaredSet','polarMultiplierSet','dataMat','subNames')
 
 
 %% Plot individual subject diagnostic plots
@@ -161,7 +163,7 @@ for ss=1:length(subNames)
         
     % Polar bands and model fit
     figHandle = figure();    
-    for ii = [0.1875 0.375 0.75 1.5 3 6 10]
+    for ii = [0.0938 0.1875 0.375 0.75 1.5 3 6 10 20]
         idx = find(supportDeg>ii,1);
         semilogy(Y(:,idx),'.');
         hold on
