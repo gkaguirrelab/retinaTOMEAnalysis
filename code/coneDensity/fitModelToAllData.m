@@ -7,13 +7,13 @@
 sourceDir = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images/densityAnalysis/';
 
 % Identify the confocal, split, and "fovea" data files
-splitFiles=dir([sourceDir '*_split.mat']);
+splitFiles = dir([sourceDir '*_split.mat']);
 splitNames = strrep(extractfield(splitFiles,'name'),'_split.mat','');
 
-confocalFiles=dir([sourceDir '*_confocal.mat']);
+confocalFiles = dir([sourceDir '*_confocal.mat']);
 confocalNames = strrep(extractfield(confocalFiles,'name'),'_confocal.mat','');
 
-foveaFiles=dir([sourceDir '*_fovea.mat']);
+foveaFiles = dir([sourceDir '*_fovea.mat']);
 foveaNames = strrep(extractfield(confocalFiles,'name'),'_fovea.mat','');
 
 % Define some constants
@@ -111,6 +111,7 @@ pSet = nan(20,length(subNames));
 YfitSet = nan(size(dataMat));
 fValSet= nan(1,length(subNames));
 RSquaredSet= nan(1,length(subNames));
+nonlconSet = nan(1,length(subNames));
 polarMultiplierSet= nan(1,length(subNames));
 
 fprintf('fitting...');
@@ -121,7 +122,7 @@ for ii = 1:length(subNames)
     end
     Y1 = squeeze(dataMat(:,:,ii));
     fprintf([num2str(ii),'...']);
-    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(ii), polarMultiplierSet(ii)] = fitDensitySurface(Y1,w1,true,true,false,p0);
+    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(ii), nonlconSet(ii), polarMultiplierSet(ii)] = fitDensitySurface(Y1,w1,true,true,true,p0);
 end
 fprintf('done\n');
 
@@ -168,7 +169,7 @@ for ss=1:length(subNames)
         if isempty(idx)
             density = coneDensityModel(ii,0,maxSupportDeg,pSet(:,ss));
             semilogy(repmat(density,1,size(dataMat,1)),'-r');
-            text(300*polarRatio,density,sprintf('%2.1f°',supportDeg(idx)));
+            text(300*polarRatio,density,sprintf('%2.1f°',ii));
         else
             semilogy(Y(:,idx),'.');
             hold on

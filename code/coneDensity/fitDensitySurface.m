@@ -1,4 +1,4 @@
-function [p, Yfit, fVal, RSquared, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,useAsymptoteConstraint,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
+function [p, Yfit, fVal, RSquared, nonlcon, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,useAsymptoteConstraint,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
 % Fit a multi-parameter surface to cone density data
 %
 % Syntax:
@@ -70,7 +70,7 @@ arguments
     supportDeg (1,:) {mustBeNumeric} = 0:0.0078:0.0078*(size(Y,1)-1)
     maxSupportDeg (1,1) {mustBeNumeric} = 15
     refEccen (1,1) = 20
-    refDensity (1,1) = 350
+    refDensity (1,1) = 250
 end
 
 %% pBlock and mBlock settings
@@ -157,7 +157,7 @@ end
 
 % non-linear constraint for the asymptotic cone density
 if useAsymptoteConstraint
-myNonlcon = @(p) asymptoteDensity(p,refEccen,refDensity);
+    myNonlcon = @(p) asymptoteDensity(p,refEccen,refDensity);
 else
     myNonlcon = [];
 end
@@ -166,6 +166,14 @@ end
 options = optimoptions('fmincon','Display','off','Algorithm','interior-point','UseParallel',true);
 [p, fVal] = fmincon(myObj,p0,[],[],[],[],lb,ub,myNonlcon,options);
 
+% Obtain the non-linear constraint value
+if useAsymptoteConstraint
+    nonlcon = myNonlcon(p);
+else
+    nonlcon = nan;
+end
+
+% Expand the p vector if needed
 if simplePolarModel
     polarMultiplier = p(6);
     p = pFull(p);
@@ -173,13 +181,15 @@ else
     polarMultiplier = nan;
 end
 
-% generate the model fit
+% Generate the model fit
 Yfit = nan(supportLength,supportLength);
-Yfit(:,:)=coneDensityModel(X,P,maxSupportDeg,p);
+Yfit(:,:) = coneDensityModel(X,P,maxSupportDeg,p);
 
 % Calculate the R-squared value
 goodIdx = ~isnan(Y(:));
 RSquared = corr(Yfit(goodIdx),Y(goodIdx))^2;
+
+
 
 end
 
