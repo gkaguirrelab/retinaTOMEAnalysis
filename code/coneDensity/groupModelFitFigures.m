@@ -9,6 +9,7 @@ supportDeg = 0:supportDegDelta:supportDegDelta*(supportLength-1);
 maxSupportDeg = 15;
 meridianLabels = {'Nasal','Superior','Temporal','Inferior','Nasal'};
 meridianAngles = [0 90 180 270 360];
+supportPA = linspace(0,360,supportLength);
 
 % Load the individual subject fit
 sourceDir = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images/densityAnalysis/';
@@ -47,17 +48,58 @@ Yfit = mean(bootYfit,3);
 %% Figures describing the mean model fit
 
 % Plot the mean polar data and model fit
-figure
-surf(X,P,Yfit,'FaceAlpha',0.5,'EdgeColor','none');
+figHandle = figure;
+
+contourf(X,P,Yfit,logspace(log10(500),log10(15000),15),'LineWidth',2)
+map = [ logspace(log10(0.5),log10(1),255); logspace(log10(0.5),log10(0.1),255); logspace(log10(0.5),log10(0.1),255)]';
+colormap(map)
+
+
+sHandle = surf(X,P,Yfit,'FaceAlpha',0.5,'EdgeColor','none');
 hold on
-plot3(X(:),P(:),Y(:),'.k')
+%plot3(X(:),P(:),Y(:),'.k')
 yticks(meridianAngles);
 yticklabels(meridianLabels);
 xlabel('Eccentricity [deg]');
 zlabel('Density [cones/deg^2]');
-view(45,15)
-plotFileName = fullfile(sourceDir,'figures','Fig01_meanModelFitPolar.pdf');
-saveas(gcf,plotFileName);
+% Add topographic lines
+ridgeHandles = [];
+for targetDensity = 500:500:15000
+    eccenIdx = nan(supportLength,1);
+    for ii=1:supportLength
+        [~,eccenIdx(ii)]=min(abs(Yfit(ii,:)-targetDensity));
+    end
+    ridgeHandles(end+1) = plot3(supportDeg(eccenIdx),supportPA,repmat(targetDensity,1,supportLength),'-k','LineWidth',1.5);
+end
+view(10,10)
+lighting gouraud
+lightangle(gca,10,10)
+lightangle(gca,10,10)
+lightangle(gca,10,10)
+lightangle(gca,0,0)
+lightangle(gca,0,0)
+lightangle(gca,0,0)
+plotFileName = fullfile(sourceDir,'figures','Fig01_meanModelFitPolar');
+alignHandle = plot3(15,360,16000,'xm');
+zlim([0 16000]);
+
+% Save figure with vector components
+hidem(sHandle);
+set(figHandle,'color','white');
+fileName = [plotFileName '.pdf'];
+export_fig(figHandle,fileName,'-Painters');
+
+% Save figure with rendered components
+axis off
+showm(sHandle);
+hidem(ridgeHandles);
+set(figHandle,'color','none');
+fileName = [plotFileName '.png'];
+export_fig(figHandle,fileName,'-r1200','-opengl');
+
+
+
+
 
 % Mean Cartesian data and model fit
 figure
@@ -97,7 +139,11 @@ saveas(gcf,plotFileName);
 figure
 for mm=1:4
     subplot(2,2,mm)
-    plot(supportDeg,Y(round((meridianAngles(mm))*polarRatio+1),:),'.k');
+    yData = Y(round((meridianAngles(mm))*polarRatio+1),:);
+    % Mask the fovea data points. When we fit the group model, we don't
+    % include these points as there is a bias towards lower vaues.
+    yData(supportDeg<0.3) = nan;
+    plot(supportDeg,yData,'.k');
     hold on
     plot(supportDeg,Yfit(round((meridianAngles(mm))*polarRatio+1),:),'-r');
     xlabel('Eccentricity [deg]');

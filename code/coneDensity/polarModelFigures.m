@@ -11,6 +11,7 @@ supportDeg = 0:supportDegDelta:supportDegDelta*(supportLength-1);
 maxSupportDeg = 15;
 meridianLabels = {'Nasal','Superior','Temporal','Inferior','Nasal'};
 meridianAngles = [0 90 180 270 360];
+supportPA = linspace(0,360,supportLength);
 
 % Load the individual subject fit
 sourceDir = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images/densityAnalysis/';
@@ -95,14 +96,23 @@ g = p(14).*gampdf(X,p(15),p(16))./max(gampdf(0:0.01:maxSupportDeg,p(15),p(16)));
 Ymodel = Ymodel+g.*cosd(P.*2+p(13));
 g = p(18).*gampdf(X,p(19),p(20))./max(gampdf(0:0.01:maxSupportDeg,p(19),p(20)));
 Ymodel = Ymodel+g.*cosd(P.*4+p(17));
-surf(X,P,Ymodel,'FaceAlpha',0.5,'EdgeColor','none');
+supportPA = linspace(0,360,supportLength);
+contourf(supportDeg,supportPA,Ymodel,15,'LineWidth',2)
+map = [ linspace(0,1,255);[linspace(0,0.5,127) linspace(0.5,0,128)];[linspace(0,0.5,127) linspace(0.5,0,128)]]';
+colormap(map)
+
+%imagesc(supportDeg,supportPA,Ymodel)
+%colorbar
+ax = gca;
+ax.YDir = 'normal';
 yticks(meridianAngles);
 yticklabels(meridianLabels);
 xlabel('Eccentricity [deg]');
 zlabel('Density modulation');
-view(45,15)
 plotFileName = fullfile(sourceDir,'figures','Fig0X_entirePolarModulation.pdf');
 saveas(gcf,plotFileName);
+
+
 
 
 figure

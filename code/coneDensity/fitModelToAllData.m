@@ -165,7 +165,7 @@ for ss=1:length(subNames)
     % Polar bands and model fit
     figHandle = figure();    
     for ii = [0.0938 0.1875 0.375 0.75 1.5 3 6 10 20]
-        idx = find(supportDeg>ii,1);
+        idx = find(supportDeg>=ii,1);
         if isempty(idx)
             density = coneDensityModel(ii,0,maxSupportDeg,pSet(:,ss));
             semilogy(repmat(density,1,size(dataMat,1)),'-r');
