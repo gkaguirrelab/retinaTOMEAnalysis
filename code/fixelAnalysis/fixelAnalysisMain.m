@@ -607,6 +607,17 @@ fprintf(['\nPartial correlation optic Tract FC with V1surface controlled for PC1
 [rho, pval] = partialcorr(fixelComparisonTable.fc_, fixelComparisonTable.V1surface, PC1);
 fprintf(['\nPartial correlation optic Tract FC with V1surface controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
 
+fprintf('\n<strong>Correlation of optic Tract FD with all other structures</strong>')
+[rho, pval] = partialcorr(fixelComparisonTable.fd_, fixelComparisonTable.LGN, PC1);
+fprintf(['\nPartial correlation optic Tract FD with LGN controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+[rho, pval] = partialcorr(fixelComparisonTable.fd_, fixelComparisonTable.fc_opticRadiation, PC1);
+fprintf(['\nPartial correlation optic Tract FD with opticRadiationFC controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+[rho, pval] = partialcorr(fixelComparisonTable.fd_, fixelComparisonTable.V1surface, PC1);
+fprintf(['\nPartial correlation optic Tract FD with V1surface controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+[rho, pval] = partialcorr(fixelComparisonTable.fd_, fixelComparisonTable.V1surface, PC1);
+fprintf(['\nPartial correlation optic Tract FD with V1surface controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
+
+
 fprintf('\n<strong>Correlation of LGN with all other structures</strong>')
 [rho, pval] = partialcorr(fixelComparisonTable.LGN, fixelComparisonTable.fc_, PC1);
 fprintf(['\nPartial correlation LGN with opticTractFC controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
@@ -940,7 +951,7 @@ setTightFig
 % set(gcf,'color','w');
 % refline
 % theStringR = sprintf(['R=' ' ' num2str(sprintf('%.3f', R(1,2)))], fixelComparisonTable.left_fc_,  fixelComparisonTable.right_fc_);
-% text(1.1, 0.82, theStringR, 'FontSize', 10);
+% text(1.1, 0.82, theStringR, 'FontSize', 10);untitled
 % 
 % %% Plot FD left right
 % 
