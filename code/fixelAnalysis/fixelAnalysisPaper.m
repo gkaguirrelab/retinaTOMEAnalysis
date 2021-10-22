@@ -4,7 +4,7 @@ function fixelAnalysisPaper(varargin)
 pcCorrelation = false;
 sizeBarPlots = false;
 adjacentFC = false;
-adjacentFD = true;
+adjacentFD = false;
 allGCFC = false;
 allGCFD = false;
 allOTFC = false;
@@ -476,7 +476,7 @@ end
 pcaMat = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.TIV];
 categoryNames = ["height"; "weight"; "ICV"];
 
-[wcoeff,score,latent,tsquared,explained] = pca(pcaMat,'VariableWeights','variance');
+[wcoeff,score,latent,tsquared,explained] = pca(pcaMat,'VariableWeights','variance', 'Centered', true);
 coefforth = inv(diag(std(pcaMat)))*wcoeff;
 
 I = coefforth'*coefforth;
@@ -494,6 +494,30 @@ biplot(coefforth(:,1:2),'Scores',score(:,1:2),'Varlabels',categoryNames,'Marker'
 
 PC1 = score(:,1);
 PC2 = score(:,2);
+
+mu = mean(pcaMat);
+sd = std(pcaMat);
+Xz = bsxfun(@minus, pcaMat ,mu)./sd; 
+figure
+scatter3(Xz(:,1),Xz(:,2),Xz(:,3),'bo','Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
+hold on 
+quiver3(0,0,0, coefforth(1,1),coefforth(2,1),coefforth(3,1),3, 'k', 'ShowArrowHead',false);
+quiver3(0,0,0, -coefforth(1,1),-coefforth(2,1),-coefforth(3,1),3, 'k', 'ShowArrowHead',false);
+xlabel('Height [inches]'); ylabel('Weight [lbs]'); zlabel('ICV [cc3]');
+box off 
+grid on
+hold off
+% figure 
+% demeanedBiometric = [fixelComparisonTable.Height_inches - mean(fixelComparisonTable.Height_inches), fixelComparisonTable.Weight_pounds - mean(fixelComparisonTable.Weight_pounds), fixelComparisonTable.TIV - mean(fixelComparisonTable.TIV)];
+% scatter3(demeanedBiometric(:,1),demeanedBiometric(:,2),demeanedBiometric(:,3))
+% hold on;
+% covariance = cov(demeanedBiometric);
+% [eigen_vector, eigen_values] = eig(covariance);
+% d = sqrt(diag(eigen_values));
+% quiver3(mean(demeanedBiometric(:,1)),mean(demeanedBiometric(:,2)), mean(demeanedBiometric(:,3)), eigen_vector(1,1),eigen_vector(2,1),eigen_vector(3,1),d(1), 'r');
+% quiver3(mean(demeanedBiometric(:,1)),mean(demeanedBiometric(:,2)), mean(demeanedBiometric(:,3)), eigen_vector(1,2),eigen_vector(2,2),eigen_vector(3,2),d(2), 'k');
+% quiver3(mean(demeanedBiometric(:,1)),mean(demeanedBiometric(:,2)), mean(demeanedBiometric(:,3)), eigen_vector(1,3),eigen_vector(2,3),eigen_vector(3,3),d(2), 'b');
+% hold off;
 
 %% Correlation of left right values
 fprintf('\n<strong>Correlation of left right hemisphere measurements of diffusion variables\n</strong>')
