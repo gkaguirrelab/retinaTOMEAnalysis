@@ -15,7 +15,6 @@ clear
 
 % Hard coded values
 downSample = 0.05;
-foveaDilate = 100;
 newDim = 18000; % Dimensions of the density maps
 pixelsperdegree = 642.7000;
 paraFovealExtent = 2;
@@ -111,8 +110,10 @@ for dd = 1:2
             error(['Unable to determine laterality for ' resultFiles(rr).name]);
         end
         
-        % Save the fovea_coords from the confocal, and apply these to the
-        % split
+        % In some cases the foveal location identified on the merged image
+        % seems off-center (e.g., 11092 and 11096). We substitute a
+        % hand-selected foveal point for these cases.
+        foveaOverride = false;
         switch dd
             case 1
                 % Special case 11061_OD
@@ -120,16 +121,19 @@ for dd = 1:2
                     % Update with the coordinates selected by Jessica in
                     % Slack
  %                   fovea_coords = [4959, 4680];
+ %                   foveaOverride = true;
                 end
                 % Special case 11083_OD
                 if strcmp(subName,'11083_OD')
                     % Update with the coordinates selected by Jessica in
                     % Slack
-                    fovea_coords = [4954 5293];
+%                    fovea_coords = [4954 5293];
+%                    foveaOverride = true;
                 end
                 % Special case 11099_OD
                 if strcmp(subName,'11099_OD')
 %                    fovea_coords = [8.5285e3, 7.8643e3];
+%                    foveaOverride = true;
                 end
                 foveaCoordStore.(['s_' subName])=fovea_coords;
             case 2
@@ -188,18 +192,9 @@ for dd = 1:2
             axis off
             title('filter periphery')
         end
-        
-        % Translate and dilate the foveamask
-        imFovea = zeros(newDim,newDim);
-        if dd==3
-            imFovea(1:imsize(1),1:imsize(2))=single(~foveamask);
-        end
-        imFovea=imtranslate(imFovea,offset);
-        imFovea = imdilate(imFovea,strel('square',foveaDilate));
-        
-        % Down-sample the maps
+                
+        % Down-sample the map
         imDensity = imresize(imDensity,downSample);
-        imFovea = imresize(imFovea,downSample);
         
         % Flip left eye density maps so they are pseudo-right eye
         if strcmp(laterality,'OS')
@@ -209,7 +204,6 @@ for dd = 1:2
         
         % Create polar maps
         polarDensity = convertImageMapToPolarMap(imDensity);
-        polarFovea = convertImageMapToPolarMap(imFovea);
         polarDim = newDim*downSample*2-1;
         
         % Show the polar density map pre filtering
@@ -231,6 +225,7 @@ for dd = 1:2
         supportDegIdx = find(supportDeg>paraFovealExtent,1);
         threshIdx = ones(1,size(polarDensity,1));
         
+        if dd == 1
             for nn=1:size(polarDensity,1)
                 
                 % Density for this polar angle
@@ -258,6 +253,7 @@ for dd = 1:2
                 threshIdx(nn)=idx(end)-1;
                 
             end
+        end
         
         % Add the filtering ridge
         hold on
@@ -314,7 +310,7 @@ for dd = 1:2
         data.meta.laterality = laterality;
         data.meta.downSample = downSample;
         data.meta.foveaCoords = fovea_coords;
-        data.meta.foveaDilate = foveaDilate;
+        data.meta.foveaOverride = foveaOverride;
         data.meta.supportDegDelta = supportDeg(1);
         data.imDensity = imDensity;
         data.polarDensity = polarDensity;
