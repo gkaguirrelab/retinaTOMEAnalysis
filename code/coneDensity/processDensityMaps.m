@@ -302,6 +302,9 @@ for dd = 1:2
             end
         end
         
+        % Convert the cleaned polar image back to Cartesian
+        imDensity = convertPolarMapToImageMap(polarDensity);
+        
         % Store the data
         data = [];
         data.meta.subName = subName;
