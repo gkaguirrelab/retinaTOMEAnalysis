@@ -10,7 +10,7 @@ function smoothManualSegGCIPExtOCT(dataDir,origFileNameSuffix)
 componentPixelThresh = 10;
 
 %search for all manual segmentations in the directory
-allSegs = subdir(fullfile(dataDir,'*seg*nii*'));
+allSegs = subdir(fullfile(dataDir,'*seg*nii'));
 
 %process each segmentation
 for n = 1:length(allSegs)
@@ -166,24 +166,24 @@ for n = 1:length(allSegs)
         BotSmooth = [Bot(:,1) BotYSmooth];
         
         %draw the boundaries as overlay on the OCT montage
-        for t= 1:length(Top)
-            overlay(Top(t,2),Top(t,1),:) = [0 1 0]';
-            %sometimes smoothing extends past the image, so we ignore these
-            %case
-            if(round(TopSmooth(t,2)) <=0 || round(TopSmooth(t,2)) >YN)
-                continue
-            end
-            overlaySmooth(round(TopSmooth(t,2)),TopSmooth(t,1),:) = [0 1 0]';
-            overlaySmooth(round(TopSmooth(t,2))+1,TopSmooth(t,1),:) = [0 1 0]';
-        end
+%         for t= 1:length(Top)
+%             overlay(Top(t,2),Top(t,1),:) = [0 1 0]';
+%             %sometimes smoothing extends past the image, so we ignore these
+%             %case
+%             if(round(TopSmooth(t,2)) <=0 || round(TopSmooth(t,2)) >YN)
+%                 continue
+%             end
+%             overlaySmooth(round(TopSmooth(t,2)),TopSmooth(t,1),:) = [0 1 0]';
+%             overlaySmooth(round(TopSmooth(t,2))+1,TopSmooth(t,1),:) = [0 1 0]';
+%         end
         %repeat for the other boundaries
         for t= 1:length(Mid)
             overlay(Mid(t,2),Mid(t,1),:) = [1 1 0]';
             if(round(MidSmooth(t,2)) <=0 || round(MidSmooth(t,2)) >YN)
                 continue
             end
-            overlaySmooth(round(MidSmooth(t,2)),MidSmooth(t,1),:) = [1 1 0]';
-            overlaySmooth(round(MidSmooth(t,2))+1,MidSmooth(t,1),:) = [1 1 0]';
+            overlaySmooth(round(MidSmooth(t,2)),MidSmooth(t,1),:) = [1 0 0]';
+            overlaySmooth(round(MidSmooth(t,2))+1,MidSmooth(t,1),:) = [1 0 0]';
             
         end
         
