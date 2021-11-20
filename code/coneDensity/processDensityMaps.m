@@ -1,3 +1,16 @@
+% processDensityMaps
+%
+% This routine loads the output of Rob Cooper's cone density estimation
+% routines, and then combines the "merged" data (composed of the confocal
+% and split images) and the "foveal" single image. Along the way there are
+% some cleaning steps applied, including filtering outlier density values
+% and removing an artifactual decline in cone density close to the fovea in
+% the confocal data. 
+%
+% The images are all aligned to the estimated foveal center, and
+% transformed to polar coordinates.
+%
+
 clear
 
 % Hard coded values
@@ -33,22 +46,17 @@ end
 warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
 warning('off','signal:findpeaks:largeMinPeakHeight');
 
-% We are going to loop through the processing thrice, once each for the
+% We are going to loop through the processing twice, once for the merged
 % confocal and split datasets, and for the single fovea image
-for dd = 1:3
+for dd = 1:2
     
     switch dd
         case 1
-            resultFiles=dir('**/confocal/Results_foveated/*_confocal_Fouriest_Result.mat');
+            resultFiles=dir('Aggregation_Analysis/*_merged_Fouriest_Result.mat');
             dataFileName = 'confocalDensityProfileData.mat';
-            tagName = '_confocal';
+            tagName = '_merged';
             maxThresh = density(r).*3;
         case 2
-            resultFiles=dir('**/split detection/Results_foveated/*_split_Fouriest_Result.mat');
-            dataFileName = 'splitDensityProfileData.mat';
-            tagName = '_split';
-            maxThresh = density(r).*2;
-        case 3
             resultFiles=dir('**/confocal/Results_fovea_map/*_Fovea.mat');
             dataFileName = 'Fovea.mat';
             tagName = '_fovea';
@@ -62,8 +70,14 @@ for dd = 1:3
         fileName = fullfile(resultFiles(rr).folder,resultFiles(rr).name);
         
         % Extract the subject name
+        switch dd
+            case 1
+        tmp = strsplit(fileName,filesep);
+        subName = [tmp{end}(4:8) tmp{end}(18:20)];
+            case 2
         tmp = strsplit(fileName,filesep);
         subName = tmp{end-3};
+        end
         
         % Some machinery to allow us to process just a few subjects at a
         % time
@@ -79,10 +93,13 @@ for dd = 1:3
         % Load the file
         load(fileName);
         
-        % For the "fovea" dataset, the data we need is saved in a variable
-        % called "densim", as opposed to "density_map".
-        if dd==3
-            density_map = densim(:,:,1);
+        % The density map information is stored in different places in the
+        % merged and "fovea" datasets.
+        switch dd
+            case 1
+                density_map = density_map_comb;
+            case 2
+                density_map = densim(:,:,1);
         end
         
         % Determine if this a left or right eye
@@ -118,8 +135,6 @@ for dd = 1:3
                 end
                 foveaCoordStore.(['s_' subName])=fovea_coords;
             case 2
-                fovea_coords=foveaCoordStore.(['s_' subName]);
-            case 3
                 fovea_coords=foveaCoordStore.(['s_' subName]);
         end
         
@@ -168,7 +183,7 @@ for dd = 1:3
         imDensity(imDensity>maxThresh)=nan;
         
         % Show the filtered map
-        if dd==1 || dd==2
+        if dd==1
             subplot(1,3,2)
             imagesc(imDensity)
             hold on
@@ -181,7 +196,7 @@ for dd = 1:3
         
         % Translate and dilate the foveamask
         imFovea = zeros(newDim,newDim);
-        if dd~=3
+        if dd==3
             imFovea(1:imsize(1),1:imsize(2))=single(~foveamask);
         end
         imFovea=imtranslate(imFovea,offset);
@@ -203,7 +218,7 @@ for dd = 1:3
         polarDim = newDim*downSample*2-1;
         
         % Show the polar density map pre filtering
-        if dd==1 || dd==2
+        if dd==1
             subplot(1,3,3)
         else
             subplot(1,3,2)
@@ -221,7 +236,6 @@ for dd = 1:3
         supportDegIdx = find(supportDeg>paraFovealExtent,1);
         threshIdx = ones(1,size(polarDensity,1));
         
-        if dd==1 || dd==3
             for nn=1:size(polarDensity,1)
                 
                 % Density for this polar angle
@@ -249,7 +263,6 @@ for dd = 1:3
                 threshIdx(nn)=idx(end)-1;
                 
             end
-        end
         
         % Add the filtering ridge
         hold on
@@ -263,7 +276,7 @@ for dd = 1:3
         
         % For the fovea data, find the blob of pixels around the highest
         % value
-        if dd==3
+        if dd==2
             [maxH,idx]=max(polarDensity(:));
             H = maxH/2;
             stillSearching = true;
