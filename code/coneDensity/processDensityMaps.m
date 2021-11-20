@@ -199,7 +199,6 @@ for dd = 1:2
         % Flip left eye density maps so they are pseudo-right eye
         if strcmp(laterality,'OS')
             imDensity = fliplr(imDensity);
-            imFovea = fliplr(imFovea);
         end
         
         % Create polar maps
