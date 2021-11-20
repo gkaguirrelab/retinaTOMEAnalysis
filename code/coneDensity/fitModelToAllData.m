@@ -109,10 +109,12 @@ w(:,1:idxD)=0;
 %% Fit each subject with the reduced model
 pSet = nan(20,length(subNames));
 YfitSet = nan(size(dataMat));
+YResidualSet = nan(size(dataMat));
 fValSet= nan(1,length(subNames));
-RSquaredSet= nan(1,length(subNames));
+RSquaredSet= nan(4,length(subNames));
 nonlconSet = nan(1,length(subNames));
-polarMultiplierSet= nan(1,length(subNames));
+polarThetaSet = nan(1,length(subNames));
+polarMultiplierSet = nan(1,length(subNames));
 
 fprintf('fitting...');
 w1 = ones(size(Y));
@@ -122,13 +124,14 @@ for ii = 1:length(subNames)
     end
     Y1 = squeeze(dataMat(:,:,ii));
     fprintf([num2str(ii),'...']);
-    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(ii), nonlconSet(ii), polarMultiplierSet(ii)] = fitDensitySurface(Y1,w1,true,true,true,p0);
+    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(:,ii), nonlconSet(ii), polarThetaSet(ii), polarMultiplierSet(ii)] = fitDensitySurface(Y1,w1,true,true,true,p0);
+    YResidualSet(:,:,ii) = Y1 - squeeze(YfitSet(:,:,ii));
 end
 fprintf('done\n');
 
 % Save the individual subject fits
 individualFitFile = fullfile(sourceDir,'individualSubjectFits.mat');
-save(individualFitFile,'pSet','YfitSet','fValSet','RSquaredSet','polarMultiplierSet','dataMat','subNames')
+save(individualFitFile,'p0','pSet','YfitSet','fValSet','RSquaredSet','polarThetaSet','polarMultiplierSet','dataMat','subNames','YResidualSet')
 
 
 %% Plot individual subject diagnostic plots

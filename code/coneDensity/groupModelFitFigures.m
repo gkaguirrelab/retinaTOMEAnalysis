@@ -23,6 +23,8 @@ Y = nanmean(dataMat,3);
 p = mean(pSet,2);
 w = sum(~isnan(dataMat),3);
 
+% Remove the points in Y which were not 
+
 % Create the Yfit
 Yfit = coneDensityModel(X,P,maxSupportDeg,p);
 
@@ -53,50 +55,50 @@ figHandle = figure;
 contourf(X,P,Yfit,logspace(log10(500),log10(15000),15),'LineWidth',2)
 map = [ logspace(log10(0.5),log10(1),255); logspace(log10(0.5),log10(0.1),255); logspace(log10(0.5),log10(0.1),255)]';
 colormap(map)
-
-
-sHandle = surf(X,P,Yfit,'FaceAlpha',0.5,'EdgeColor','none');
-hold on
-%plot3(X(:),P(:),Y(:),'.k')
-yticks(meridianAngles);
-yticklabels(meridianLabels);
-xlabel('Eccentricity [deg]');
-zlabel('Density [cones/deg^2]');
-% Add topographic lines
-ridgeHandles = [];
-for targetDensity = 500:500:15000
-    eccenIdx = nan(supportLength,1);
-    for ii=1:supportLength
-        [~,eccenIdx(ii)]=min(abs(Yfit(ii,:)-targetDensity));
-    end
-    ridgeHandles(end+1) = plot3(supportDeg(eccenIdx),supportPA,repmat(targetDensity,1,supportLength),'-k','LineWidth',1.5);
-end
-view(10,10)
-lighting gouraud
-lightangle(gca,10,10)
-lightangle(gca,10,10)
-lightangle(gca,10,10)
-lightangle(gca,0,0)
-lightangle(gca,0,0)
-lightangle(gca,0,0)
-plotFileName = fullfile(sourceDir,'figures','Fig01_meanModelFitPolar');
-alignHandle = plot3(15,360,16000,'xm');
-zlim([0 16000]);
-
-% Save figure with vector components
-hidem(sHandle);
-set(figHandle,'color','white');
-fileName = [plotFileName '.pdf'];
-export_fig(figHandle,fileName,'-Painters');
-
-% Save figure with rendered components
-axis off
-showm(sHandle);
-hidem(ridgeHandles);
-set(figHandle,'color','none');
-fileName = [plotFileName '.png'];
-export_fig(figHandle,fileName,'-r1200','-opengl');
-
+% 
+% 
+% sHandle = surf(X,P,Yfit,'FaceAlpha',0.5,'EdgeColor','none');
+% hold on
+% %plot3(X(:),P(:),Y(:),'.k')
+% yticks(meridianAngles);
+% yticklabels(meridianLabels);
+% xlabel('Eccentricity [deg]');
+% zlabel('Density [cones/deg^2]');
+% % Add topographic lines
+% ridgeHandles = [];
+% for targetDensity = 500:500:15000
+%     eccenIdx = nan(supportLength,1);
+%     for ii=1:supportLength
+%         [~,eccenIdx(ii)]=min(abs(Yfit(ii,:)-targetDensity));
+%     end
+%     ridgeHandles(end+1) = plot3(supportDeg(eccenIdx),supportPA,repmat(targetDensity,1,supportLength),'-k','LineWidth',1.5);
+% end
+% view(10,10)
+% lighting gouraud
+% lightangle(gca,10,10)
+% lightangle(gca,10,10)
+% lightangle(gca,10,10)
+% lightangle(gca,0,0)
+% lightangle(gca,0,0)
+% lightangle(gca,0,0)
+% plotFileName = fullfile(sourceDir,'figures','Fig01_meanModelFitPolar');
+% alignHandle = plot3(15,360,16000,'xm');
+% zlim([0 16000]);
+% 
+% % Save figure with vector components
+% hidem(sHandle);
+% set(figHandle,'color','white');
+% fileName = [plotFileName '.pdf'];
+% export_fig(figHandle,fileName,'-Painters');
+% 
+% % Save figure with rendered components
+% axis off
+% showm(sHandle);
+% hidem(ridgeHandles);
+% set(figHandle,'color','none');
+% fileName = [plotFileName '.png'];
+% export_fig(figHandle,fileName,'-r1200','-opengl');
+% 
 
 
 
@@ -109,13 +111,19 @@ cartYfit = convertPolarMapToImageMap(Yfit,'imRdim',imRdim);
 cartYfit(cartYfit<min([Y(:); Yfit(:)]))=nan;
 cartY = convertPolarMapToImageMap(Y,'imRdim',imRdim);
 cartY(cartY<min([Y(:); Yfit(:)]))=nan;
-surf(cartXDeg,cartYDeg,cartYfit,'FaceAlpha',0.5,'EdgeColor','none');
-hold on
-plot3(cartXDeg(:),cartYDeg(:),cartY(:),'.k')
+
+
+
+contourf(cartSupportDeg,cartSupportDeg,cartYfit,logspace(log10(500),log10(15000),15),'LineWidth',2)
+map = [ logspace(log10(0.5),log10(1),255); logspace(log10(0.5),log10(0.1),255); logspace(log10(0.5),log10(0.1),255)]';
+colormap(map)
+
 xlabel('Eccentricity [deg]');
 ylabel('Eccentricity [deg]');
 zlabel('Density [cones/deg^2]');
-view(-140,22)
+
+axis off
+
 plotFileName = fullfile(sourceDir,'figures','Fig02_meanModelFitCartesian.pdf');
 saveas(gcf,plotFileName);
 

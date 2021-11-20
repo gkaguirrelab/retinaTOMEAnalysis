@@ -1,4 +1,4 @@
-function [p, Yfit, fVal, RSquared, nonlcon, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,useAsymptoteConstraint,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
+function [p, Yfit, fVal, RSquared, nonlcon, polarTheta, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,useAsymptoteConstraint,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
 % Fit a multi-parameter surface to cone density data
 %
 % Syntax:
@@ -175,9 +175,11 @@ end
 
 % Expand the p vector if needed
 if simplePolarModel
+    polarTheta = p(5);
     polarMultiplier = p(6);
     p = pFull(p);
 else
+    polarTheta = nan;
     polarMultiplier = nan;
 end
 
@@ -185,11 +187,25 @@ end
 Yfit = nan(supportLength,supportLength);
 Yfit(:,:) = coneDensityModel(X,P,maxSupportDeg,p);
 
-% Calculate the R-squared value
+% Calculate the R-squared value for the exponential and polar variation
+% components
+pReduced = p;
+pReduced([6 10 14 18])=0;
+YfitExponentialOnly = nan(supportLength,supportLength);
+YfitExponentialOnly(:,:) = coneDensityModel(X,P,maxSupportDeg,pReduced);
+YfitPolarOnly = Yfit-YfitExponentialOnly;
+
+% Only evaluate the correlation where there are data values
 goodIdx = ~isnan(Y(:));
-RSquared = corr(Yfit(goodIdx),Y(goodIdx))^2;
 
+RSquaredFull = corr(Yfit(goodIdx),Y(goodIdx))^2;
+RSquaredExponentialOnly = corr(YfitExponentialOnly(goodIdx),Y(goodIdx))^2;
+RSquaredPolarOnly = corr(YfitPolarOnly(goodIdx),Y(goodIdx))^2;
 
+YPolarResiduals = Y - YfitExponentialOnly;
+RSquaredPolarResiduals = corr(YfitPolarOnly(goodIdx),YPolarResiduals(goodIdx))^2;
+
+RSquared = [RSquaredFull; RSquaredExponentialOnly; RSquaredPolarOnly; RSquaredPolarResiduals];
 
 end
 
