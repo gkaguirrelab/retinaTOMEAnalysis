@@ -1,8 +1,8 @@
 function fig2d_ExtremeEyes(saveDir)
 
-eye = modelEyeParameters('axialLength',27.57,'sphericalAmetropia',-10.25);
+eye = modelEyeParameters();
 a0 = eye.landmarks.fovea.degField;
-theta = linspace(0,2*pi,20);
+theta = linspace(0,2*pi,100);
 radius=15;
 for ii=1:length(theta)
     x=radius*cos(theta(ii));
@@ -11,8 +11,11 @@ for ii=1:length(theta)
     X(ii,:) = rayPath(:,end);
 end
 rayPath = calcNodalRayFromField(eye,a0);
-plotOpticalSystem(eye,'rayPath',rayPath);
-plot3(X(:,1),X(:,2),X(:,3),'.b');
+plotOpticalSystem(eye,'surfaceAlpha',0.5);
+%plot3(X(:,1),X(:,2),X(:,3),'-r');
+patch(X(:,1),X(:,2),X(:,3),[1 0 0])
+axis off
+print('~/Desktop/Eye30DegPatch.png','-dpng','-r600')
 
 bigEyeRadiusMm = mean(vecnorm((X-mean(X))')');
 
