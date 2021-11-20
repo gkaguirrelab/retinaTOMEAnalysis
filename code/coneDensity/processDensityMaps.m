@@ -53,12 +53,10 @@ for dd = 1:2
     switch dd
         case 1
             resultFiles=dir('Aggregation_Analysis/*_merged_Fouriest_Result.mat');
-            dataFileName = 'confocalDensityProfileData.mat';
             tagName = '_merged';
-            maxThresh = density(r).*3;
+            maxThresh = density(r).*2.5;
         case 2
             resultFiles=dir('**/confocal/Results_fovea_map/*_Fovea.mat');
-            dataFileName = 'Fovea.mat';
             tagName = '_fovea';
             maxThresh = density(r).*4;
     end
@@ -121,7 +119,7 @@ for dd = 1:2
                 if strcmp(subName,'11061_OD')
                     % Update with the coordinates selected by Jessica in
                     % Slack
-                    fovea_coords = [4959, 4680];
+ %                   fovea_coords = [4959, 4680];
                 end
                 % Special case 11083_OD
                 if strcmp(subName,'11083_OD')
@@ -131,7 +129,7 @@ for dd = 1:2
                 end
                 % Special case 11099_OD
                 if strcmp(subName,'11099_OD')
-                    fovea_coords = [8.5285e3, 7.8643e3];
+%                    fovea_coords = [8.5285e3, 7.8643e3];
                 end
                 foveaCoordStore.(['s_' subName])=fovea_coords;
             case 2
@@ -150,9 +148,6 @@ for dd = 1:2
                 'spectacleLens',-8.5);
             magFactor = 1/sg.refraction.cameraToRetina.magnification.spectacle;
             density_map = imresize(density_map,magFactor);
-            if dd~=3
-                foveamask = round(imresize(foveamask,magFactor));
-            end
             fovea_coords = fovea_coords.*magFactor;
         end
         
