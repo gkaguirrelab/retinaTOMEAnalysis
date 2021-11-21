@@ -5,7 +5,7 @@
 % and split images) and the "foveal" single image. Along the way there are
 % some cleaning steps applied, including filtering outlier density values
 % and removing an artifactual decline in cone density close to the fovea in
-% the confocal data. 
+% the confocal data.
 %
 % The images are all aligned to the estimated foveal center, and
 % transformed to polar coordinates.
@@ -17,8 +17,7 @@ clear
 downSample = 0.05;
 newDim = 18000; % Dimensions of the density maps
 pixelsperdegree = 642.7000;
-paraFovealExtent = 2;
-foveaIslandSizePixels = 20000;
+paraFovealExtent = 2; % Start of search for "ridge" to filter
 
 % Create a map that will be used to filter "extreme" values
 dParams = [1477 -0.3396 7846 -1.3049 629];
@@ -42,6 +41,7 @@ if isfile(fileName)
 end
 
 % Turn off a warning
+warnState = warning();
 warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
 warning('off','signal:findpeaks:largeMinPeakHeight');
 
@@ -69,11 +69,11 @@ for dd = 1:2
         % Extract the subject name
         switch dd
             case 1
-        tmp = strsplit(fileName,filesep);
-        subName = [tmp{end}(4:8) tmp{end}(18:20)];
+                tmp = strsplit(fileName,filesep);
+                subName = [tmp{end}(4:8) tmp{end}(18:20)];
             case 2
-        tmp = strsplit(fileName,filesep);
-        subName = tmp{end-3};
+                tmp = strsplit(fileName,filesep);
+                subName = tmp{end-3};
         end
         
         % Some machinery to allow us to process just a few subjects at a
@@ -120,20 +120,20 @@ for dd = 1:2
                 if strcmp(subName,'11061_OD')
                     % Update with the coordinates selected by Jessica in
                     % Slack
- %                   fovea_coords = [4959, 4680];
- %                   foveaOverride = true;
+                    %                   fovea_coords = [4959, 4680];
+                    %                   foveaOverride = true;
                 end
                 % Special case 11083_OD
                 if strcmp(subName,'11083_OD')
                     % Update with the coordinates selected by Jessica in
                     % Slack
-%                    fovea_coords = [4954 5293];
-%                    foveaOverride = true;
+                    %                    fovea_coords = [4954 5293];
+                    %                    foveaOverride = true;
                 end
                 % Special case 11099_OD
                 if strcmp(subName,'11099_OD')
-%                    fovea_coords = [8.5285e3, 7.8643e3];
-%                    foveaOverride = true;
+                    %                    fovea_coords = [8.5285e3, 7.8643e3];
+                    %                    foveaOverride = true;
                 end
                 foveaCoordStore.(['s_' subName])=fovea_coords;
             case 2
@@ -181,45 +181,47 @@ for dd = 1:2
         % Filter the map for extreme values
         imDensity(imDensity>maxThresh)=nan;
         
-        % Show the filtered map
-        if dd==1
-            subplot(1,3,2)
-            imagesc(imDensity)
-            hold on
-            plot([1 newDim],round([newDim newDim]/2),'-r');
-            plot(round([newDim newDim]/2),[1 newDim],'-r');
-            axis square
-            axis off
-            title('filter periphery')
-        end
-                
         % Down-sample the map
         imDensity = imresize(imDensity,downSample);
         
         % Flip left eye density maps so they are pseudo-right eye
+        panelTitle = 'resample, filter';
         if strcmp(laterality,'OS')
             imDensity = fliplr(imDensity);
+            panelTitle = 'flip, resample, filter';
         end
+        
+        % In the fovea image, filter to find just the highest connected
+        % components
+        if dd == 2
+            imDensity = findOrderedRegions(imDensity);
+        end
+        
+        % Show the filtered map
+        subplot(1,3,2)
+        imagesc(imDensity)
+        hold on
+        plot([1 newDim],round([newDim newDim]/2),'-r');
+        plot(round([newDim newDim]/2),[1 newDim],'-r');
+        axis square
+        axis off
+        title(panelTitle)
         
         % Create polar maps
         polarDensity = convertImageMapToPolarMap(imDensity);
         polarDim = newDim*downSample*2-1;
         
         % Show the polar density map pre filtering
-        if dd==1
-            subplot(1,3,3)
-        else
-            subplot(1,3,2)
-        end
+        subplot(1,3,3)
         imagesc(polarDensity)
         axis square
         axis off
-        title('filter center; polar')
+        title('polar w/ ridge filter')
         
         % Calculate the support in degrees for the polar image
         supportDeg = (1:polarDim)./(pixelsperdegree*downSample*4);
         
-        % Remove decreasing components close to the fovea in the confocal
+        % Remove decreasing components close to the fovea in the merged
         % images
         supportDegIdx = find(supportDeg>paraFovealExtent,1);
         threshIdx = ones(1,size(polarDensity,1));
@@ -254,7 +256,7 @@ for dd = 1:2
             end
         end
         
-        % Add the filtering ridge
+        % Draw the filtering ridge
         hold on
         plot(threshIdx,1:size(polarDensity,1),'-r');
         drawnow
@@ -262,39 +264,6 @@ for dd = 1:2
         % Apply the filtering
         for nn=1:size(polarDensity,1)
             polarDensity(nn,1:threshIdx(nn))=nan;
-        end
-        
-        % For the fovea data, find the blob of pixels around the highest
-        % value
-        if dd==2
-            [maxH,idx]=max(polarDensity(:));
-            H = maxH/2;
-            stillSearching = true;
-            nonNanDensity = polarDensity;
-            nonNanDensity(isnan(nonNanDensity))=0;
-            while stillSearching
-                foveaIsland = nonNanDensity;
-                foveaIsland(foveaIsland<=H)=0;
-                foveaIsland(foveaIsland>H)=1;
-                CC = bwconncomp(foveaIsland);
-                [val,idx]=max(cellfun(@(x) length(x),CC.PixelIdxList));
-                if val<foveaIslandSizePixels
-                    stillSearching = false;
-                    foveaIsland = zeros(size(nonNanDensity));
-                    foveaIsland(CC.PixelIdxList{idx})=1;
-                    polarDensity(foveaIsland==0)=0;
-                    polarDensity(polarDensity==0)=nan;
-                    % Show the fovea blob
-                    subplot(1,3,3)
-                    imagesc(polarDensity)
-                    axis square
-                    axis off
-                    title('foveal blob, polar')
-                    drawnow
-                else
-                    H = H + (maxH/2)./100;
-                end
-            end
         end
         
         % Convert the cleaned polar image back to Cartesian
@@ -336,6 +305,6 @@ for dd = 1:2
     
 end
 
-% Turn on a warning
-warning('on','MATLAB:dispatcher:UnresolvedFunctionHandle');
+% Restore the warning state
+warning(warnState);
 
