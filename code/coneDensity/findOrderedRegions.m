@@ -30,6 +30,14 @@ hIdx = 2;
 stillSearching = true;
 while stillSearching
     
+    % Check if we have accounted for all the pixels
+    if hIdx > length(pixValList)
+        stillSearching = false;
+        hIdx = hIdx - 1;
+        continue
+    end
+    
+    % Get the current threshold
     H = pixValList(hIdx);
     
     % Binarize the image at this threshold
@@ -87,6 +95,7 @@ while stillSearching
     if any(maxBorderVals(1:length(lastMaxBorderVals)) > lastMaxBorderVals)
         stillSearching = false;
         hIdx = hIdx - 1;
+        continue
     else
         lastOrderedRegions = orderedRegions;
         lastBorderRegions = newBorderRegions;
