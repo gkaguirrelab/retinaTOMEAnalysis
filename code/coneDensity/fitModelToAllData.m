@@ -18,6 +18,7 @@ supportLength = 1799;
 imRdim = (supportLength+1)/2;
 maxSupportDeg = 15;
 supportDegDelta = 0.0078;
+idxF = 20;
 
 % Define the eccentricity support, and the ranges (in degrees) that will be
 % used for the confocal and split detecton data sets
@@ -74,8 +75,8 @@ end
 % those subjects with lower cone densities.
 Y = nanmean(dataMat,3);
 w = sum(~isnan(dataMat),3);
-Y(:,1:idxD)=nan;
-w(:,1:idxD)=0;
+Y(:,1:idxF)=nan;
+w(:,1:idxF)=0;
 [p0, Yfit, fVal] = fitDensitySurface(Y,w,false,false,true);
 
 
