@@ -226,35 +226,34 @@ for dd = 1:2
         supportDegIdx = find(supportDeg>paraFovealExtent,1);
         threshIdx = ones(1,size(polarDensity,1));
         
-        if dd == 1
-            for nn=1:size(polarDensity,1)
-                
-                % Density for this polar angle
-                myVec = polarDensity(nn,1:supportDegIdx);
-                
-                [~,idx] = findpeaks(myVec,'MinPeakHeight',4e3,'MinPeakProminence',500,'MinPeakWidth',10,'NPeaks',3);
-                
-                % Couldn't find a peak. Try this method instead
-                if isempty(idx)
-                    stillSearching = true;
-                    idx = 1;
-                    while stillSearching
-                        if myVec(idx) > max(myVec(idx+1:end))
+        % Loop over the polar angles to find the ridge
+        for nn=1:size(polarDensity,1)
+            
+            % Density for this polar angle
+            myVec = polarDensity(nn,1:supportDegIdx);
+            
+            [~,idx] = findpeaks(myVec,'MinPeakHeight',4e3,'MinPeakProminence',500,'MinPeakWidth',10,'NPeaks',3);
+            
+            % Couldn't find a peak. Try this method instead
+            if isempty(idx)
+                stillSearching = true;
+                idx = 1;
+                while stillSearching
+                    if myVec(idx) > max(myVec(idx+1:end))
+                        stillSearching = false;
+                    else
+                        idx=idx+1;
+                        if idx==length(myVec)
                             stillSearching = false;
-                        else
-                            idx=idx+1;
-                            if idx==length(myVec)
-                                stillSearching = false;
-                            end
                         end
                     end
                 end
-                
-                % Store the ridge index
-                threshIdx(nn)=idx(end)-1;
-                
             end
-        end
+            
+            % Store the ridge index
+            threshIdx(nn)=idx(end)-1;
+            
+        end % loop over polar angle
         
         % Draw the filtering ridge
         hold on
