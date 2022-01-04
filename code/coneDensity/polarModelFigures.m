@@ -64,16 +64,19 @@ for cc = 1:4
     switch cc
         case 1
             g = p(6).*gampdf(X,p(7),p(8))./max(gampdf(0:0.01:maxSupportDeg,p(7),p(8)));
-            Ymodel = g.*cosd(P+p(5));
+            Ymodel = g.*cosd(P+p(5)+180);
         case 2
             g = p(10).*gampdf(X,p(11),p(12))./max(gampdf(0:0.01:maxSupportDeg,p(11),p(12)));
-            Ymodel = g.*sind(P+p(5));
+            Ymodel = g.*sind(P+p(9)+180);
         case 3
             g = p(14).*gampdf(X,p(15),p(16))./max(gampdf(0:0.01:maxSupportDeg,p(15),p(16)));
             Ymodel = g.*cosd(P.*2+p(13));
         case 4
             g = p(18).*gampdf(X,p(19),p(20))./max(gampdf(0:0.01:maxSupportDeg,p(19),p(20)));
             Ymodel = g.*cosd(P.*4+p(17));
+        case 5
+            g = p(22).*gampdf(X,p(23),p(24))./max(gampdf(0:0.01:maxSupportDeg,p(23),p(24)));
+            Ymodel = g.*sind(P+p(21)+180);
     end
     surf(X,P,Ymodel,'FaceAlpha',0.5,'EdgeColor','none');
     yticks(meridianAngles);
@@ -89,9 +92,9 @@ saveas(gcf,plotFileName);
 % Illustrate the model surface components
 figure
 g = p(6).*gampdf(X,p(7),p(8))./max(gampdf(0:0.01:maxSupportDeg,p(7),p(8)));
-Ymodel = g.*cosd(P+p(5));
+Ymodel = g.*cosd(P+p(5)+180);
 g = p(10).*gampdf(X,p(11),p(12))./max(gampdf(0:0.01:maxSupportDeg,p(11),p(12)));
-Ymodel = Ymodel+g.*sind(P+p(5));
+Ymodel = Ymodel+g.*sind(P+p(9)+180);
 g = p(14).*gampdf(X,p(15),p(16))./max(gampdf(0:0.01:maxSupportDeg,p(15),p(16)));
 Ymodel = Ymodel+g.*cosd(P.*2+p(13));
 g = p(18).*gampdf(X,p(19),p(20))./max(gampdf(0:0.01:maxSupportDeg,p(19),p(20)));

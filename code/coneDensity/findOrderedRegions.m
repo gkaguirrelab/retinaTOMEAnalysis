@@ -2,7 +2,7 @@ function filteredIm = findOrderedRegions(im,precision)
 
 % Specify the precision if not defined
 if nargin < 2
-    precision = -2;
+    precision = -3;
 end
 
 % Copy over im to roundIm;

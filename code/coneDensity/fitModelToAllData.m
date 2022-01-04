@@ -3,7 +3,7 @@
 % composites of the data (confocal, split, and "fovea") and then fits the
 % data with the polar cone density surface model.
 
-% The overal result directory
+% The overall result directory
 sourceDir = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images/densityAnalysis/';
 
 % Identify the confocal, split, and "fovea" data files
@@ -18,7 +18,7 @@ supportLength = 1799;
 imRdim = (supportLength+1)/2;
 maxSupportDeg = 15;
 supportDegDelta = 0.0078;
-idxF = 20;
+idxF = 40;
 
 % Define the eccentricity support, and the ranges (in degrees) that will be
 % used for the confocal and split detecton data sets
@@ -56,12 +56,14 @@ for ss = 1:length(subNames)
         if ~isempty(validVerts)
             y(validVerts) = data.polarDensity(validVerts);
             hasFovea = true;
+        else
+            fprintf(['No unique fovea data for ' subNames{ss} '\n']);
+            missingFovea(ss) = true;
         end
-    end    
-    if ~hasFovea
-        fprintf(['No fovea data for ' subNames{ss} '\n']);
+    else
+        fprintf(['No fovea file for ' subNames{ss} '\n']);
         missingFovea(ss) = true;
-    end
+    end    
     
     % Filter out any negative values
     y(y<0)=nan;
@@ -77,8 +79,7 @@ Y = nanmean(dataMat,3);
 w = sum(~isnan(dataMat),3);
 Y(:,1:idxF)=nan;
 w(:,1:idxF)=0;
-[p0, Yfit, fVal] = fitDensitySurface(Y,w,false,false,true);
-
+[p0, Yfit, fVal] = fitDensitySurface(Y,w,false,false,true,false);
 
 
 %% Fit each subject with the reduced model
@@ -99,7 +100,7 @@ for ii = 1:length(subNames)
     end
     Y1 = squeeze(dataMat(:,:,ii));
     fprintf([num2str(ii),'...']);
-    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(:,ii), nonlconSet(ii), polarThetaSet(ii), polarMultiplierSet(ii)] = fitDensitySurface(Y1,w1,true,true,true,p0);
+    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(:,ii), nonlconSet(ii), polarThetaSet(ii), polarMultiplierSet(ii)] = fitDensitySurface(Y1,w1,true,true,true,true,p0);
     YResidualSet(:,:,ii) = Y1 - squeeze(YfitSet(:,:,ii));
 end
 fprintf('done\n');

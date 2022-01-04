@@ -1,4 +1,4 @@
-function [p, Yfit, fVal, RSquared, nonlcon, polarTheta, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,useAsymptoteConstraint,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
+function [p, Yfit, fVal, RSquared, nonlcon, polarTheta, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,usePeripheralDensityConstraint,useFovealDensityConstraint,p0,supportDeg,maxSupportDeg,refPeripheralLocation,refPeripheralDensity,refFovealDensity)
 % Fit a multi-parameter surface to cone density data
 %
 % Syntax:
@@ -65,12 +65,19 @@ arguments
     w (:,:) {mustBeNumeric} = ones(size(Y))
     preFitAvgEccen (1,1) = true;
     simplePolarModel (1,1) = true;
-    useAsymptoteConstraint (1,1) = false;
-    p0 (1,20) {mustBeNumeric} = [2.0072e+03, -0.1079, 1.4437e+04, -1.9325, 35.0000, 0.0635, 10.4377, 0.1361, 32.4056, 0.0278, 2.4968, 3.0000, -10.5220, 0.0949, 2.9280, 0.7202, -4.4283, 0.0647, 6.1025, 0.3186]
+    usePeripheralDensityConstraint (1,1) = false;
+    useFovealDensityConstraint (1,1) = false;
+    p0 (1,20) {mustBeNumeric} = [ ...
+        1.6577e+03, -0.0793, 9.2344e+03, -1.4909, ...
+        2.8341    0.0476    6.1593    0.3000, ...
+       14.9857    0.0541   11.5255    0.3896, ...
+      -10.6093    0.0839    2.9337    0.7068, ...
+       -8.6727    0.0664    3.4947    0.7545]
     supportDeg (1,:) {mustBeNumeric} = 0:0.0078:0.0078*(size(Y,1)-1)
     maxSupportDeg (1,1) {mustBeNumeric} = 15
-    refEccen (1,1) = 20
-    refDensity (1,1) = 250
+    refPeripheralLocation (1,1) = 10
+    refPeripheralDensity (1,1) = 650
+    refFovealDensity (1,1) = 14426; % Median peak cone density from Table S1 of Reiniger et al., 2021 Current Biology
 end
 
 %% pBlock and mBlock settings
@@ -82,8 +89,9 @@ end
 pBlockLB = [0,-5,0,-5];
 pBlockUB = [5e4,0,5e4,0];
 
-mBlockLB = [-35 -1 2 0.01];
-mBlockUB = [35 1 25 3];
+mBlockLB = [-15  0.0  1.8  0.3];
+mBlockUB = [ 15  0.1 12.0  3.0];
+
 
 % The number of Fourier components that models variation across polar angle
 nFourier = 4;
@@ -156,10 +164,12 @@ else
 end
 
 % non-linear constraint for the asymptotic cone density
-if useAsymptoteConstraint
-    myNonlcon = @(p) asymptoteDensity(p,refEccen,refDensity);
-else
-    myNonlcon = [];
+myNonlcon = [];
+if usePeripheralDensityConstraint && useFovealDensityConstraint
+    myNonlcon = @(p) constrainFovealAndPeripheralDensity(p,refPeripheralLocation,refPeripheralDensity,refFovealDensity);
+end
+if usePeripheralDensityConstraint && ~useFovealDensityConstraint
+    myNonlcon = @(p) asymptoteDensity(p,refPeripheralLocation,refPeripheralDensity);
 end
 
 % search
@@ -167,7 +177,7 @@ options = optimoptions('fmincon','Display','off','Algorithm','interior-point','U
 [p, fVal] = fmincon(myObj,p0,[],[],[],[],lb,ub,myNonlcon,options);
 
 % Obtain the non-linear constraint value
-if useAsymptoteConstraint
+if usePeripheralDensityConstraint
     nonlcon = myNonlcon(p);
 else
     nonlcon = nan;
@@ -210,7 +220,29 @@ RSquared = [RSquaredFull; RSquaredExponentialOnly; RSquaredPolarOnly; RSquaredPo
 end
 
 
-function [c,ceq] = asymptoteDensity(p,refEccen,refDensity)
+function [c,ceq] = constrainFovealAndPeripheralDensity(p,refPeripheralLocation,refPeripheralDensity,refFovealDensity)
+
+% Decompose p into individual variables
+a = p(1);   % scale first exponential
+b = p(2);   % time constant first exponential
+c = p(3);   % scale second exponential
+d = p(4);   % time constant second exponential
+
+% The modeled density at the peripheral reference eccentricity, and the
+% modeled density at the foveal center
+modelPeripheralDensity = (a.*exp(b.*refPeripheralLocation)+c.*exp(d.*refPeripheralLocation));
+modelFovealDensity = (a.*exp(b.*1e-4)+c.*exp(d.*1e-4));
+
+% Constraint to keep peripheral density above the reference peripheral
+% density, and to match the peak density to the reference peak density
+c = refPeripheralDensity - modelPeripheralDensity;
+ceq = refFovealDensity - modelFovealDensity;
+
+end
+
+
+
+function [c,ceq] = asymptoteDensity(p,refPeripheralLocation,refPeripheralDensity)
 
 % Decompose p into individual variables
 a = p(1);   % scale first exponential
@@ -219,10 +251,11 @@ c = p(3);   % scale second exponential
 d = p(4);   % time constant second exponential
 
 % The modeled density at the reference eccentricity
-density = (a.*exp(b.*refEccen)+c.*exp(d.*refEccen));
+modelPeripheralDensity = (a.*exp(b.*refPeripheralLocation)+c.*exp(d.*refPeripheralLocation));
 
-% Constraint to keep density above the reference density
-c = refDensity - density;
+% Constraint to keep peripheral density above the reference peripheral
+% density,
+c = refPeripheralDensity - modelPeripheralDensity;
 ceq = [];
 
 end

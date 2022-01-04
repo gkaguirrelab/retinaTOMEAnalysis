@@ -48,7 +48,7 @@ warning('off','signal:findpeaks:largeMinPeakHeight');
 % We are going to loop through the processing twice, once for the merged
 % confocal and split datasets, and for the single fovea image
 for dd = 1:2
-    
+
     switch dd
         case 1
             resultFiles=dir('Aggregation_Analysis/*_merged_Fouriest_Result.mat');
@@ -59,13 +59,13 @@ for dd = 1:2
             tagName = '_fovea';
             maxThresh = density(r).*4;
     end
-    
+
     % Loop over the result files
     for rr = 1:length(resultFiles)
-        
+
         % Identify the next file
         fileName = fullfile(resultFiles(rr).folder,resultFiles(rr).name);
-        
+
         % Extract the subject name
         switch dd
             case 1
@@ -75,7 +75,7 @@ for dd = 1:2
                 tmp = strsplit(fileName,filesep);
                 subName = tmp{end-3};
         end
-        
+
         % Some machinery to allow us to process just a few subjects at a
         % time
         %{
@@ -83,13 +83,13 @@ for dd = 1:2
                 continue
             end
         %}
-        
+
         % Report that we are about to process this subject
         fprintf([resultFiles(rr).name '\n']);
-        
+
         % Load the file
         load(fileName);
-        
+
         % The density map information is stored in different places in the
         % merged and "fovea" datasets.
         switch dd
@@ -98,7 +98,7 @@ for dd = 1:2
             case 2
                 density_map = densim(:,:,1);
         end
-        
+
         % Determine if this a left or right eye
         if contains(resultFiles(rr).name,'_OS_')
             laterality = 'OS';
@@ -109,7 +109,7 @@ for dd = 1:2
         else
             error(['Unable to determine laterality for ' resultFiles(rr).name]);
         end
-        
+
         % In some cases the foveal location identified on the merged image
         % seems off-center (e.g., 11092 and 11096). We substitute a
         % hand-selected foveal point for these cases.
@@ -139,13 +139,12 @@ for dd = 1:2
             case 2
                 fovea_coords=foveaCoordStore.(['s_' subName]);
         end
-        
+
         % Detect the special case of subject 11051, who wore a -8.5 D
         % spectacle lens during collection of their adaptive optics images.
-        % Need to adjust for spectaacle magnification
+        % Need to adjust for spectacle magnification
         if strcmp(subName,'11051_OS') || strcmp(subName,'11051_OD')
-            % Need to resize the density_map, and the foveamask, and adjust
-            % the fovea_coords
+            % Need to resize the density_map and adjust the fovea_coords
             sg = createSceneGeometry(...
                 'sphericalAmetropia',-8.5000,...
                 'axialLength',25.9250,...
@@ -154,11 +153,25 @@ for dd = 1:2
             density_map = imresize(density_map,magFactor);
             fovea_coords = fovea_coords.*magFactor;
         end
-        
+
+        % Detect the special case of subject 11102, who wore a -8 D
+        % spectacle lens during collection of their adaptive optics images.
+        % Need to adjust for spectacle magnification
+        if strcmp(subName,'11102_OS') || strcmp(subName,'11102_OD')
+            % Need to resize the density_map and adjust the fovea_coords
+            sg = createSceneGeometry(...
+                'sphericalAmetropia',-8,...
+                'axialLength',26.26,...
+                'spectacleLens',-8);
+            magFactor = 1/sg.refraction.cameraToRetina.magnification.spectacle;
+            density_map = imresize(density_map,magFactor);
+            fovea_coords = fovea_coords.*magFactor;
+        end
+
         % Pad the density map so that it is square around the fovea_coords
         imsize = size(density_map);
         offset = round(newDim/2-fovea_coords);
-        
+
         % Set up the density map
         imDensity = zeros(newDim,newDim);
         imDensity(1:imsize(1),1:imsize(2))=density_map;
@@ -166,7 +179,7 @@ for dd = 1:2
         imDensity(isinf(imDensity))=0;
         imDensity=imtranslate(imDensity,offset);
         imDensity(imDensity==0)=nan;
-        
+
         % Show the initial density map
         figHandle = figure('Name',subName,'Position',  [100, 100, 800, 200]);
         subplot(1,3,1)
@@ -177,26 +190,31 @@ for dd = 1:2
         axis square
         axis off
         title('centered')
-        
+
         % Filter the map for extreme values
         imDensity(imDensity>maxThresh)=nan;
-        
+
         % Down-sample the map
         imDensity = imresize(imDensity,downSample);
-        
+
         % Flip left eye density maps so they are pseudo-right eye
         panelTitle = 'resample, filter';
         if strcmp(laterality,'OS')
             imDensity = fliplr(imDensity);
             panelTitle = 'flip, resample, filter';
         end
-        
+
         % In the fovea image, filter to find just the highest connected
         % components
         if dd == 2
             imDensity = findOrderedRegions(imDensity);
         end
-        
+
+        % Check if imDensity is empty, in which case throw an error
+        if sum(~isnan(imDensity(:)))==0
+            error('No data points survived!')
+        end
+
         % Show the filtered map
         subplot(1,3,2)
         imagesc(imDensity)
@@ -206,34 +224,33 @@ for dd = 1:2
         axis square
         axis off
         title(panelTitle)
-        
+
         % Create polar maps
         polarDensity = convertImageMapToPolarMap(imDensity);
         polarDim = newDim*downSample*2-1;
-        
+
         % Show the polar density map pre filtering
         subplot(1,3,3)
         imagesc(polarDensity)
         axis square
         axis off
         title('polar w/ ridge filter')
-        
+
         % Calculate the support in degrees for the polar image
         supportDeg = (1:polarDim)./(pixelsperdegree*downSample*4);
-        
-        % Remove decreasing components close to the fovea in the merged
-        % images
+
+        % Remove decreasing components close to the fovea
         supportDegIdx = find(supportDeg>paraFovealExtent,1);
         threshIdx = ones(1,size(polarDensity,1));
-        
+
         % Loop over the polar angles to find the ridge
         for nn=1:size(polarDensity,1)
-            
+
             % Density for this polar angle
             myVec = polarDensity(nn,1:supportDegIdx);
-            
+
             [~,idx] = findpeaks(myVec,'MinPeakHeight',4e3,'MinPeakProminence',500,'MinPeakWidth',10,'NPeaks',3);
-            
+
             % Couldn't find a peak. Try this method instead
             if isempty(idx)
                 stillSearching = true;
@@ -249,25 +266,30 @@ for dd = 1:2
                     end
                 end
             end
-            
+
             % Store the ridge index
             threshIdx(nn)=idx(end)-1;
-            
+
         end % loop over polar angle
-        
+
         % Draw the filtering ridge
         hold on
         plot(threshIdx,1:size(polarDensity,1),'-r');
         drawnow
-        
+
         % Apply the filtering
         for nn=1:size(polarDensity,1)
             polarDensity(nn,1:threshIdx(nn))=nan;
         end
-        
+
         % Convert the cleaned polar image back to Cartesian
         imDensity = convertPolarMapToImageMap(polarDensity);
-        
+
+        % Check if imDensity is empty, in which case throw an error
+        if sum(~isnan(imDensity(:)))==0
+            error('No data points survived!')
+        end
+
         % Store the data
         data = [];
         data.meta.subName = subName;
@@ -281,27 +303,27 @@ for dd = 1:2
         data.meta.supportDegDelta = supportDeg(1);
         data.imDensity = imDensity;
         data.polarDensity = polarDensity;
-        
+
         % Save the data file
         fileName = fullfile('densityAnalysis',[subName tagName '.mat']);
         save(fileName,'data','-v7.3');
-        
+
         % Save the foveaCoordsStore
         fileName = fullfile('densityAnalysis','foveaCoordStore.mat');
         save(fileName,'foveaCoordStore');
-        
+
         % Save the diagnostic image
         fileName = fullfile('densityAnalysis',[subName tagName '.png']);
         saveas(figHandle,fileName)
-        
+
         % Close the image
         close(figHandle);
-        
+
         % Clear the data file
         clear data
-        
+
     end
-    
+
 end
 
 % Restore the warning state
