@@ -1,24 +1,19 @@
 %% fitModelToAllData
-% This routine loads the outputs of processDensityMaps.m, generates
-% composites of the data (confocal, split, and "fovea") and then fits the
+% This routine loads the outputs of processDensityMaps.m and then fits the
 % data with the polar cone density surface model.
 
 % The overall result directory
 sourceDir = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images/densityAnalysis/';
 
-% Identify the confocal, split, and "fovea" data files
+% Identify the aggregate data files
 mergedFiles = dir([sourceDir '*_merged.mat']);
-mergedNames = strrep(extractfield(mergedFiles,'name'),'_merged.mat','');
-
-foveaFiles = dir([sourceDir '*_fovea.mat']);
-foveaNames = strrep(extractfield(foveaFiles,'name'),'_fovea.mat','');
+subNames = strrep(extractfield(mergedFiles,'name'),'_merged.mat','');
 
 % Define some constants
 supportLength = 1799;
 imRdim = (supportLength+1)/2;
 maxSupportDeg = 15;
-supportDegDelta = 0.0078;
-idxF = 40;
+supportDegDelta = 0.00773;
 
 % Define the eccentricity support, and the ranges (in degrees) that will be
 % used for the confocal and split detecton data sets
@@ -27,7 +22,6 @@ supportDeg = 0:supportDegDelta:supportDegDelta*(supportLength-1);
 
 %% Loop through subjects and create the composite polar density image
 
-subNames = unique([mergedNames foveaNames]);
 dataMat = nan(supportLength,supportLength,length(subNames));
 missingMerged = false(length(subNames));
 missingFovea = false(length(subNames));
@@ -37,7 +31,7 @@ for ss = 1:length(subNames)
     % A matrix to hold the data for this subject
     y = nan(supportLength,supportLength);
     
-    % Add the merged split and confocal data
+    % Load the aggregate data file
     merFile = fullfile(sourceDir,[subNames{ss} '_merged.mat']);
     if isfile(merFile)
         load(merFile,'data');
@@ -45,40 +39,20 @@ for ss = 1:length(subNames)
     else
         fprintf(['No merged data for ' subNames{ss} '\n']);
         missingMerged(ss) = true;
-    end
-        
-    % Add the fovea data
-    foveaFile = fullfile(sourceDir,[subNames{ss} '_fovea.mat']);
-    hasFovea = false;
-    if isfile(foveaFile)
-        load(foveaFile,'data');
-        validVerts = find(fix(~isnan(data.polarDensity)) .* fix(isnan(y)));
-        if ~isempty(validVerts)
-            y(validVerts) = data.polarDensity(validVerts);
-            hasFovea = true;
-        else
-            fprintf(['No unique fovea data for ' subNames{ss} '\n']);
-            missingFovea(ss) = true;
-        end
-    else
-        fprintf(['No fovea file for ' subNames{ss} '\n']);
-        missingFovea(ss) = true;
-    end    
+    end        
     
+    % Make sure that the supportDegDelta is as expected
+    assert(abs(supportDegDelta-data.meta.supportDegDelta)<0.001);
+
     % Filter out any negative values
     y(y<0)=nan;
     dataMat(:,:,ss)=y;
     
 end
 
-
-% Fit the mean. We remove value very close to the fovea as not all subjects
-% have these, leading to a bias of the mean close to the fovea towards
-% those subjects with lower cone densities.
+% Fit the mean.
 Y = nanmean(dataMat,3);
 w = sum(~isnan(dataMat),3);
-Y(:,1:idxF)=nan;
-w(:,1:idxF)=0;
 [p0, Yfit, fVal] = fitDensitySurface(Y,w,false,false,true,false);
 
 
@@ -95,9 +69,6 @@ polarMultiplierSet = nan(1,length(subNames));
 fprintf('fitting...');
 w1 = ones(size(Y));
 for ii = 1:length(subNames)
-    if missingMerged(ii)
-        continue
-    end
     Y1 = squeeze(dataMat(:,:,ii));
     fprintf([num2str(ii),'...']);
     [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(:,ii), nonlconSet(ii), polarThetaSet(ii), polarMultiplierSet(ii)] = fitDensitySurface(Y1,w1,true,true,true,true,p0);

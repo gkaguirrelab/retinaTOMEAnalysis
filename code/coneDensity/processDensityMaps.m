@@ -10,14 +10,18 @@
 % The images are all aligned to the estimated foveal center, and
 % transformed to polar coordinates.
 %
+% The code is written to support a separate processing of a "merged" and
+% "fovea" dataset. Rob ultimately added the foveal images into the
+% aggregate image, so this aspect of the code is vestigal.
+%
 
 clear
 
 % Hard coded values
-downSample = 0.05;
+downSample = 0.05; % Downsamples the image to 1/20th of the original rez
 newDim = 18000; % Dimensions of the density maps
-pixelsperdegree = 642.7000;
-paraFovealExtent = 2; % Start of search for "ridge" to filter
+pixelsPerDegreeFixed = 647; % All of the results files have this rez.
+paraFovealExtent = 2; % Start of search for "ridge" to filter (in degrees)
 
 % Create a map that will be used to filter "extreme" values
 dParams = [1477 -0.3396 7846 -1.3049 629];
@@ -25,7 +29,7 @@ density = @(x) dParams(1).*exp(dParams(2).*x)+dParams(3).*exp(dParams(4).*x)+dPa
 [R,C] = ndgrid(1:newDim, 1:newDim);
 R = R - newDim/2;
 C = C - newDim/2;
-r = sqrt(R.^2+C.^2) ./ pixelsperdegree;
+r = sqrt(R.^2+C.^2) ./ pixelsPerDegreeFixed;
 r(r<1.25)=nan;
 
 % The overal result directory
@@ -45,9 +49,11 @@ warnState = warning();
 warning('off','MATLAB:dispatcher:UnresolvedFunctionHandle');
 warning('off','signal:findpeaks:largeMinPeakHeight');
 
-% We are going to loop through the processing twice, once for the merged
-% confocal and split datasets, and for the single fovea image
-for dd = 1:2
+% We are going to loop through the processing once for the aggregate
+% images. There is vestigal code here that would have handled a separate
+% set of foveal images, but these are now integrated into the "aggregate"
+% images.
+for dd = 1:1
 
     switch dd
         case 1
@@ -55,7 +61,7 @@ for dd = 1:2
             tagName = '_merged';
             maxThresh = density(r).*2.5;
         case 2
-            resultFiles=dir('**/confocal/Results_fovea_map/*_Fovea.mat');
+            resultFiles=dir('*/confocal/Results_fovea_map/*_Fovea.mat');
             tagName = '_fovea';
             maxThresh = density(r).*4;
     end
@@ -76,19 +82,16 @@ for dd = 1:2
                 subName = tmp{end-3};
         end
 
-        % Some machinery to allow us to process just a few subjects at a
-        % time
-        %{
-            if ~any(strcmp(subName,{'11100_OS','11028_OD','11088_OD','11101_OD','11092_OS'}))
-                continue
-            end
-        %}
-
         % Report that we are about to process this subject
         fprintf([resultFiles(rr).name '\n']);
 
         % Load the file
         load(fileName);
+
+        % Make sure that the image resolution is as expected
+        if dd==1
+            assert(1/scaling==pixelsPerDegreeFixed)
+        end
 
         % The density map information is stored in different places in the
         % merged and "fovea" datasets.
@@ -110,62 +113,18 @@ for dd = 1:2
             error(['Unable to determine laterality for ' resultFiles(rr).name]);
         end
 
-        % In some cases the foveal location identified on the merged image
-        % seems off-center (e.g., 11092 and 11096). We substitute a
-        % hand-selected foveal point for these cases.
+        % Code to allow an over-ride of the default fovea coords; not used.
         foveaOverride = false;
         switch dd
             case 1
-                % Special case 11061_OD
-                if strcmp(subName,'11061_OD')
-                    % Update with the coordinates selected by Jessica in
-                    % Slack
-                    %                   fovea_coords = [4959, 4680];
-                    %                   foveaOverride = true;
-                end
-                % Special case 11083_OD
-                if strcmp(subName,'11083_OD')
-                    % Update with the coordinates selected by Jessica in
-                    % Slack
-                    %                    fovea_coords = [4954 5293];
-                    %                    foveaOverride = true;
-                end
-                % Special case 11099_OD
-                if strcmp(subName,'11099_OD')
-                    %                    fovea_coords = [8.5285e3, 7.8643e3];
-                    %                    foveaOverride = true;
+                % Structure of a special case foveal coordinate
+                if strcmp(subName,'123456_OD')
+                    fovea_coords = [4444, 5555];
+                    foveaOverride = true;
                 end
                 foveaCoordStore.(['s_' subName])=fovea_coords;
             case 2
                 fovea_coords=foveaCoordStore.(['s_' subName]);
-        end
-
-        % Detect the special case of subject 11051, who wore a -8.5 D
-        % spectacle lens during collection of their adaptive optics images.
-        % Need to adjust for spectacle magnification
-        if strcmp(subName,'11051_OS') || strcmp(subName,'11051_OD')
-            % Need to resize the density_map and adjust the fovea_coords
-            sg = createSceneGeometry(...
-                'sphericalAmetropia',-8.5000,...
-                'axialLength',25.9250,...
-                'spectacleLens',-8.5);
-            magFactor = 1/sg.refraction.cameraToRetina.magnification.spectacle;
-            density_map = imresize(density_map,magFactor);
-            fovea_coords = fovea_coords.*magFactor;
-        end
-
-        % Detect the special case of subject 11102, who wore a -8 D
-        % spectacle lens during collection of their adaptive optics images.
-        % Need to adjust for spectacle magnification
-        if strcmp(subName,'11102_OS') || strcmp(subName,'11102_OD')
-            % Need to resize the density_map and adjust the fovea_coords
-            sg = createSceneGeometry(...
-                'sphericalAmetropia',-8,...
-                'axialLength',26.26,...
-                'spectacleLens',-8);
-            magFactor = 1/sg.refraction.cameraToRetina.magnification.spectacle;
-            density_map = imresize(density_map,magFactor);
-            fovea_coords = fovea_coords.*magFactor;
         end
 
         % Pad the density map so that it is square around the fovea_coords
@@ -181,7 +140,7 @@ for dd = 1:2
         imDensity(imDensity==0)=nan;
 
         % Show the initial density map
-        figHandle = figure('Name',subName,'Position',  [100, 100, 800, 200]);
+        figHandle = figure('Name',subName,'Position',[100, 100, 800, 200]);
         subplot(1,3,1)
         imagesc(imDensity)
         hold on
@@ -237,7 +196,7 @@ for dd = 1:2
         title('polar w/ ridge filter')
 
         % Calculate the support in degrees for the polar image
-        supportDeg = (1:polarDim)./(pixelsperdegree*downSample*4);
+        supportDeg = (1:polarDim)./(pixelsPerDegreeFixed*downSample*4);
 
         % Remove decreasing components close to the fovea
         supportDegIdx = find(supportDeg>paraFovealExtent,1);
