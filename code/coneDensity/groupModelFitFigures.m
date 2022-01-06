@@ -148,7 +148,6 @@ for mm=1:4
     yData = Y(round((meridianAngles(mm))*polarRatio+1),:);
     % Mask the fovea data points. When we fit the group model, we don't
     % include these points as there is a bias towards lower vaues.
-    yData(supportDeg<0.3) = nan;
     plot(supportDeg,yData,'.k');
     hold on
     plot(supportDeg,Yfit(round((meridianAngles(mm))*polarRatio+1),:),'-r');

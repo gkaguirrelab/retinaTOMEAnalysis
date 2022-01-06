@@ -55,7 +55,6 @@ Y = nanmean(dataMat,3);
 w = sum(~isnan(dataMat),3);
 [p0, Yfit, fVal] = fitDensitySurface(Y,w,false,false,true,false);
 
-
 %% Fit each subject with the reduced model
 pSet = nan(20,length(subNames));
 YfitSet = nan(size(dataMat));
