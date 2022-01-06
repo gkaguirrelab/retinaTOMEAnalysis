@@ -71,7 +71,7 @@ w1 = ones(size(Y));
 for ii = 1:length(subNames)
     Y1 = squeeze(dataMat(:,:,ii));
     fprintf([num2str(ii),'...']);
-    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(:,ii), nonlconSet(ii), polarThetaSet(ii), polarMultiplierSet(ii)] = fitDensitySurface(Y1,w1,true,true,true,true,p0);
+    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(:,ii), nonlconSet(ii), polarThetaSet(ii), polarMultiplierSet(ii)] = fitDensitySurface(Y1,w1,true,true,false,false,p0);
     YResidualSet(:,:,ii) = Y1 - squeeze(YfitSet(:,:,ii));
 end
 fprintf('done\n');
@@ -87,10 +87,6 @@ meridianAngles = [0 90 180 270 360];
 polarRatio = (size(dataMat,1)+1)/360;
 
 for ss=1:length(subNames)
-    
-    if missingMerged(ss)
-        continue
-    end
     
     Y = squeeze(dataMat(:,:,ss));
     Yfit = squeeze(YfitSet(:,:,ss));
@@ -114,7 +110,7 @@ for ss=1:length(subNames)
         
     % Polar bands and model fit
     figHandle = figure();    
-    for ii = [0.0938 0.1875 0.375 0.75 1.5 3 6 10 20]
+    for ii = [0.1875 0.375 0.75 1.5 3 6 10]
         idx = find(supportDeg>=ii,1);
         if isempty(idx)
             density = coneDensityModel(ii,0,maxSupportDeg,pSet(:,ss));

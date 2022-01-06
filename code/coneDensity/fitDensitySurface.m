@@ -52,7 +52,11 @@ function [p, Yfit, fVal, RSquared, nonlcon, polarTheta, polarMultiplier] = fitDe
 %   p                     - 1x20 vector. The parameters of the model fit.
 %   Yfit                  - nxn matrix. The model fit
 %   fVal                  - Scalar. The fit error.
-%   RSquared              - Scalar. Another expression of the fit error.
+%   RSquared              - 1x4 vector. A set of R-squared values for:
+%                             - RSquaredFull
+%                             - RSquaredExponentialOnly
+%                             - RSquaredPolarOnly
+%                             - RSquaredPolarResiduals
 %   polarMultiplier       - Scalar. When simplePolarModel is set to true,
 %                           this is the multiplicative scaler that is
 %                           applied to the effect of polar angle upon the
@@ -208,12 +212,15 @@ YfitPolarOnly = Yfit-YfitExponentialOnly;
 % Only evaluate the correlation where there are data values
 goodIdx = ~isnan(Y(:));
 
+% Calculate a few metrics of the fit, including the R-squared value for a
+% few different model components
 RSquaredFull = corr(Yfit(goodIdx),Y(goodIdx))^2;
 RSquaredExponentialOnly = corr(YfitExponentialOnly(goodIdx),Y(goodIdx))^2;
 RSquaredPolarOnly = corr(YfitPolarOnly(goodIdx),Y(goodIdx))^2;
 
 YPolarResiduals = Y - YfitExponentialOnly;
 RSquaredPolarResiduals = corr(YfitPolarOnly(goodIdx),YPolarResiduals(goodIdx))^2;
+
 
 RSquared = [RSquaredFull; RSquaredExponentialOnly; RSquaredPolarOnly; RSquaredPolarResiduals];
 

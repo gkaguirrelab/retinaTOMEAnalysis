@@ -4,7 +4,7 @@
 % Set up some constants
 supportLength = 1799;
 imRdim = (supportLength+1)/2;
-supportDegDelta = 0.0078;
+supportDegDelta = 0.00773;
 supportDeg = 0:supportDegDelta:supportDegDelta*(supportLength-1);
 maxSupportDeg = 15;
 meridianLabels = {'Nasal','Superior','Temporal','Inferior','Nasal'};
@@ -22,8 +22,6 @@ P = repmat(linspace(0,360,supportLength)',1,supportLength);
 Y = nanmean(dataMat,3);
 p = mean(pSet,2);
 w = sum(~isnan(dataMat),3);
-
-% Remove the points in Y which were not 
 
 % Create the Yfit
 Yfit = coneDensityModel(X,P,maxSupportDeg,p);
@@ -226,10 +224,14 @@ ylabel('counts [subjects]')
 
 
 figure
-histogram(RSquaredSet)
+rSquareTitles = {'RSquaredFull','RSquaredExponentialOnly','RSquaredPolarOnly','RSquaredPolarResiduals'};
+for ii=1:4
+    subplot(2,2,ii)
+    histogram(RSquaredSet(ii,:))
 xlabel('R squared')
 ylabel('counts [subjects]')
-
+title(rSquareTitles{ii})
+end
 
 figure
 histogram(polarMultiplierSet)
