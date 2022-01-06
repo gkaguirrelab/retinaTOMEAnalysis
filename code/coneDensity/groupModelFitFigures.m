@@ -195,7 +195,7 @@ plotFileName = fullfile(sourceDir,'figures','Fig06_individualDensityFcnsByMeridi
 saveas(gcf,plotFileName);
 
 % Loop over subjects and calculate the integrated cone count
-for ss = 1:nSubs    
+for ss = 1:size(dataMat,3)    
     myFunc = @(ec,pa) coneDensityModel(ec,pa,maxSupportDeg,pSet(:,ss));
     count(ss) = integral2(myFunc,0,10,0,360);
 end
