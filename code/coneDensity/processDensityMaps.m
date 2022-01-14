@@ -18,6 +18,7 @@ downSample = 0.05; % Downsamples the image to 1/20th of the original rez
 newDim = 18000; % Dimensions of the density maps
 pixelsPerDegreeFixed = 647; % All of the results files have this rez.
 paraFovealExtent = 2; % Start of search for "ridge" to filter (in degrees)
+mmPerPixelFixed = 0.01; % Map resolution in retinal mm coordinate space
 
 % Create a map that will be used to filter "extreme" values
 dParams = [1477 -0.3396 7846 -1.3049 629];
@@ -31,6 +32,11 @@ maxThresh = density(r).*2.5;
 
 % The overal result directory
 dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
+
+% Load the subject data table
+subjectTableFileName = fullfile(dropboxBaseDir,'TOME_subject','TOME-AOSO_SubjectInfo.xlsx');
+opts = detectImportOptions(subjectTableFileName);
+subjectTable = readtable(subjectTableFileName, opts);
 
 % Change to our working directory
 cd(fullfile(dropboxBaseDir,'Connectome_AOmontages_images'))
@@ -57,17 +63,20 @@ for rr = 1:length(resultFiles)
 
     % Extract the subject name
     tmp = strsplit(fileName,filesep);
-    subName = [tmp{end}(4:8) tmp{end}(18:20)];
+    tmp = tmp{end};
+    tmpBits = strsplit(tmp,'_');
+    subName = tmpBits{2}; subDate = tmpBits{3}; subEye = tmpBits{4};
 
-    % Some machinery to allow us to process just a few subjects at a time
-%{
-    if ~any(strcmp(subName,{'11098_OS'}))
+    % Report that we are about to process this subject
+    fprintf([subName '_' subEye '\n']);
+
+    % Make sure that this subject has a row in the table
+    subRow = find(subjectTable.AOSO_ID==str2double(subName));
+
+    if length(subRow) ~= 1
+        warning('This subject is missing an entry in the subject table')
         continue
     end
-%}
-    
-    % Report that we are about to process this subject
-    fprintf([resultFiles(rr).name '\n']);
 
     % Load the file
     load(fileName);
@@ -79,19 +88,20 @@ for rr = 1:length(resultFiles)
     density_map = density_map_comb;
 
     % Determine if this a left or right eye
-    if contains(resultFiles(rr).name,'_OS_')
-        laterality = 'OS';
-        polarToMeridian = {'Inferior','Temporal','Superior','Nasal'};
-    elseif contains(resultFiles(rr).name,'_OD_')
-        laterality = 'OD';
-        polarToMeridian = {'Inferior','Nasal','Superior','Temporal'};
-    else
-        error(['Unable to determine laterality for ' resultFiles(rr).name]);
+    switch subEye
+        case 'OS'
+            laterality = 'OS';
+            polarToMeridian = {'Inferior','Temporal','Superior','Nasal'};
+        case 'OD'
+            laterality = 'OD';
+            polarToMeridian = {'Inferior','Nasal','Superior','Temporal'};
+        otherwise
+            error(['Unable to determine laterality for ' resultFiles(rr).name]);
     end
 
     % Code to allow an over-ride of the default fovea coords
     foveaOverride = false;
-    if strcmp(subName,'11098_OS')
+    if strcmp(subName,'11098') && strcmp(subEye,'OS')
         fovea_coords = [7025, 8013];
         foveaOverride = true;
     end
@@ -213,9 +223,67 @@ for rr = 1:length(resultFiles)
         error('No data points survived!')
     end
 
-    % Store the data
+    % Create a model eye, and a warp field to bring the data into mm
+    % retinal coordinates
+    axialLength = subjectTable.Axial_Length_average(subRow);
+    sphericalAmetropia = subjectTable.Spherical_Error_average(subRow);
+    eye = modelEyeParameters('axialLength',axialLength,'sphericalAmetropia',sphericalAmetropia,'accommodation',0);
+
+    % Define some landmarks needed for visual field calculation
+    rayOriginDistance = min([2000, 1000 / eye.meta.accommodation]);
+    principalPoint = calcPrincipalPoint(eye, rayOriginDistance);
+
+    % Define the parameters of a displacement map. The warp field is quite
+    % smooth, so we define the map at 0.5 mm increments, out to 5 mm away
+    % from the fovea
+    imRes = 0.5;
+    imExtent = 5;
+    dim = (imExtent*2)/imRes+1;
+    D = nan(dim,dim,2);
+    xVals = ((1:dim)-ceil(dim/2))*imRes;
+    yVals = ((1:dim)-ceil(dim/2))*imRes;
+    for xx = 1:dim
+        for yy = 1:dim
+            theta = wrapTo360(atan2d(yVals(yy),xVals(xx)));
+            eccen = sqrt(xVals(xx)^2+yVals(yy)^2);
+
+            X = calcRetina2DPolToCart(eye,theta,eccen);
+            [~,fieldAngularPosition] = calcNodalRayToRetina(eye,X,rayOriginDistance,principalPoint);
+            fieldAngularPosition = fieldAngularPosition - eye.landmarks.fovea.degField;
+
+            D(xx,yy,:) = fieldAngularPosition;
+        end
+    end
+
+    % Slight numerical errors cause the foveal coordinate to not have a
+    % visual field position of exactly zero. Fudge that here
+    D(:,:,1) = D(:,:,1) - D(ceil(dim/2),ceil(dim/2),1);
+    D(:,:,2) = D(:,:,2) - D(ceil(dim/2),ceil(dim/2),2);
+
+    % Interpolate the warp field to the full, desired resolution of 10 microns.
+    dimHi = (imExtent*2)/mmPerPixelFixed+1;
+    xValsHi = ((1:dimHi)-ceil(dimHi/2))*mmPerPixelFixed;
+    yValsHi = ((1:dimHi)-ceil(dimHi/2))*mmPerPixelFixed;
+    DHi(:,:,1) = interp2(xVals,yVals',squeeze(D(:,:,1)),xValsHi,yValsHi');
+    DHi(:,:,2) = interp2(xVals,yVals',squeeze(D(:,:,2)),xValsHi,yValsHi');
+
+    % Adjust the values to map pixels from one space to the other
+    DWarp = (DHi ./ supportDeg(1))+ceil(size(imDensity,1)/2);
+    [H,V]=meshgrid(1:dimHi,1:dimHi);
+    DWarp(:,:,1) = squeeze(DWarp(:,:,1)) - H;
+    DWarp(:,:,2) = squeeze(DWarp(:,:,2)) - V;
+
+    % Get the density map in mm coordinates
+    imDensityMM = imwarp(imDensity,DWarp);
+
+    % Convert to polar coordinates
+    polarDensityMM = convertImageMapToPolarMap(imDensityMM);
+
+    % Store the meta
     data = [];
     data.meta.subName = subName;
+    data.meta.subDate = subDate;
+    data.meta.subEye = subEye;
     data.meta.tagName = tagName;
     data.meta.filename = resultFiles(rr).name;
     data.meta.folder = resultFiles(rr).folder;
@@ -224,8 +292,17 @@ for rr = 1:length(resultFiles)
     data.meta.foveaCoords = fovea_coords;
     data.meta.foveaOverride = foveaOverride;
     data.meta.supportDegDelta = supportDeg(1);
+    data.meta.mmPerPixelFixed = mmPerPixelFixed;
+    data.meta.eye = eye;
+    data.meta.axialLength = axialLength;
+    data.meta.sphericalAmetropia = sphericalAmetropia;
+
+    % Store the data
     data.imDensity = imDensity;
     data.polarDensity = polarDensity;
+    data.imDensityMM = imDensityMM;
+    data.polarDensityMM = polarDensityMM;
+    data.DWarp = DWarp;
 
     % Save the data file
     fileName = fullfile('densityAnalysis',[subName tagName '.mat']);
