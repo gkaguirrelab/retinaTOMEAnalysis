@@ -24,7 +24,6 @@ supportDeg = 0:supportDegDelta:supportDegDelta*(supportLength-1);
 
 dataMat = nan(supportLength,supportLength,length(subNames));
 missingMerged = false(length(subNames));
-missingFovea = false(length(subNames));
 
 for ss = 1:length(subNames)
     
@@ -37,8 +36,8 @@ for ss = 1:length(subNames)
         load(merFile,'data');
         y(:,:) = data.polarDensity(:,:);
     else
-        fprintf(['No merged data for ' subNames{ss} '\n']);
-        missingMerged(ss) = true;
+        str = fprintf(['No merged data for ' subNames{ss} ]);
+        error(str);
     end        
     
     % Make sure that the supportDegDelta is as expected
