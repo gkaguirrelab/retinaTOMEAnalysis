@@ -5,7 +5,7 @@
 % confocal, split, and a single confocal foveal image. Along the way there
 % are some cleaning steps applied, including filtering outlier density
 % values and removing an artifactual decline in cone density close to the
-% fovea in the confocal data.
+% fovea.
 %
 % The images are all aligned to the estimated foveal center, and
 % transformed to polar coordinates.
@@ -74,7 +74,7 @@ for rr = 1:length(resultFiles)
     subRow = find(subjectTable.AOSO_ID==str2double(subName));
 
     if length(subRow) ~= 1
-        warning('This subject is missing an entry in the subject table')
+        warning('This subject is missing an entry in the subject table; skipping')
         continue
     end
 
@@ -293,7 +293,6 @@ for rr = 1:length(resultFiles)
     data.meta.foveaOverride = foveaOverride;
     data.meta.supportDegDelta = supportDeg(1);
     data.meta.mmPerPixelFixed = mmPerPixelFixed;
-    data.meta.eye = eye;
     data.meta.axialLength = axialLength;
     data.meta.sphericalAmetropia = sphericalAmetropia;
 
@@ -303,6 +302,7 @@ for rr = 1:length(resultFiles)
     data.imDensityMM = imDensityMM;
     data.polarDensityMM = polarDensityMM;
     data.DWarp = DWarp;
+    data.eye = eye;
 
     % Save the data file
     fileName = fullfile('densityAnalysis',[subName tagName '.mat']);
