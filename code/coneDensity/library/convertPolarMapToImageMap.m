@@ -31,7 +31,7 @@ p = inputParser;
 p.addRequired('polarMap',@isnumeric);
 
 % Optional analysis params
-p.addParameter('imRdim',size(polarMap,2)*2-1,@isnumeric);
+p.addParameter('imRdim',(size(polarMap,2)+1)/2,@isnumeric);
 
 % parse
 p.parse(polarMap,varargin{:})

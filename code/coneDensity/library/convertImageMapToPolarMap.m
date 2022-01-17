@@ -52,7 +52,7 @@ function polarMap = convertImageMapToPolarMap(imageMap, varargin)
     title('polar map');
 
     % Convert back to image and display
-    imR2 = convertPolarMapToImageMap(imP,'imRdim',imRdim);
+    imR2 = convertPolarMapToImageMap(imP);
     subplot(1,4,3)
     imagesc(imR2)
     axis off;
