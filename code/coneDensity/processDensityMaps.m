@@ -260,7 +260,8 @@ for rr = 1:length(resultFiles)
     D(:,:,1) = D(:,:,1) - D(ceil(dim/2),ceil(dim/2),1);
     D(:,:,2) = D(:,:,2) - D(ceil(dim/2),ceil(dim/2),2);
 
-    % Interpolate the warp field to the full, desired resolution of 10 microns.
+    % Interpolate the warp field to the full, desired resolution of 10
+    % microns.
     dimHi = (imExtent*2)/mmPerPixelFixed+1;
     xValsHi = ((1:dimHi)-ceil(dimHi/2))*mmPerPixelFixed;
     yValsHi = ((1:dimHi)-ceil(dimHi/2))*mmPerPixelFixed;
@@ -268,16 +269,16 @@ for rr = 1:length(resultFiles)
     DHi(:,:,2) = interp2(xVals,yVals',squeeze(D(:,:,2)),xValsHi,yValsHi');
 
     % Adjust the values to map pixels from one space to the other
-    DWarp = (DHi ./ supportDeg(1))+ceil(size(imDensity,1)/2);
+    DWarp = (DHi ./ (supportDeg(1)*4)) + ceil(size(imDensity,1)/2);
     [H,V]=meshgrid(1:dimHi,1:dimHi);
     DWarp(:,:,1) = squeeze(DWarp(:,:,1)) - H;
     DWarp(:,:,2) = squeeze(DWarp(:,:,2)) - V;
 
     % Get the density map in mm coordinates
-    imDensityMM = imwarp(imDensity,DWarp);
+    imDensityMm = imwarp(imDensity,DWarp);
 
     % Convert to polar coordinates
-    polarDensityMM = convertImageMapToPolarMap(imDensityMM);
+    polarDensityMm = convertImageMapToPolarMap(imDensityMm);
 
     % Store the meta
     data = [];
@@ -299,8 +300,8 @@ for rr = 1:length(resultFiles)
     % Store the data
     data.imDensity = imDensity;
     data.polarDensity = polarDensity;
-    data.imDensityMM = imDensityMM;
-    data.polarDensityMM = polarDensityMM;
+    data.imDensityMm = imDensityMm;
+    data.polarDensityMm = polarDensityMm;
     data.DWarp = DWarp;
     data.eye = eye;
 
