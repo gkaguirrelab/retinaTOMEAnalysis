@@ -70,12 +70,32 @@ for rr = 1:length(resultFiles)
     % Report that we are about to process this subject
     fprintf([subName '_' subEye '\n']);
 
-    % Make sure that this subject has a row in the table
+    % See if this subject has a row in the table
     subRow = find(subjectTable.AOSO_ID==str2double(subName));
-
-    if length(subRow) ~= 1
-        warning('This subject is missing an entry in the subject table; skipping')
-        continue
+    if length(subRow) > 1
+        error('There is more than one matching subject in the subject table')
+    end
+    if length(subRow) < 1
+        % We do not have a row in the subject table. See if we have some
+        % custom values for this subject provided by Yu You via direct
+        % message on Slack on January 19, 2022.
+        switch subName
+            case '11002'
+                axialLength = 25.83;
+                sphericalAmetropia = -5.50;
+            case '11101'
+                axialLength = 24.16;
+                sphericalAmetropia = 0.75;
+            case '11102'
+                axialLength = 26.26;
+                sphericalAmetropia = -11;
+            otherwise
+                warning('No biometrics for this subject; skipping')
+                continue
+        end
+    else
+        axialLength = subjectTable.Axial_Length_average(subRow);
+        sphericalAmetropia = subjectTable.Spherical_Error_average(subRow);
     end
 
     % Load the file
@@ -223,10 +243,9 @@ for rr = 1:length(resultFiles)
         error('No data points survived!')
     end
 
-    % Create a model eye, and a warp field to bring the data into mm
-    % retinal coordinates
-    axialLength = subjectTable.Axial_Length_average(subRow);
-    sphericalAmetropia = subjectTable.Spherical_Error_average(subRow);
+    %% Create deg --> mm warp field
+
+    % Create a cycloplegic model eye
     eye = modelEyeParameters('axialLength',axialLength,'sphericalAmetropia',sphericalAmetropia,'accommodation',0);
 
     % Define some landmarks needed for visual field calculation
@@ -240,7 +259,10 @@ for rr = 1:length(resultFiles)
     imExtent = 5;
     dim = (imExtent*2)/imRes+1;
     D = nan(dim,dim,2);
-    xVals = ((1:dim)-ceil(dim/2))*imRes;
+
+    % There is some work here to match up the sign of the field position
+    % with theta, and with the image location in D
+    xVals = -(((1:dim)-ceil(dim/2))*imRes);
     yVals = ((1:dim)-ceil(dim/2))*imRes;
     for xx = 1:dim
         for yy = 1:dim
@@ -248,10 +270,10 @@ for rr = 1:length(resultFiles)
             eccen = sqrt(xVals(xx)^2+yVals(yy)^2);
 
             X = calcRetina2DPolToCart(eye,theta,eccen);
-            [~,fieldAngularPosition] = calcNodalRayToRetina(eye,X,rayOriginDistance,principalPoint);
+            [rayPath,fieldAngularPosition] = calcNodalRayToRetina(eye,X,rayOriginDistance,principalPoint);
             fieldAngularPosition = fieldAngularPosition - eye.landmarks.fovea.degField;
 
-            D(xx,yy,:) = fieldAngularPosition;
+            D(xx,yy,:) = fliplr(fieldAngularPosition);
         end
     end
 
@@ -274,7 +296,7 @@ for rr = 1:length(resultFiles)
     DWarp(:,:,1) = squeeze(DWarp(:,:,1)) - H;
     DWarp(:,:,2) = squeeze(DWarp(:,:,2)) - V;
 
-    % Get the density map in mm coordinates
+    % Get the density map in mm coordinates.
     imDensityMm = imwarp(imDensity,DWarp);
 
     % Convert to polar coordinates
