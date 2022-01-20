@@ -18,7 +18,7 @@ downSample = 0.05; % Downsamples the image to 1/20th of the original rez
 newDim = 18000; % Dimensions of the density maps
 pixelsPerDegreeFixed = 647; % All of the results files have this rez.
 paraFovealExtent = 2; % Start of search for "ridge" to filter (in degrees)
-mmPerPixelFixed = 0.01; % Map resolution in retinal mm coordinate space
+mmPerPixelFixed = 0.0025; % Map resolution in retinal mm coordinate space
 
 % Create a map that will be used to filter "extreme" values
 dParams = [1477 -0.3396 7846 -1.3049 629];
@@ -284,9 +284,9 @@ for rr = 1:length(resultFiles)
 
     % Interpolate the warp field to the full, desired resolution of 10
     % microns.
-    dimHi = (imExtent*2)/mmPerPixelFixed+1;
-    xValsHi = ((1:dimHi)-ceil(dimHi/2))*mmPerPixelFixed;
-    yValsHi = ((1:dimHi)-ceil(dimHi/2))*mmPerPixelFixed;
+    dimHi = (imExtent*2)/(mmPerPixelFixed*2)+1;
+    xValsHi = ((1:dimHi)-ceil(dimHi/2))*(mmPerPixelFixed*2);
+    yValsHi = ((1:dimHi)-ceil(dimHi/2))*(mmPerPixelFixed*2);
     DHi(:,:,1) = interp2(xVals,yVals',squeeze(D(:,:,1)),xValsHi,yValsHi');
     DHi(:,:,2) = interp2(xVals,yVals',squeeze(D(:,:,2)),xValsHi,yValsHi');
 

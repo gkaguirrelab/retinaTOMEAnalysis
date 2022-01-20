@@ -27,7 +27,7 @@ function density = coneDensityModel(x,angle,maxX,p)
 %   assigned the same phase shift.
 %
 % Inputs:
-%   x                     - Vector. Retinal eccentricity in degrees
+%   x                     - Vector. Retinal eccentricity (mm or degrees)
 %   angle                 - Vector. Retinal polar angle in degrees
 %   maxX                  - Scalar. The reference eccentricity location for
 %                           setting up the gamma functions. This may be a
@@ -36,7 +36,7 @@ function density = coneDensityModel(x,angle,maxX,p)
 %   p                     - 1x20 vector of params of the model.
 %
 % Outputs:
-%   density               - Vector. Cone density in cones / deg^2
+%   density               - Vector. Cone density.
 %
 
 % Decompose p into individual variables
