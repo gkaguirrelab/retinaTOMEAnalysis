@@ -1,5 +1,5 @@
 function density = coneDensityModel(x,angle,maxX,p)
-% A parameterized model of retinal cone density as a function of eccen / PA
+% A parameterized model of continuous retinal cone density
 %
 % Syntax:
 %   density = coneDensityModel(x,angle,maxX,p)
@@ -32,7 +32,7 @@ function density = coneDensityModel(x,angle,maxX,p)
 %   maxX                  - Scalar. The reference eccentricity location for
 %                           setting up the gamma functions. This may be a
 %                           value that is larger or smaller than the
-%                           maximum value in supportDeg.
+%                           maximum value in x.
 %   p                     - 1x20 vector of params of the model.
 %
 % Outputs:

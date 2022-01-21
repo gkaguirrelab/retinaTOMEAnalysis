@@ -72,11 +72,11 @@ arguments
     usePeripheralDensityConstraint (1,1) = false;
     useFovealDensityConstraint (1,1) = false;
     p0 (1,20) {mustBeNumeric} = [ ...
-        1.8805e+03, -0.0987, 8.8561e+03, -1.3272, ...
-        2.8341    0.0476    6.1593    0.3000, ...
-       14.9857    0.0541   11.5255    0.3896, ...
-      -10.6093    0.0839    2.9337    0.7068, ...
-       -8.6727    0.0664    3.4947    0.7545]
+        1.6349e+03,  -0.2816, 8.8862e+03, -5, ...
+        53.6134    0.1128    4.6850    0.1085, ...
+       -11.2582    0.0560    1.6059    1.0000, ...
+      -10.8416    0.0832    2.2149    0.2996, ...
+       -5.4307    0.0661    3.8713    0.1751]
     supportMm (1,:) {mustBeNumeric} = 0:0.0025:0.0025*(size(Y,1)-1)
     maxSupportMm (1,1) {mustBeNumeric} = 5
     refPeripheralLocation (1,1) = 5
@@ -90,11 +90,11 @@ end
 % function modulation of a sinusoidal variation in density across polar
 % angle.
 
-pBlockLB = [0,-5,0,-5];
+pBlockLB = [0,-10,0,-10];
 pBlockUB = [5e4,0,5e4,0];
 
-mBlockLB = [-15  0.0  1.8  0.3];
-mBlockUB = [ 15  0.1 12.0  3.0];
+mBlockLB = [-90  0.0  1.0  0.05];
+mBlockUB = [ 90  0.2 15.0  1.5];
 
 
 % The number of Fourier components that models variation across polar angle

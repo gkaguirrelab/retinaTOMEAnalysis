@@ -18,11 +18,10 @@ supportMmDelta = 0.0025;
 % used for the confocal and split detecton data sets
 supportMm = 0:supportMmDelta:supportMmDelta*(supportLengthMm-1);
 
-%% Loop through subjects and create the composite polar density image
 
+% Load the data from all subjects
 dataMatMm = nan(supportLengthMm,supportLengthMm,length(subNames));
 missingMerged = false(length(subNames));
-
 for ss = 1:length(subNames)
         
     % Load the aggregate data file
@@ -50,11 +49,10 @@ Y = nanmean(dataMatMm,3);
 w = sum(~isnan(dataMatMm),3);
 p0 = fitDensitySurfaceMm(Y,w,false,false,true,false);
 
-
-%% Fit each subject with the reduced model
+% Fit each subject with the reduced model
 pSet = nan(20,length(subNames));
-YfitSet = nan(size(dataMatDeg));
-YResidualSet = nan(size(dataMatDeg));
+YfitSet = nan(size(dataMatMm));
+YResidualSet = nan(size(dataMatMm));
 fValSet= nan(1,length(subNames));
 RSquaredSet= nan(4,length(subNames));
 nonlconSet = nan(1,length(subNames));
@@ -64,15 +62,15 @@ polarMultiplierSet = nan(1,length(subNames));
 fprintf('fitting...');
 w1 = ones(size(Y));
 for ii = 1:length(subNames)
-    Y1 = squeeze(dataMatDeg(:,:,ii));
+    Y1 = squeeze(dataMatMm(:,:,ii));
     fprintf([num2str(ii),'...']);
-    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(:,ii), nonlconSet(ii), polarThetaSet(ii), polarMultiplierSet(ii)] = fitDensitySurfaceMm(Y1,w1,true,true,false,false,p0);
+    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(:,ii), nonlconSet(ii), polarThetaSet(ii), polarMultiplierSet(ii)] = fitDensitySurfaceMm(Y1,w1,true,true,true,false,p0);
     YResidualSet(:,:,ii) = Y1 - squeeze(YfitSet(:,:,ii));
 end
 fprintf('done\n');
 
 % Save the individual subject fits
 individualFitFile = fullfile(sourceDir,'individualSubjectFitsMm.mat');
-save(individualFitFile,'p0','pSet','YfitSet','fValSet','RSquaredSet','polarThetaSet','polarMultiplierSet','dataMatDeg','subNames','YResidualSet')
+save(individualFitFile,'p0','pSet','YfitSet','fValSet','RSquaredSet','polarThetaSet','polarMultiplierSet','dataMatMm','subNames','YResidualSet')
 
 
