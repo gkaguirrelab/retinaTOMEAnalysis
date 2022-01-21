@@ -148,7 +148,8 @@ for meridianIdx = 1:4
 
     % Add the Curcio profile along the specified meridian
     CurcioFitConeDensitySqDegVisual = getSplineFitToConeDensitySqDegVisual(meridianAngles(meridianIdx));
-    loglog(supportMm,CurcioFitConeDensitySqDegVisual(supportMm),'-r','LineWidth',5);
+    CurcioSupportDeg = convert_mmRetina_to_degVisual(supportMm, meridianAngles(meridianIdx));
+    loglog(supportMm,CurcioFitConeDensitySqDegVisual(CurcioSupportDeg),'-r','LineWidth',5);
 
     % Add the individual subject fits
     hold on
