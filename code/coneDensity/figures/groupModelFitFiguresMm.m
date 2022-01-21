@@ -87,8 +87,8 @@ cartY(cartY<min([Y(:); Yfit(:)]))=nan;
 contourf(cartsupportMm,cartsupportMm,cartYfit,logspace(log10(500),log10(15000),15),'LineWidth',2)
 map = [ logspace(log10(0.5),log10(1),255); logspace(log10(0.5),log10(0.1),255); logspace(log10(0.5),log10(0.1),255)]';
 colormap(map)
-xlabel('Eccentricity [deg]');
-ylabel('Eccentricity [deg]');
+xlabel('Eccentricity [mm]');
+ylabel('Eccentricity [mm]');
 zlabel('Density [cones/deg^2]');
 axis square
 axis off

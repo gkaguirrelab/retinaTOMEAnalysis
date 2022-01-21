@@ -34,7 +34,7 @@ for ss = 1:length(subNames)
     end        
     
     % Make sure that the support is as expected
-%    assert(abs(supportMmDelta-data.meta.mmPerPixelFixed)<0.001);
+    assert(abs(supportMmDelta-data.meta.mmPerPixelFixed)<0.001);
 
     % Store the polar maps
     dataMatMm(:,:,ss)=data.polarDensityMm(:,:);
