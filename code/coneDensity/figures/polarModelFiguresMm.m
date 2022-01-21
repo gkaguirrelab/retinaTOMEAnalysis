@@ -2,6 +2,7 @@
 % This routine creates plots that describe the elements of the polar model
 % of cone density
 
+clear
 
 % Set up some constants
 supportLengthMm = 2001;
@@ -48,7 +49,7 @@ for cc = 1:4
     surf(X,P,Ymodel,'FaceAlpha',0.5,'EdgeColor','none');
     yticks(meridianAngles);
     yticklabels(meridianLabels);
-    xlabel('Eccentricity [deg]');
+    xlabel('Eccentricity [mm]');
     zlabel('Density modulation');
     view(45,15)
 end
@@ -79,7 +80,7 @@ for cc = 1:4
     surf(X,P,Ymodel,'FaceAlpha',0.5,'EdgeColor','none');
     yticks(meridianAngles);
     yticklabels(meridianLabels);
-    xlabel('Eccentricity [deg]');
+    xlabel('Eccentricity [mm]');
     zlabel('Density modulation');
     zlim([-0.1 0.1]);
     view(45,15)
@@ -108,7 +109,7 @@ ax = gca;
 ax.YDir = 'normal';
 yticks(meridianAngles);
 yticklabels(meridianLabels);
-xlabel('Eccentricity [deg]');
+xlabel('Eccentricity [mm]');
 zlabel('Density modulation');
 plotFileName = fullfile(sourceDir,'figures','Fig0X_entirePolarModulationMm.pdf');
 saveas(gcf,plotFileName);
@@ -129,7 +130,7 @@ for gg = 1:nFourier
     hold on
 end
 legend(legendLabels(1:nFourier));
-xlabel('Eccentricity [deg]');
+xlabel('Eccentricity [mm]');
 ylabel('Modulation [proportion]');
 plotFileName = fullfile(sourceDir,'figures','Fig0X_gammaPDFWeightFunctionsMm.pdf');
 saveas(gcf,plotFileName);

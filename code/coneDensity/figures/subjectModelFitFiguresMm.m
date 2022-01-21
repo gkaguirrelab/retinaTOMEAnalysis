@@ -1,3 +1,4 @@
+clear
 
 % Set up some constants
 supportLengthMm = 2001;
