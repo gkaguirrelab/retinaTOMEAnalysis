@@ -284,9 +284,9 @@ for rr = 1:length(resultFiles)
 
     % Interpolate the warp field to the full, desired resolution of 10
     % microns.
-    dimHi = (imExtent*2)/(mmPerPixelFixed*2)+1;
-    xValsHi = ((1:dimHi)-ceil(dimHi/2))*(mmPerPixelFixed*2);
-    yValsHi = ((1:dimHi)-ceil(dimHi/2))*(mmPerPixelFixed*2);
+    dimHi = imExtent/(mmPerPixelFixed*2)+1;
+    xValsHi = ((1:dimHi)-ceil(dimHi/2))*(mmPerPixelFixed*4);
+    yValsHi = ((1:dimHi)-ceil(dimHi/2))*(mmPerPixelFixed*4);
     DHi(:,:,1) = interp2(xVals,yVals',squeeze(D(:,:,1)),xValsHi,yValsHi');
     DHi(:,:,2) = interp2(xVals,yVals',squeeze(D(:,:,2)),xValsHi,yValsHi');
 
