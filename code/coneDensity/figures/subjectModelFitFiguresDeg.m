@@ -1,20 +1,40 @@
 
 
-%% Plot individual subject diagnostic plots
+clear
+
+% Set up some constants
+supportLengthDeg = 1799;
+imRdim = (supportLengthDeg+1)/2;
+supportDegDelta = 0.00773;
+supportDeg = 0:supportDegDelta:supportDegDelta*(supportLengthDeg-1);
+maxSupportDeg = 15;
 meridianLabels = {'Nasal','Superior','Temporal','Inferior','Nasal'};
 meridianAngles = [0 90 180 270 360];
-polarRatio = (size(dataMat,1)+1)/360;
+supportPA = linspace(0,360,supportLengthDeg);
+polarRatio = (supportLengthDeg+1)/360;
+
+% Load the individual subject fit
+sourceDir = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images/densityAnalysis/';
+individualFitFile = fullfile(sourceDir,'individualSubjectFitsDeg.mat');
+load(individualFitFile,'pSet','YfitSet','fValSet','RSquaredSet','polarMultiplierSet','dataMatDeg','subNames')
+
+% How many subjects?
+nSubs = length(subNames);
+
+
+
+%% Plot individual subject diagnostic plots
 
 for ss=1:length(subNames)
     
-    Y = squeeze(dataMat(:,:,ss));
+    Y = squeeze(dataMatDeg(:,:,ss));
     Yfit = squeeze(YfitSet(:,:,ss));
     p = pSet(:,ss);
     
     % Mean polar data and model fit
     figHandle = figure();
-    X = repmat(supportDeg,supportLength,1);
-    P = repmat(linspace(0,360,supportLength)',1,supportLength);
+    X = repmat(supportDeg,supportLengthDeg,1);
+    P = repmat(linspace(0,360,supportLengthDeg)',1,supportLengthDeg);
     surf(X,P,Yfit,'FaceAlpha',0.5,'EdgeColor','none');
     hold on
     plot3(X(:),P(:),Y(:),'.k')
@@ -23,7 +43,7 @@ for ss=1:length(subNames)
     xlabel('Eccentricity [deg]');
     zlabel('Density [cones/deg^2]');
     view(45,15)
-    plotFileName = fullfile(sourceDir,'figures','subjects',[subNames{ss} '_polarSurface.pdf']);
+    plotFileName = fullfile(sourceDir,'figures','subjects',[subNames{ss} '_polarSurfaceDeg.pdf']);
     saveas(figHandle,plotFileName);
     close(figHandle);
         
@@ -47,7 +67,7 @@ for ss=1:length(subNames)
     ylim([10^2,2*10^4]);
     ylabel('log_1_0 density [cones/deg^2]')
     
-    plotFileName = fullfile(sourceDir,'figures','subjects',[subNames{ss} '_polarModelFit.pdf']);
+    plotFileName = fullfile(sourceDir,'figures','subjects',[subNames{ss} '_polarModelFitDeg.pdf']);
     saveas(figHandle,plotFileName);
     close(figHandle);
     
@@ -64,7 +84,7 @@ for ss=1:length(subNames)
         title(meridianLabels{mm});
     end
     
-    plotFileName = fullfile(sourceDir,'figures','subjects',[subNames{ss} '_MeridianModelFit.pdf']);
+    plotFileName = fullfile(sourceDir,'figures','subjects',[subNames{ss} '_MeridianModelFitDeg.pdf']);
     saveas(figHandle,plotFileName);
     close(figHandle);    
     

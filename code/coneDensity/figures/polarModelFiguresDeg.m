@@ -2,34 +2,33 @@
 % This routine creates plots that describe the elements of the polar model
 % of cone density
 
+clear
 
 % Set up some constants
-supportLength = 1799;
-imRdim = (supportLength+1)/2;
-supportDegDelta = 0.0078;
-supportDeg = 0:supportDegDelta:supportDegDelta*(supportLength-1);
+supportLengthDeg = 1799;
+imRdim = (supportLengthDeg+1)/2;
+supportDegDelta = 0.00773;
+supportDeg = 0:supportDegDelta:supportDegDelta*(supportLengthDeg-1);
 maxSupportDeg = 15;
 meridianLabels = {'Nasal','Superior','Temporal','Inferior','Nasal'};
 meridianAngles = [0 90 180 270 360];
-supportPA = linspace(0,360,supportLength);
+supportPA = linspace(0,360,supportLengthDeg);
+polarRatio = (supportLengthDeg+1)/360;
 
 % Load the individual subject fit
 sourceDir = '/Users/aguirre/Dropbox (Aguirre-Brainard Lab)/Connectome_AOmontages_images/densityAnalysis/';
-individualFitFile = fullfile(sourceDir,'individualSubjectFits.mat');
-load(individualFitFile,'pSet','YfitSet','fValSet','polarMultiplierSet','dataMat','subNames')
+individualFitFile = fullfile(sourceDir,'individualSubjectFitsDeg.mat');
+load(individualFitFile,'pSet','YfitSet','fValSet','RSquaredSet','polarMultiplierSet','dataMatDeg','subNames')
 
 % Create the X and P support, the mean data, and the fit
-X = repmat(supportDeg,supportLength,1);
-P = repmat(linspace(0,360,supportLength)',1,supportLength);
-Y = nanmean(dataMat,3);
+X = repmat(supportDeg,supportLengthDeg,1);
+P = repmat(linspace(0,360,supportLengthDeg)',1,supportLengthDeg);
+Y = nanmean(dataMatDeg,3);
 p = mean(pSet,2);
+w = sum(~isnan(dataMatDeg),3);
 
 % Create the Yfit
 Yfit = coneDensityModel(X,P,maxSupportDeg,p);
-
-% Extract a couple of costants
-nSubs = size(pSet,2);
-polarRatio = (size(dataMat,1)+1)/360;
 
 
 
@@ -54,7 +53,7 @@ for cc = 1:4
     zlabel('Density modulation');
     view(45,15)
 end
-plotFileName = fullfile(sourceDir,'figures','Fig0X_polarModulationModel.pdf');
+plotFileName = fullfile(sourceDir,'figures','Fig0X_polarModulationModelDeg.pdf');
 saveas(gcf,plotFileName);
 
 % Illustrate the model surface components
@@ -86,7 +85,7 @@ for cc = 1:4
     zlim([-0.1 0.1]);
     view(45,15)
 end
-plotFileName = fullfile(sourceDir,'figures','Fig0X_polarModulationModelWithGamma.pdf');
+plotFileName = fullfile(sourceDir,'figures','Fig0X_polarModulationModelWithGammaDeg.pdf');
 saveas(gcf,plotFileName);
 
 % Illustrate the model surface components
@@ -99,7 +98,7 @@ g = p(14).*gampdf(X,p(15),p(16))./max(gampdf(0:0.01:maxSupportDeg,p(15),p(16)));
 Ymodel = Ymodel+g.*cosd(P.*2+p(13));
 g = p(18).*gampdf(X,p(19),p(20))./max(gampdf(0:0.01:maxSupportDeg,p(19),p(20)));
 Ymodel = Ymodel+g.*cosd(P.*4+p(17));
-supportPA = linspace(0,360,supportLength);
+supportPA = linspace(0,360,supportLengthDeg);
 contourf(supportDeg,supportPA,Ymodel,15,'LineWidth',2)
 map = [ linspace(0,1,255);[linspace(0,0.5,127) linspace(0.5,0,128)];[linspace(0,0.5,127) linspace(0.5,0,128)]]';
 colormap(map)
@@ -112,7 +111,7 @@ yticks(meridianAngles);
 yticklabels(meridianLabels);
 xlabel('Eccentricity [deg]');
 zlabel('Density modulation');
-plotFileName = fullfile(sourceDir,'figures','Fig0X_entirePolarModulation.pdf');
+plotFileName = fullfile(sourceDir,'figures','Fig0X_entirePolarModulationDeg.pdf');
 saveas(gcf,plotFileName);
 
 
@@ -133,7 +132,7 @@ end
 legend(legendLabels(1:nFourier));
 xlabel('Eccentricity [deg]');
 ylabel('Modulation [proportion]');
-plotFileName = fullfile(sourceDir,'figures','Fig0X_gammaPDFWeightFunctions.pdf');
+plotFileName = fullfile(sourceDir,'figures','Fig0X_gammaPDFWeightFunctionsDeg.pdf');
 saveas(gcf,plotFileName);
 
 
