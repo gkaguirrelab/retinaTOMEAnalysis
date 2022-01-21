@@ -65,7 +65,7 @@ w1 = ones(size(Y));
 for ii = 1:length(subNames)
     Y1 = squeeze(dataMatDeg(:,:,ii));
     fprintf([num2str(ii),'...']);
-    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(:,ii), nonlconSet(ii), polarThetaSet(ii), polarMultiplierSet(ii)] = fitDensitySurfaceDeg(Y1,w1,true,true,false,false,p0);
+    [pSet(:,ii), YfitSet(:,:,ii), fValSet(ii), RSquaredSet(:,ii), nonlconSet(ii), polarThetaSet(ii), polarMultiplierSet(ii)] = fitDensitySurfaceDeg(Y1,w1,true,true,true,false,p0);
     YResidualSet(:,:,ii) = Y1 - squeeze(YfitSet(:,:,ii));
 end
 fprintf('done\n');
