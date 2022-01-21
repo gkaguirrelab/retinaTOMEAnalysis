@@ -1,8 +1,8 @@
-function [p, Yfit, fVal, RSquared, nonlcon, polarTheta, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,usePeripheralDensityConstraint,useFovealDensityConstraint,p0,supportDeg,maxSupportDeg,refPeripheralLocation,refPeripheralDensity,refFovealDensity)
+function [p, Yfit, fVal, RSquared, nonlcon, polarTheta, polarMultiplier] = fitDensitySurfaceDeg(Y,w,preFitAvgEccen,simplePolarModel,usePeripheralDensityConstraint,useFovealDensityConstraint,p0,supportDeg,maxSupportDeg,refPeripheralLocation,refPeripheralDensity,refFovealDensity)
 % Fit a multi-parameter surface to cone density data
 %
 % Syntax:
-%   [p, Yfit, fVal, RSquared, polarMultiplier] = fitDensitySurface(Y,w,preFitAvgEccen,simplePolarModel,useAsymptoteConstraint,p0,supportDeg,maxSupportDeg,refEccen,refDensity)
+%   [p, Yfit, fVal, RSquared, nonlcon, polarTheta, polarMultiplier] = fitDensitySurfaceDeg(Y,w,preFitAvgEccen,simplePolarModel,usePeripheralDensityConstraint,useFovealDensityConstraint,p0,supportDeg,maxSupportDeg,refPeripheralLocation,refPeripheralDensity,refFovealDensity)
 %
 % Description:
 %   A model of cone density across eccentricity and polar angle.
@@ -93,8 +93,11 @@ end
 pBlockLB = [0,-5,0,-5];
 pBlockUB = [5e4,0,5e4,0];
 
-mBlockLB = [-15  0.0  1.8  0.3];
-mBlockUB = [ 15  0.1 12.0  3.0];
+mBlockLB = [-90  0.0  1.0  0.05];
+mBlockUB = [ 90  0.2 15.0  1.5];
+
+%mBlockLB = [-15  0.0  1.8  0.3];
+%mBlockUB = [ 15  0.1 12.0  3.0];
 
 
 % The number of Fourier components that models variation across polar angle
@@ -173,7 +176,7 @@ if usePeripheralDensityConstraint && useFovealDensityConstraint
     myNonlcon = @(p) constrainFovealAndPeripheralDensity(p,refPeripheralLocation,refPeripheralDensity,refFovealDensity);
 end
 if usePeripheralDensityConstraint && ~useFovealDensityConstraint
-    myNonlcon = @(p) asymptoteDensity(p,refPeripheralLocation,refPeripheralDensity);
+    myNonlcon = @(p) constrainPeripheralDensity(p,refPeripheralLocation,refPeripheralDensity);
 end
 
 % search
@@ -249,7 +252,7 @@ end
 
 
 
-function [c,ceq] = asymptoteDensity(p,refPeripheralLocation,refPeripheralDensity)
+function [c,ceq] = constrainPeripheralDensity(p,refPeripheralLocation,refPeripheralDensity)
 
 % Decompose p into individual variables
 a = p(1);   % scale first exponential
