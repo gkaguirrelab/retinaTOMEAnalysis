@@ -18,11 +18,10 @@ supportDegDelta = 0.00773;
 % used for the confocal and split detecton data sets
 supportDeg = 0:supportDegDelta:supportDegDelta*(supportLengthDeg-1);
 
-%% Loop through subjects and create the composite polar density image
-
+% Load the data from all subjects
 dataMatDeg = nan(supportLengthDeg,supportLengthDeg,length(subNames));
 missingMerged = false(length(subNames));
-
+axialLengths = nan(length(subNames),1);
 for ss = 1:length(subNames)
     
     % Load the aggregate data file
@@ -40,6 +39,9 @@ for ss = 1:length(subNames)
     % Store the polar maps
     dataMatDeg(:,:,ss)=data.polarDensity(:,:);
     
+    % Store the axial length of the eye
+    axialLengths(ss) = data.meta.axialLength;
+
 end
 
 % Filter out any zero or negative values that slipped in
@@ -50,7 +52,7 @@ Y = nanmean(dataMatDeg,3);
 w = sum(~isnan(dataMatDeg),3);
 [p0, Yfit, fVal] = fitDensitySurfaceDeg(Y,w,false,false,true,false);
 
-%% Fit each subject with the reduced model
+% Fit each subject with the reduced model
 pSet = nan(20,length(subNames));
 YfitSet = nan(size(dataMatDeg));
 YResidualSet = nan(size(dataMatDeg));
@@ -72,6 +74,6 @@ fprintf('done\n');
 
 % Save the individual subject fits
 individualFitFile = fullfile(sourceDir,'individualSubjectFitsDeg.mat');
-save(individualFitFile,'p0','pSet','YfitSet','fValSet','RSquaredSet','polarThetaSet','polarMultiplierSet','dataMatDeg','subNames','YResidualSet')
+save(individualFitFile,'p0','pSet','YfitSet','fValSet','RSquaredSet','polarThetaSet','polarMultiplierSet','dataMatDeg','subNames','YResidualSet','axialLengths')
 
 

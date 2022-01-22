@@ -1,4 +1,4 @@
-%% fitModelToAllData
+%% fitModelToAllDataMm
 % This routine loads the outputs of processDensityMaps.m and then fits the
 % data with the polar cone density surface model.
 
@@ -18,10 +18,10 @@ supportMmDelta = 0.0025;
 % used for the confocal and split detecton data sets
 supportMm = 0:supportMmDelta:supportMmDelta*(supportLengthMm-1);
 
-
 % Load the data from all subjects
 dataMatMm = nan(supportLengthMm,supportLengthMm,length(subNames));
 missingMerged = false(length(subNames));
+axialLengths = nan(length(subNames),1);
 for ss = 1:length(subNames)
         
     % Load the aggregate data file
@@ -38,6 +38,9 @@ for ss = 1:length(subNames)
 
     % Store the polar maps
     dataMatMm(:,:,ss)=data.polarDensityMm(:,:);
+
+    % Store the axial length of the eye
+    axialLengths(ss) = data.meta.axialLength;
     
 end
 
@@ -71,6 +74,6 @@ fprintf('done\n');
 
 % Save the individual subject fits
 individualFitFile = fullfile(sourceDir,'individualSubjectFitsMm.mat');
-save(individualFitFile,'p0','pSet','YfitSet','fValSet','RSquaredSet','polarThetaSet','polarMultiplierSet','dataMatMm','subNames','YResidualSet')
+save(individualFitFile,'p0','pSet','YfitSet','fValSet','RSquaredSet','polarThetaSet','polarMultiplierSet','dataMatMm','subNames','YResidualSet','axialLengths')
 
 
