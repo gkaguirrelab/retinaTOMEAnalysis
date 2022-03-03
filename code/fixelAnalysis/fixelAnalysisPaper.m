@@ -4,7 +4,7 @@ function fixelAnalysisPaper(varargin)
 pcCorrelation = false;
 sizeBarPlots = false;
 adjacentFC = false;
-adjacentFD = false;
+adjacentFD = true;
 allGCFC = false;
 allGCFD = false;
 allOTFC = false;
@@ -12,6 +12,7 @@ allOTFD = false;
 allLGN = false;
 allORFC = false;
 radiationControl = false;
+extraCalc = false;
 
 %% Set the dropboxBaseDir and flywheel id
 % We need this for the default loations of some the directories
@@ -97,6 +98,7 @@ comboTable = join(comboTable,fitVolTable,'Keys','AOSO_ID');
 % Right then left optic tract
 laterality = {'right','left'};
 analysisIDs = {'613222eae4575d3ae7e439e1','613222e90cb137b99763de1d'};
+% analysisIDs = {'60a33c76b4a131197e7bfaa8','60a33c7617fcfbb03ffeacf6'};
 fileNames = {'fc_stats.csv','fd_stats.csv','fdc_stats.csv'};
 for ll = 1:length(laterality)
     for ff = 1:length(fileNames)
@@ -127,6 +129,7 @@ fixelTable = sortrows(fixelTable);
 % Right then left optic radiation
 laterality = {'right','left'};
 analysisIDs = {'613dd3a1af9c5aae928f7b26','613dd3a150fe1777a6965bad'};
+% analysisIDs = {'60ed117b6d2438c15c96c6bd','60ed1153dcf573726496c77d'}; % NOT A SINGLE SHELL
 fileNames = {'fc_stats.csv','fd_stats.csv','fdc_stats.csv'};
 for ll = 1:length(laterality)
     for ff = 1:length(fileNames)
@@ -544,7 +547,10 @@ if pcCorrelation
     FCopt = fixelComparisonTable.fc_;
     fcFit = fitlm(PC1, FCopt);
     R = corr(PC1,FCopt);
-
+    mycorr = @(PC1,FCopt) corr(PC1,FCopt);
+    interval = bootci(10000,{mycorr,PC1,FCopt});
+    fprintf(['correlation Optic tract FC with PC1 is: ' num2str(R) ' ' '95per CI= ' num2str(interval(1)) ' ' num2str(interval(2)) '\n']);
+    
     figure 
     plot(fcFit, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
     xlabel(['Biometric Size Index']);
@@ -559,7 +565,10 @@ if pcCorrelation
     FDopt = fixelComparisonTable.fd_;
     fdFit = fitlm(PC1, FDopt);
     R = corr(PC1,FDopt);
-
+    mycorr = @(PC1,FDopt) corr(PC1,FDopt);
+    interval = bootci(10000,{mycorr,PC1,FDopt});
+    fprintf(['correlation Optic tract FD with PC1 is: ' num2str(R) ' ' '95per CI= ' num2str(interval(1)) ' ' num2str(interval(2)) '\n']);
+    
     figure 
     plot(fdFit, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
     xlabel(['Biometric Size Index']);
@@ -569,6 +578,66 @@ if pcCorrelation
     grid on
     theStringR = sprintf(['N=42, R=' num2str(sprintf('%.2f', R))], PC1,  FDopt);
     text(-2.8, 0.69, theStringR, 'FontSize', 10);
+end
+
+%% extra calculations
+if extraCalc
+    % Set body corrected FC and FD
+    bodyCorrectedFC = fitlm(PC1, fixelComparisonTable.fc_);
+    bodyCorrectedFC = bodyCorrectedFC.Residuals.Pearson;
+    bodyCorrectedFD = fitlm(PC1, fixelComparisonTable.fd_);
+    bodyCorrectedFD = bodyCorrectedFD.Residuals.Pearson;
+    bodyCorrectedNonAxialGC = fitlm(PC1, fixelComparisonTable.meanFitGCVol);
+    bodyCorrectedNonAxialGC = bodyCorrectedNonAxialGC.Residuals.Pearson;
+
+
+    % Uncorrected GC and FC
+    model = fitlm(fixelComparisonTable.meanFitGCVol, fixelComparisonTable.fc_);
+    figure
+    plot(model)
+    xlabel('raw RGCvol')
+    ylabel('raw FC')
+    title('')
+
+    % Uncorrected GC and FD
+    model = fitlm(fixelComparisonTable.meanFitGCVol, fixelComparisonTable.fd_);
+    figure
+    plot(model)
+    xlabel('raw RGCvol')
+    ylabel('raw FC')
+    title('')
+
+    % GC not axial corrected, but GC,FC all body corrected
+    model = fitlm(bodyCorrectedNonAxialGC, bodyCorrectedFC);
+    figure
+    plot(model)
+    xlabel('GC (no axial correction, size correction)')
+    ylabel('FC size correction')
+    title('')
+
+    % GC not axial corrected, but GC,FD all body corrected
+    model = fitlm(bodyCorrectedNonAxialGC, bodyCorrectedFD);
+    figure
+    plot(model)
+    xlabel('GC (no axial correction, size correction)')
+    ylabel('FD size correction')
+    title('')
+
+    % GC axial corrected, but FC not body size corrected
+    model = fitlm(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_);
+    figure
+    plot(model)
+    xlabel('GC (axial correction, no size correction)')
+    ylabel('FC no size correction')
+    title('')
+
+    % GC axial corrected, but FC not body size corrected
+    model = fitlm(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fd_);
+    figure
+    plot(model)
+    xlabel('GC (axial correction, no size correction)')
+    ylabel('FD no size correction')
+    title('')
 end
 %% Controlled correlation plots showing the correlation of adjacent regions FC
 if adjacentFC
@@ -588,9 +657,12 @@ if adjacentFC
         mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
         niterations = 10000;
         interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);
         RL = interval(1);
         RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
 
+        
         % add first plot in 2 x 1 grid  
         figure
         plot(mdl, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
@@ -623,8 +695,11 @@ if adjacentFD
         mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
         niterations = 10000;
         interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);
         RL = interval(1);
         RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
+
 
         % add first plot in 2 x 1 grid  
         figure
@@ -807,7 +882,39 @@ if allGCFD
     set(gca, 'XLim', [0 5])
     xlabel('Brain regions')
     ylabel('Correlation values [r]')
+    
+    % Calculate ceilings
+    ceilings = [];
+    meanGCcorr = {0.64,0.64,0.64,0.64};
+    otherRegionCorr = {0.91, 0.44, 0.76, 0.81};
+    for ii = 1:length(meanGCcorr)
+        reliabilityA = (meanGCcorr{ii} * 2) / ( meanGCcorr{ii} + 1);
+        reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
+    
+        corrCeiling = sqrt(reliabilityA*reliabilityB);
+        ceilings = [ceilings; corrCeiling];
+    end
+    
+    figure;
+    X = categorical({'Optic Tract FD', 'LGN', 'Optic Radiation FD', 'V1 Surface'});
+    X = reordercats(X,{'Optic Tract FD', 'LGN', 'Optic Radiation FD', 'V1 Surface'});
+    y = [regionRs(1), regionRs(2), regionRs(3), regionRs(4)];
+    bar(X,y)
+    ylabel('Correlation [r]')
+    xlabel('Brain regions')
+    ylim([-0.3 1])
+    title('')
+    hold on
+    er = errorbar(X,y, lowerlen, higherlen);   
+    er.Color = [0 0 0];                            
+    er.LineStyle = 'none'; 
+    text(0.6, ceilings(1), '-------------------', 'color', 'red', 'FontSize', 12)
+    text(1.6, ceilings(2), '-------------------', 'color', 'red', 'FontSize', 12)
+    text(2.6, ceilings(3), '-------------------', 'color', 'red', 'FontSize', 12)
+    text(3.6, ceilings(4), '-------------------', 'color', 'red', 'FontSize', 12)
+    hold off 
 end
+
 %% Controlled correlation plots showing the optic tract FC for other variables
 if allOTFC
     x = [fixelComparisonTable.fc_, fixelComparisonTable.fc_, fixelComparisonTable.fc_, fixelComparisonTable.fc_, fixelComparisonTable.fc_];

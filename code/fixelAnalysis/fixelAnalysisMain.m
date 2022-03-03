@@ -96,7 +96,8 @@ fw = flywheel.Flywheel(getpref('flywheelMRSupport','flywheelAPIKey'));
 %}
 % Right then left optic tract
 laterality = {'right','left'};
-analysisIDs = {'613222eae4575d3ae7e439e1','613222e90cb137b99763de1d'};
+% analysisIDs = {'613222eae4575d3ae7e439e1','613222e90cb137b99763de1d'};
+analysisIDs = {'60a33c76b4a131197e7bfaa8','60a33c7617fcfbb03ffeacf6'};
 fileNames = {'fc_stats.csv','fd_stats.csv','fdc_stats.csv'};
 for ll = 1:length(laterality)
     for ff = 1:length(fileNames)
@@ -126,7 +127,8 @@ fixelTable = sortrows(fixelTable);
 
 % Right then left optic radiation
 laterality = {'right','left'};
-analysisIDs = {'613dd3a1af9c5aae928f7b26','613dd3a150fe1777a6965bad'};
+% analysisIDs = {'613dd3a1af9c5aae928f7b26','613dd3a150fe1777a6965bad'};
+analysisIDs = {'60ed117b6d2438c15c96c6bd','60ed1153dcf573726496c77d'}; % NOT A SINGLE SHELL
 fileNames = {'fc_stats.csv','fd_stats.csv','fdc_stats.csv'};
 for ll = 1:length(laterality)
     for ff = 1:length(fileNames)
@@ -389,12 +391,12 @@ chiasmTableHCP.Properties.VariableNames{1} = 'TOME_ID';
 chiasmTableHCP.Properties.VariableNames{2} = 'opticChiasmVolume_HCP';
 fixelTable=join(fixelTable,chiasmTableHCP);
 
-% Get Min's optic chiasm results
-Optic_Chiasm_xls = readtable(fullfile(p.Results.fixelDataDir, 'MinvisualPathwayAnatMeasures.xlsx'));
-Optic_Chiasm = table(Optic_Chiasm_xls.TOME_ID, Optic_Chiasm_xls.Optic_Chiasm);
-Optic_Chiasm.Properties.VariableNames{1} = 'TOME_ID';
-Optic_Chiasm.Properties.VariableNames{2} = 'opticChiasmVolume_Min';
-fixelTable=join(fixelTable,Optic_Chiasm);
+% % Get Min's optic chiasm results
+% Optic_Chiasm_xls = readtable(fullfile(p.Results.fixelDataDir, 'MinvisualPathwayAnatMeasures.xlsx'));
+% Optic_Chiasm = table(Optic_Chiasm_xls.TOME_ID, Optic_Chiasm_xls.Optic_Chiasm);
+% Optic_Chiasm.Properties.VariableNames{1} = 'TOME_ID';
+% Optic_Chiasm.Properties.VariableNames{2} = 'opticChiasmVolume_Min';
+% fixelTable=join(fixelTable,Optic_Chiasm);
 
 % Combine subject and LGN in a table and sort rows.
 LGN = (leftLGN + rightLGN) / 2;
@@ -449,14 +451,14 @@ end
 
 %% Report the correlation of fixel values with RGC values
 % Variables to compare 
-fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'intracranialVol', 'intracranialHCP', 'TIV', 'LGN', 'meanAdjustedGCVol', 'V1surface', 'V1thickness', 'opticChiasmVolume_Min'};
+fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'intracranialVol', 'intracranialHCP', 'TIV', 'LGN', 'meanAdjustedGCVol', 'V1surface', 'V1thickness'};
 fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TOME_ID),:),fixelTable,'Keys','TOME_ID');
 
 % Variables to compare against
-measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender','intracranialVol', 'intracranialHCP', 'TIV', 'LGN', 'V1surface', 'V1thickness', 'opticChiasmVolume_Min'};
+measureSet = {'gcMeanThick','meanFitGCVol','meanAdjustedGCVol','Height_inches','Weight_pounds','Age','Axial_Length_average','Gender','intracranialVol', 'intracranialHCP', 'TIV', 'LGN', 'V1surface', 'V1thickness'};
 
 % Names for size plots
-names = {'Optic Tract FC','Optic Tract FD','fdc', 'FA', 'MD', 'Optic Radiation FC', 'Optic Radiation FD', 'fdcopticRadiation', 'intracranialVol', 'intracranialHCP', 'TIV', 'LGN', 'meanAdjustedGCVol', 'V1surface', 'V1thickness', 'opticChiasmVolume_Min'};
+names = {'Optic Tract FC','Optic Tract FD','fdc', 'FA', 'MD', 'Optic Radiation FC', 'Optic Radiation FD', 'fdcopticRadiation', 'intracranialVol', 'intracranialHCP', 'TIV', 'LGN', 'meanAdjustedGCVol', 'V1surface', 'V1thickness'};
 
 fprintf('\n<strong>Correlation of each variable\n</strong>')
 for ff = 1:length(fixelSet)
@@ -677,14 +679,14 @@ fprintf(['\nPartial correlation OpticRadiationFD with V1surfaceArea controlled f
 fprintf(['\nPartial correlation OpticRadiationFD with V1thickness controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval) '\n'])
 
 fprintf('\n<strong>Chiasm version</strong>')
-[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.opticChiasmVolume_Min, PC1);
-fprintf(['\nPartial correlation meanAdjustedGCVol with opticChiasm controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
-[rho, pval] = partialcorr(fixelComparisonTable.opticChiasmVolume_Min, fixelComparisonTable.fc_, PC1);
-fprintf(['\nPartial correlation opticChiasm with opticTractFC controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
-[rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.opticChiasmVolume_Min, PC1, 'rows', 'pairwise');
-fprintf(['\nPartial correlation meanAdjustedGCVol with MINopticChiasm controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
-[rho, pval] = partialcorr(fixelComparisonTable.opticChiasmVolume_Min, fixelComparisonTable.fc_, PC1, 'rows', 'pairwise');
-fprintf(['\nPartial correlation MINopticChiasm with opticTractFC controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+% [rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.opticChiasmVolume_Min, PC1);
+% fprintf(['\nPartial correlation meanAdjustedGCVol with opticChiasm controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+% [rho, pval] = partialcorr(fixelComparisonTable.opticChiasmVolume_Min, fixelComparisonTable.fc_, PC1);
+% fprintf(['\nPartial correlation opticChiasm with opticTractFC controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+% [rho, pval] = partialcorr(fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.opticChiasmVolume_Min, PC1, 'rows', 'pairwise');
+% fprintf(['\nPartial correlation meanAdjustedGCVol with MINopticChiasm controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
+% [rho, pval] = partialcorr(fixelComparisonTable.opticChiasmVolume_Min, fixelComparisonTable.fc_, PC1, 'rows', 'pairwise');
+% fprintf(['\nPartial correlation MINopticChiasm with opticTractFC controlled for PC1: ' 'rho:' num2str(rho) ', p:' num2str(pval)])
 
 
 % %% Remove the effect of biometric PC1 from the brain vectors, then do PCA on the residuals, and then ask if PC1 of the (corrected for bigness) brain vectors is correlated with adjusted GC volume
