@@ -140,7 +140,7 @@ for rr = 1:length(resultFiles)
     imDensity(imDensity==0)=nan;
 
     % Show the initial density map
-    figHandle = figure('Name',subName,'Position',[100, 100, 800, 200]);
+    figHandle = figure('Name',subName,'Position',[100, 100, 800, 200],'visible','off');
     subplot(1,3,1)
     imagesc(imDensity)
     hold on
