@@ -31,23 +31,34 @@ fprintf('Test for higher R2 values for polar angle model in the mm as compared t
 % across the retina is locked to physical distance from the fovea, and does
 % not scale proportinately in eyes of different sizes.
 
+% Plot a histogram of the two datasets
 figure
 rSquareTitles = {'RSquaredFull','RSquaredExponentialOnly','RSquaredPolarOnly','RSquaredPolarResiduals'};
 indexSet = [2 4];
+for ff=1:2
+switch ff
+    case 1
+        thisSet = degRSquaredSet;
+        thisColor = '-b';
+    case 2
+        thisSet = mmRSquaredSet;
+        thisColor = '-r';
+end
 for ii=1:length(indexSet)
     subplot(1,2,ii)
-    [~,edges] = histcounts(mmRSquaredSet(indexSet(ii),:));
+    % Define the edges using a fixed choice of one of the sets
+    [~,edges] = histcounts(degRSquaredSet(indexSet(ii),:));
     binsize = edges(2)-edges(1);
     edges = 0:binsize:1+(binsize/2);
     centers = binsize/2:binsize:1;
     centerI = 0:0.01:1;
-    N = histcounts(mmRSquaredSet(indexSet(ii),:),edges);
+    N = histcounts(thisSet(indexSet(ii),:),edges);
     plot(centers,N,'ok'); hold on
     Nq = interp1(centers,N,centerI,'makima',0);
-    plot(centerI,Nq,'-r');
+    plot(centerI,Nq,thisColor);
     xlabel('R squared')
     ylabel('counts [subjects]')
     title(rSquareTitles{indexSet(ii)})
 end
-
+end
 
