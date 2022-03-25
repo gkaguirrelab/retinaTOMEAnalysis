@@ -1,10 +1,9 @@
 function fixelAnalysisPaper(varargin)
 
 % What to plot 
-pcCorrelation = false;
 sizeBarPlots = false;
-adjacentFC = false;
-adjacentFD = true;
+adjacentFC = true;
+adjacentFD = false;
 allGCFC = false;
 allGCFD = false;
 allOTFC = false;
@@ -13,7 +12,16 @@ allLGN = false;
 allORFC = false;
 radiationControl = false;
 extraCalc = false;
+mainTrackCorrelations = false;
+allOTFDC = false;
+allORFD = false;
+allORFDC = false;
+FCFD = false;
+allOTFAMD = false;
+allORFAMD = false;
 
+% Set random seed 
+rng('default')
 %% Set the dropboxBaseDir and flywheel id
 % We need this for the default loations of some the directories
 % dropboxBaseDir=fullfile(getpref('retinaTOMEAnalysis','dropboxBaseDir'));
@@ -23,9 +31,38 @@ fw = flywheel.Flywheel(getpref('flywheelMRSupport','flywheelAPIKey'));
 
 % Get tome subjects
 projects = fw.projects();
-tome = projects{1,1};
+tome = projects{2,1};
 subjects = tome.subjects();
 subjectLength = length(subjects);
+
+% % Download freesurfer zips in case we need them
+freesurfer_subject_path = '/home/ozzy/freesurfer_subjects';
+% for sub = 1:subjectLength
+%     if strcmp(subjects{sub}.label(1:4), 'TOME') && ~strcmp(subjects{sub}.label(6:end), '3027')      
+%         % Get subject name and save the name for where aseg files will be saved
+%         subject = subjects{sub,1};
+%         subjectLabel = subject.label;
+%         % Do the next block if any of the stat files do not exist in the path
+%         sessions = subject.sessions();
+%         for ses = 1:length(sessions)
+%             session = sessions{ses,1};
+%             % Get analysis and loop through
+%             analyses = session.analyses();
+%             for a = 1:length(analyses)
+%                 % Get aseg from latest freesurfer runs     
+%                 if contains(analyses{a,1}.label, 'freesurfer')
+%                     freesurferAnalysisContainer = analyses{a,1};
+%                     analysisTag = freesurferAnalysisContainer.id;
+%                     zipFile = ['freesurfer-recon-all_' subjectLabel '_' analysisTag '.zip'];  
+%                     freesurferAnalysisContainer.downloadFile(zipFile, fullfile(freesurfer_subject_path, [subjectLabel '.zip']))
+%                     unzip(fullfile(freesurfer_subject_path, [subjectLabel '.zip']), freesurfer_subject_path)
+%                     delete(fullfile(freesurfer_subject_path, [subjectLabel '.zip']))
+%                 end
+%             end
+%         end
+%     end
+% end                            
+    
 %% Parse vargin
 p = inputParser;
 
@@ -189,6 +226,32 @@ for ll = 1:length(laterality)
     fixelTable=join(fixelTable,subTable);
 end
 
+laterality = {'right','left','right','left'};
+analysisIDs = {'623a32bc3b0ec157fb571815','623a31ab0f25db25cbcc3e17','623a314e76a5a3f9ad74295b','623a3074bc08ba8422ca2906'};
+fileNames = {'FA_stats.csv', 'FA_stats.csv', 'MD_stats.csv', 'MD_stats.csv'};
+for ll = 1:length(laterality)
+    saveName = fullfile(p.Results.fixelDataDir,[laterality{ll} '_OR' fileNames{ll}]);
+    fw.downloadOutputFromAnalysis(analysisIDs{ll},fileNames{ll},saveName);
+        
+    % Now load the file
+    opts = detectImportOptions(saveName);
+    dtiData = readtable(saveName, opts);
+        
+    % Sort the table
+    dtiData = sortrows(dtiData);
+        
+    % Add 
+    subTable = dtiData(:,1:2);
+    subTable.Properties.VariableNames{1} = 'TOME_ID';
+    subTable.Properties.VariableNames{2} = [laterality{ll} '_OR' fileNames{ll}(1:2)];
+    if strcmp(fixelTable{1,1}{1}(1:7), 'preproc')
+        for ii = 1:height(fixelTable)
+            fixelTable{ii,1}{1} = fixelTable{ii,1}{1}(12:end);
+        end
+    end
+    fixelTable=join(fixelTable,subTable);
+end
+
 %% Get the volume measurements from visual regions and load them to the fixel comparison table
 % Create a folder in fixelData dir for extracting aseg files from
 % Freesurfer directories
@@ -209,6 +272,7 @@ V1surfaceRight = [];
 V1ThicknessLeft = [];
 V1ThicknessRight = [];
 radiationTable = [];
+totalSurfaceArea = [];
 
 % Loop through subjects
 for sub = 1:subjectLength
@@ -347,7 +411,17 @@ for sub = 1:subjectLength
         thicknessRight = read_curv(rhThickness);
         thicknessRight = thicknessRight(vertIdxRight);
         V1ThicknessRight = [V1ThicknessRight; mean(thicknessRight)];         
-
+    
+%         % Total surface area
+%         [~, outlh] = system(['mris_anatomical_stats ' subjectLabel ' lh']);
+%         [~, outrh] = system(['mris_anatomical_stats ' subjectLabel ' rh']);
+%         outlh = extractBetween(outlh, 'total surface area                      = ', ' mm^2');
+%         outrh = extractBetween(outrh, 'total surface area                      = ', ' mm^2');
+%         outlh = str2num(outlh{1});
+%         outrh = str2num(outrh{1});
+%         totalhemisarea = outlh + outrh;
+%         totalSurfaceArea = [totalSurfaceArea; totalhemisarea];
+       
         % Construct optic radiation volume from 
         radiationMask = MRIread(opticRadiationMaskSaveName);
         lengthNonZero = find(radiationMask.vol);
@@ -365,6 +439,12 @@ LGNTable.Properties.VariableNames{1} = 'TOME_ID';
 LGNTable.Properties.VariableNames{2} = 'left_LGN';
 LGNTable.Properties.VariableNames{3} = 'right_LGN';
 fixelTable=join(fixelTable,LGNTable);
+
+% % Add total surface to the fixel table
+% totalSurfaceArea = table(subjectNames, totalSurfaceArea);
+% totalSurfaceArea.Properties.VariableNames{1} = 'TOME_ID';
+% totalSurfaceArea.Properties.VariableNames{2} = 'totalSurfaceArea';
+% fixelTable=join(fixelTable,totalSurfaceArea);
 
 % Add optic radiation volume to the table
 radiationVolumeTable = table(subjectNames, radiationTable);
@@ -410,7 +490,7 @@ fixelTable=join(fixelTable,TIVtable);
 
 %% Create variables for left-right mean and create fixel comparison table
 fprintf('\n<strong>Correlation of left right hemisphere measurements of diffusion variables\n</strong>')
-fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'LGN', 'V1surface', 'V1thickness'};
+fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'ORFA', 'ORMD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'LGN', 'LGN_HCP', 'V1surface', 'V1thickness'};
 for ff = 1:length(fixelSet)
     fixelValR = fixelTable.(['right_' fixelSet{ff}]);
     fixelValL = fixelTable.(['left_' fixelSet{ff}]);
@@ -501,30 +581,62 @@ PC2 = score(:,2);
 mu = mean(pcaMat);
 sd = std(pcaMat);
 Xz = bsxfun(@minus, pcaMat ,mu)./sd; 
-figure
+fig = figure;
+fig.Renderer='Painters';
+subplot(2,2,1);
 scatter3(Xz(:,1),Xz(:,2),Xz(:,3),'bo','Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
 hold on 
 quiver3(0,0,0, coefforth(1,1),coefforth(2,1),coefforth(3,1),3, 'k', 'ShowArrowHead',false);
 quiver3(0,0,0, -coefforth(1,1),-coefforth(2,1),-coefforth(3,1),3, 'k', 'ShowArrowHead',false);
-xlabel('Height [inches]'); ylabel('Weight [lbs]'); zlabel('ICV [cc3]');
+xlabel('Height [inches]'); ylabel('Weight [lbs]'); zlabel('ICV [cm^3]');
 box off 
 grid on
 hold off
-% figure 
-% demeanedBiometric = [fixelComparisonTable.Height_inches - mean(fixelComparisonTable.Height_inches), fixelComparisonTable.Weight_pounds - mean(fixelComparisonTable.Weight_pounds), fixelComparisonTable.TIV - mean(fixelComparisonTable.TIV)];
-% scatter3(demeanedBiometric(:,1),demeanedBiometric(:,2),demeanedBiometric(:,3))
-% hold on;
-% covariance = cov(demeanedBiometric);
-% [eigen_vector, eigen_values] = eig(covariance);
-% d = sqrt(diag(eigen_values));
-% quiver3(mean(demeanedBiometric(:,1)),mean(demeanedBiometric(:,2)), mean(demeanedBiometric(:,3)), eigen_vector(1,1),eigen_vector(2,1),eigen_vector(3,1),d(1), 'r');
-% quiver3(mean(demeanedBiometric(:,1)),mean(demeanedBiometric(:,2)), mean(demeanedBiometric(:,3)), eigen_vector(1,2),eigen_vector(2,2),eigen_vector(3,2),d(2), 'k');
-% quiver3(mean(demeanedBiometric(:,1)),mean(demeanedBiometric(:,2)), mean(demeanedBiometric(:,3)), eigen_vector(1,3),eigen_vector(2,3),eigen_vector(3,3),d(2), 'b');
-% hold off;
 
+% FC
+FCopt = fixelComparisonTable.fc_;
+fcFit = fitlm(PC1, FCopt);
+R = corr(PC1,FCopt);
+mycorr = @(PC1,FCopt) corr(PC1,FCopt);
+interval = bootci(10000,{mycorr,PC1,FCopt});
+fprintf(['correlation Optic tract FC with PC1 is: ' num2str(R) ' ' '95per CI= ' num2str(interval(1)) ' ' num2str(interval(2)) '\n']);
+
+subplot(2,2,3); 
+plot(fcFit, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
+xlabel(['Body Size']);
+ylabel(['Optic Tract FC'])
+box off
+grid on
+title('')
+theStringR = sprintf(['N=42, R=' num2str(sprintf('%.2f', R))], PC1,  FCopt);
+text(-2.8, 1.135, theStringR, 'FontSize', 10);
+
+% FD
+FDopt = fixelComparisonTable.fd_;
+fdFit = fitlm(PC1, FDopt);
+R = corr(PC1,FDopt);
+mycorr = @(PC1,FDopt) corr(PC1,FDopt);
+interval = bootci(10000,{mycorr,PC1,FDopt});
+fprintf(['correlation Optic tract FD with PC1 is: ' num2str(R) ' ' '95per CI= ' num2str(interval(1)) ' ' num2str(interval(2)) '\n']);
+
+subplot(2,2,4);
+plot(fdFit, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
+xlabel(['Body Size']);
+ylabel(['Optic Tract FD'])
+title('')
+box off
+grid on
+theStringR = sprintf(['N=42, R=' num2str(sprintf('%.2f', R))], PC1,  FDopt);
+text(-2.8, 0.69, theStringR, 'FontSize', 10);
+
+h=gcf;
+set(h,'PaperPositionMode','auto');         
+set(h,'PaperOrientation','landscape');
+set(h,'Position',[50 50 1200 800]);
+% print(gcf, '-dpdf', 'test1.pdf')
 %% Correlation of left right values
 fprintf('\n<strong>Correlation of left right hemisphere measurements of diffusion variables\n</strong>')
-fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'LGN', 'V1surface', 'V1thickness'};
+fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'ORFA', 'ORMD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'LGN', 'LGN_HCP', 'V1surface', 'V1thickness'};
 for ff = 1:length(fixelSet)
     % Report the correlation of left and right
     fixelValR = fixelTable.(['right_' fixelSet{ff}]);
@@ -539,47 +651,34 @@ for ff = 1:length(fixelSet)
     interval = bootci(niterations,{modelcorr,resx,resy});
     R = model.Coefficients{2,1};
     fprintf([fixelSet{ff} ' correlation left with right: ' num2str(R) ' ' '95per CI= ' num2str(interval(1)) ' ' num2str(interval(2)) '\n']);
+    % Assign the correlations here after printing
+    if strcmp(fixelSet{ff}, 'fc_')
+        fcLeftRight = R;
+    elseif strcmp(fixelSet{ff}, 'fd_')
+        fdLeftRight = R;
+    elseif strcmp(fixelSet{ff}, 'fdc')
+        fdcLeftRight = R;   
+    elseif strcmp(fixelSet{ff}, 'fc_opticRadiation')
+        fcRadiationLeftRight = R;
+    elseif strcmp(fixelSet{ff}, 'fd_opticRadiation')
+        fdRadiationLeftRight = R;  
+    elseif strcmp(fixelSet{ff}, 'fdcopticRadiation')
+        fdcRadiationLeftRight = R;         
+    elseif strcmp(fixelSet{ff}, 'LGN')
+        LGNLeftRight = R; 
+    elseif strcmp(fixelSet{ff}, 'V1surface')
+        V1LeftRight = R;
+    elseif strcmp(fixelSet{ff}, 'FA')
+        FALeftRight = R;
+    elseif strcmp(fixelSet{ff}, 'MD')
+        MDLeftRight = R;
+    elseif strcmp(fixelSet{ff}, 'ORFA')
+        ORFALeftRight = R;
+    elseif strcmp(fixelSet{ff}, 'ORMD')
+        ORMDLeftRight = R;
+    end
 end
-
-%% Correlation plots for PCA1 with optic tract FC and FD
-if pcCorrelation
-    % FC
-    FCopt = fixelComparisonTable.fc_;
-    fcFit = fitlm(PC1, FCopt);
-    R = corr(PC1,FCopt);
-    mycorr = @(PC1,FCopt) corr(PC1,FCopt);
-    interval = bootci(10000,{mycorr,PC1,FCopt});
-    fprintf(['correlation Optic tract FC with PC1 is: ' num2str(R) ' ' '95per CI= ' num2str(interval(1)) ' ' num2str(interval(2)) '\n']);
-    
-    figure 
-    plot(fcFit, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
-    xlabel(['Biometric Size Index']);
-    ylabel(['Optic Tract FC'])
-    box off
-    grid on
-    title('')
-    theStringR = sprintf(['N=42, R=' num2str(sprintf('%.2f', R))], PC1,  FCopt);
-    text(-2.8, 1.135, theStringR, 'FontSize', 10);
-
-    % FD
-    FDopt = fixelComparisonTable.fd_;
-    fdFit = fitlm(PC1, FDopt);
-    R = corr(PC1,FDopt);
-    mycorr = @(PC1,FDopt) corr(PC1,FDopt);
-    interval = bootci(10000,{mycorr,PC1,FDopt});
-    fprintf(['correlation Optic tract FD with PC1 is: ' num2str(R) ' ' '95per CI= ' num2str(interval(1)) ' ' num2str(interval(2)) '\n']);
-    
-    figure 
-    plot(fdFit, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
-    xlabel(['Biometric Size Index']);
-    ylabel(['Optic Tract FD'])
-    title('')
-    box off
-    grid on
-    theStringR = sprintf(['N=42, R=' num2str(sprintf('%.2f', R))], PC1,  FDopt);
-    text(-2.8, 0.69, theStringR, 'FontSize', 10);
-end
-
+GCLeftRight = 0.64;
 %% extra calculations
 if extraCalc
     % Set body corrected FC and FD
@@ -639,10 +738,79 @@ if extraCalc
     ylabel('FD no size correction')
     title('')
 end
+
+%% Controlled correlation plots showing tract and radiation correlations 
+if mainTrackCorrelations
+    x = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.meanAdjustedGCVol];
+    y = [fixelComparisonTable.fc_, fixelComparisonTable.fd_, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.fd_opticRadiation];
+    xName = {'Mean Adjusted GC Volume', 'Mean Adjusted GC Volume', 'Mean Adjusted GC Volume', 'Mean Adjusted GC Volume'};
+    yName = {'Optic Tract FC','Optic Tract FD', 'Optic Radiation FC', 'Optic Radiation FD'}; 
+
+    fig2 = figure;
+    fig2.Renderer='Painters';    
+    subplotNum = 1;
+    for ii = 1:length(xName)
+        corrTablex = fitlm(PC1, x(1:end, ii));
+        residualsx = corrTablex.Residuals.Pearson;
+
+        corrTabley = fitlm(PC1, y(1:end, ii));
+        residualsy = corrTabley.Residuals.Pearson;
+
+        mdl = fitlm(residualsx, residualsy);
+        mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
+        niterations = 10000;
+        interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);
+        RL = interval(1);
+        RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
+
+        
+        % add first plot in 2 x 1 grid  
+        subplot(2,2,subplotNum)
+        plot(mdl, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
+        xlabel([xName(ii)]);
+        ylabel([yName(ii)]);  
+        title('')
+        legend off
+        box off
+        grid on
+        theStringR = sprintf(['N=42, R=' num2str(sprintf('%.2f', mdl.Coefficients{2,1}))], residualsx,  residualsy);
+        text(-2.8, 2.5, theStringR, 'FontSize', 10);
+        xlim([-3 3])
+        ylim([-3 3])
+        
+        subplotNum = subplotNum + 1;
+    end
+end
+h=gcf;
+set(h,'PaperPositionMode','auto');   
+
+% Unadjusted GC
+x = [fixelComparisonTable.meanFitGCVol, fixelComparisonTable.meanFitGCVol];
+y = [fixelComparisonTable.fc_, fixelComparisonTable.fd_];
+xName = {'Unadjusted GC', 'Unadjusted GC'};
+yName = {'Optic Tract FC','Optic Tract FD'}; 
+    for ii = 1:length(xName)
+        corrTablex = fitlm(PC1, x(1:end, ii));
+        residualsx = corrTablex.Residuals.Pearson;
+
+        corrTabley = fitlm(PC1, y(1:end, ii));
+        residualsy = corrTabley.Residuals.Pearson;
+
+        mdl = fitlm(residualsx, residualsy);
+        mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
+        niterations = 10000;
+        interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);
+        RL = interval(1);
+        RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
+    end
 %% Controlled correlation plots showing the correlation of adjacent regions FC
 if adjacentFC
-    x = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation];
-    y = [fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1surface];
+    x = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fc_, fixelComparisonTable.new_LGN, fixelComparisonTable.fc_opticRadiation];
+    y = [fixelComparisonTable.fc_, fixelComparisonTable.new_LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1surface];
     xName = {'Mean Adjusted GC Volume', 'Optic Tract FC', 'LGN Volume', 'Optic Radiation FC'};
     yName = {'Optic Tract FC','LGN Volume', 'Optic Radiation FC', 'V1 Surface'}; 
 
@@ -733,10 +901,12 @@ if radiationControl
         mdl = fitlm(residualsx, residualsy);
         mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
         niterations = 10000;
-        interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        interval = bootci(niterations,{mycorr,residualsx,residualsy}); 
+        R = corr(residualsx, residualsy);
         RL = interval(1);
         RU = interval(2);
-
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
+        
         % add first plot in 2 x 1 grid  
         figure
         plot(mdl, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
@@ -771,10 +941,12 @@ if allGCFC
         mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
         niterations = 10000;
         interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);
         RL = interval(1);
         RU = interval(2);
         regionRs(ii) = mdl.Coefficients{2,1};
         regionBounds{ii} = interval;
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
         
         % add first plot in 2 x 1 grid  
         figure
@@ -803,8 +975,8 @@ if allGCFC
     
     % Calculate ceilings
     ceilings = [];
-    meanGCcorr = {0.64,0.64,0.64,0.64};
-    otherRegionCorr = {0.93, 0.44, 0.86, 0.81};
+    meanGCcorr = {GCLeftRight,GCLeftRight,GCLeftRight,GCLeftRight};
+    otherRegionCorr = {fcLeftRight, LGNLeftRight, fcRadiationLeftRight, V1LeftRight};
     for ii = 1:length(meanGCcorr)
         reliabilityA = (meanGCcorr{ii} * 2) / ( meanGCcorr{ii} + 1);
         reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
@@ -853,10 +1025,12 @@ if allGCFD
         mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
         niterations = 10000;
         interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);
         RL = interval(1);
         RU = interval(2);
         regionRs(ii) = mdl.Coefficients{2,1};
         regionBounds{ii} = interval;
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
         
         % add first plot in 2 x 1 grid  
         figure
@@ -892,7 +1066,7 @@ if allGCFD
         reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
     
         corrCeiling = sqrt(reliabilityA*reliabilityB);
-        ceilings = [ceilings; corrCeiling];
+        ceilings = [ceilings; corrCeiling]
     end
     
     figure;
@@ -933,8 +1107,10 @@ if allOTFC
         mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
         niterations = 10000;
         interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);
         RL = interval(1);
         RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
 
         % add first plot in 2 x 1 grid  
         figure
@@ -966,8 +1142,10 @@ if allOTFD
         mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
         niterations = 10000;
         interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);       
         RL = interval(1);
         RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
 
         % add first plot in 2 x 1 grid  
         figure
@@ -982,6 +1160,41 @@ if allOTFD
     end
 end
 
+%% Controlled correlation plots showing the optic tract FDC for other variables
+if allOTFDC
+    x = [fixelComparisonTable.fdc, fixelComparisonTable.fdc, fixelComparisonTable.fdc, fixelComparisonTable.fdc, fixelComparisonTable.fdc];
+    y = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fdc, fixelComparisonTable.LGN, fixelComparisonTable.fdcopticRadiation, fixelComparisonTable.V1surface];
+    xName = {'OpticTractFDC', 'OpticTractFDC', 'OpticTractFDC', 'OpticTractFDC', 'OpticTractFDC'};
+    yName = {'meanAdjustedGCVol', 'OpticTractFDC', 'LGN Volume', 'OpticRadiationFDC', 'V1surface'}; 
+
+    for ii = 1:length(xName)
+        corrTablex = fitlm(PC1, x(1:end, ii));
+        residualsx = corrTablex.Residuals.Pearson;
+
+        corrTabley = fitlm(PC1, y(1:end, ii));
+        residualsy = corrTabley.Residuals.Pearson;
+
+        mdl = fitlm(residualsx, residualsy);
+        mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
+        niterations = 10000;
+        interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);       
+        RL = interval(1);
+        RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
+
+        % add first plot in 2 x 1 grid  
+        figure
+        plot(mdl, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
+        xlabel([xName(ii)]);
+        ylabel([yName(ii)]);  
+        title('')
+        theStringR = sprintf(['N=42, R=' num2str(sprintf('%.2f', mdl.Coefficients{2,1}))], residualsx,  residualsy);
+        text(-2.8, 2.5, theStringR, 'FontSize', 10);
+        xlim([-3 3])
+        ylim([-3 3])
+    end
+end
 %% Controlled correlation plots showing the LGN for other variables
 if allLGN
     x = [fixelComparisonTable.LGN, fixelComparisonTable.LGN, fixelComparisonTable.LGN, fixelComparisonTable.LGN, fixelComparisonTable.LGN];
@@ -1000,8 +1213,10 @@ if allLGN
         mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
         niterations = 10000;
         interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);         
         RL = interval(1);
         RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
 
         % add first plot in 2 x 1 grid  
         figure
@@ -1034,8 +1249,10 @@ if allORFC
         mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
         niterations = 10000;
         interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);          
         RL = interval(1);
         RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
 
         % add first plot in 2 x 1 grid  
         figure
@@ -1048,6 +1265,296 @@ if allORFC
         xlim([-3 3])
         ylim([-3 3])
     end
+end
+
+%% Controlled correlation plots showing the optic radiation  FD for other variables
+if allORFD
+    x = [fixelComparisonTable.fd_opticRadiation, fixelComparisonTable.fd_opticRadiation, fixelComparisonTable.fd_opticRadiation, fixelComparisonTable.fd_opticRadiation, fixelComparisonTable.fd_opticRadiation];
+    y = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fd_, fixelComparisonTable.LGN, fixelComparisonTable.fd_opticRadiation, fixelComparisonTable.V1surface];
+    xName = {'OpticRadiationFD', 'OpticRadiationFD', 'OpticRadiationFD', 'OpticRadiationFD', 'OpticRadiationFD'};
+    yName = {'meanAdjustedGCVol', 'OpticTractFD', 'LGN Volume', 'OpticRadiationFD', 'V1surface'}; 
+
+    for ii = 1:length(xName)
+        corrTablex = fitlm(PC1, x(1:end, ii));
+        residualsx = corrTablex.Residuals.Pearson;
+
+        corrTabley = fitlm(PC1, y(1:end, ii));
+        residualsy = corrTabley.Residuals.Pearson;
+
+        mdl = fitlm(residualsx, residualsy);
+        mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
+        niterations = 10000;
+        interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);          
+        RL = interval(1);
+        RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
+
+        % add first plot in 2 x 1 grid  
+        figure
+        plot(mdl, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
+        xlabel([xName(ii)]);
+        ylabel([yName(ii)]);  
+        title('')
+        theStringR = sprintf(['N=42, R=' num2str(sprintf('%.2f', mdl.Coefficients{2,1}))], residualsx,  residualsy);
+        text(-2.8, 2.5, theStringR, 'FontSize', 10);
+        xlim([-3 3])
+        ylim([-3 3])
+    end
+end
+
+%% Controlled correlation plots showing the optic radiation  FD for other variables
+if allORFDC
+    x = [fixelComparisonTable.fdcopticRadiation, fixelComparisonTable.fdcopticRadiation, fixelComparisonTable.fdcopticRadiation, fixelComparisonTable.fdcopticRadiation, fixelComparisonTable.fdcopticRadiation];
+    y = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.fdc, fixelComparisonTable.LGN, fixelComparisonTable.fdcopticRadiation, fixelComparisonTable.V1surface];
+    xName = {'OpticRadiationFDC', 'OpticRadiationFDC', 'OpticRadiationFDC', 'OpticRadiationFDC', 'OpticRadiationFDC'};
+    yName = {'meanAdjustedGCVol', 'OpticTractFDC', 'LGN Volume', 'OpticRadiationFDC', 'V1surface'}; 
+
+    for ii = 1:length(xName)
+        corrTablex = fitlm(PC1, x(1:end, ii));
+        residualsx = corrTablex.Residuals.Pearson;
+
+        corrTabley = fitlm(PC1, y(1:end, ii));
+        residualsy = corrTabley.Residuals.Pearson;
+
+        mdl = fitlm(residualsx, residualsy);
+        mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
+        niterations = 10000;
+        interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);          
+        RL = interval(1);
+        RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
+
+        % add first plot in 2 x 1 grid  
+        figure
+        plot(mdl, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
+        xlabel([xName(ii)]);
+        ylabel([yName(ii)]);  
+        title('')
+        theStringR = sprintf(['N=42, R=' num2str(sprintf('%.2f', mdl.Coefficients{2,1}))], residualsx,  residualsy);
+        text(-2.8, 2.5, theStringR, 'FontSize', 10);
+        xlim([-3 3])
+        ylim([-3 3])
+    end
+end
+
+%% All OTFAMD
+if allOTFAMD
+    x = [fixelComparisonTable.FA, fixelComparisonTable.FA, fixelComparisonTable.FA, fixelComparisonTable.FA, fixelComparisonTable.FA, fixelComparisonTable.MD, fixelComparisonTable.MD, fixelComparisonTable.MD, fixelComparisonTable.MD, fixelComparisonTable.MD];
+    y = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.FA, fixelComparisonTable.LGN, fixelComparisonTable.ORFA, fixelComparisonTable.V1surface, fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.MD, fixelComparisonTable.LGN, fixelComparisonTable.ORMD, fixelComparisonTable.V1surface];
+    xName = {'OpticTractFA', 'OpticTractFA', 'OpticTractFA', 'OpticTractFA', 'OpticTractFA','OpticTractMD','OpticTractMD','OpticTractMD','OpticTractMD','OpticTractMD'};
+    yName = {'meanAdjustedGCVol', 'OpticTractFC', 'LGN Volume', 'OpticRadiationFC', 'V1surface', 'meanAdjustedGCVol', 'OpticTractFC', 'LGN Volume', 'OpticRadiationFC', 'V1surface'}; 
+
+    for ii = 1:length(xName)
+        corrTablex = fitlm(PC1, x(1:end, ii));
+        residualsx = corrTablex.Residuals.Pearson;
+
+        corrTabley = fitlm(PC1, y(1:end, ii));
+        residualsy = corrTabley.Residuals.Pearson;
+
+        mdl = fitlm(residualsx, residualsy);
+        mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
+        niterations = 10000;
+        interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);          
+        RL = interval(1);
+        RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
+
+        % add first plot in 2 x 1 grid  
+        figure
+        plot(mdl, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
+        xlabel([xName(ii)]);
+        ylabel([yName(ii)]);  
+        title('')
+        theStringR = sprintf(['N=42, R=' num2str(sprintf('%.2f', mdl.Coefficients{2,1}))], residualsx,  residualsy);
+        text(-2.8, 2.5, theStringR, 'FontSize', 10);
+        xlim([-3 3])
+        ylim([-3 3])
+    end
+end
+%% All ORFAMD
+if allORFAMD
+    x = [fixelComparisonTable.ORFA, fixelComparisonTable.ORFA, fixelComparisonTable.ORFA, fixelComparisonTable.ORFA, fixelComparisonTable.ORFA, fixelComparisonTable.ORMD, fixelComparisonTable.ORMD, fixelComparisonTable.ORMD, fixelComparisonTable.ORMD, fixelComparisonTable.ORMD];
+    y = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.FA, fixelComparisonTable.LGN, fixelComparisonTable.ORFA, fixelComparisonTable.V1surface, fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.MD, fixelComparisonTable.LGN, fixelComparisonTable.ORMD, fixelComparisonTable.V1surface];
+    xName = {'OpticRadiationFA', 'OpticRadiationFA', 'OpticRadiationFA', 'OpticRadiationFA', 'OpticRadiationFA','OpticRadiationMD','OpticRadiationMD','OpticRadiationMD','OpticRadiationMD','OpticRadiationMD'};
+    yName = {'meanAdjustedGCVol', 'OpticTractFA', 'LGN Volume', 'OpticRadiationFA', 'V1surface', 'meanAdjustedGCVol', 'OpticTractMD', 'LGN Volume', 'OpticRadiationMD', 'V1surface'}; 
+
+    for ii = 1:length(xName)
+        corrTablex = fitlm(PC1, x(1:end, ii));
+        residualsx = corrTablex.Residuals.Pearson;
+
+        corrTabley = fitlm(PC1, y(1:end, ii));
+        residualsy = corrTabley.Residuals.Pearson;
+
+        mdl = fitlm(residualsx, residualsy);
+        mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
+        niterations = 10000;
+        interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);          
+        RL = interval(1);
+        RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
+
+        % add first plot in 2 x 1 grid  
+        figure
+        plot(mdl, 'Marker', 'o', 'MarkerEdgeColor',[0, 0, 1], 'MarkerFaceColor',[0, 0, 1])
+        xlabel([xName(ii)]);
+        ylabel([yName(ii)]);  
+        title('')
+        theStringR = sprintf(['N=42, R=' num2str(sprintf('%.2f', mdl.Coefficients{2,1}))], residualsx,  residualsy);
+        text(-2.8, 2.5, theStringR, 'FontSize', 10);
+        xlim([-3 3])
+        ylim([-3 3])
+    end
+end
+
+%% Controlled correlation plots showing FC and FD
+if FCFD
+    x = [fixelComparisonTable.fc_, fixelComparisonTable.fc_opticRadiation];
+    y = [fixelComparisonTable.fd_, fixelComparisonTable.fd_opticRadiation];
+    xName = {'Optic Tract FC', 'Optic Radiation FC'};
+    yName = {'Optic Tract FD', 'Optic Radiation FD'}; 
+
+    for ii = 1:length(xName)
+        corrTablex = fitlm(PC1, x(1:end, ii));
+        residualsx = corrTablex.Residuals.Pearson;
+
+        corrTabley = fitlm(PC1, y(1:end, ii));
+        residualsy = corrTabley.Residuals.Pearson;
+
+        mdl = fitlm(residualsx, residualsy);
+        mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
+        niterations = 10000;
+        interval = bootci(niterations,{mycorr,residualsx,residualsy});
+        R = corr(residualsx, residualsy);          
+        RL = interval(1);
+        RU = interval(2);
+        fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
+    end
+end
+
+%% Get all correlation ceilings
+% GC ceilings
+GCceilings = [];
+meanGCcorr = {GCLeftRight,GCLeftRight,GCLeftRight,GCLeftRight, GCLeftRight, GCLeftRight, GCLeftRight, GCLeftRight};
+otherRegionCorr = {fcLeftRight, LGNLeftRight, fcRadiationLeftRight, V1LeftRight, fdLeftRight, fdRadiationLeftRight, fdcLeftRight, fdcRadiationLeftRight};
+for ii = 1:length(meanGCcorr)
+    reliabilityA = (meanGCcorr{ii} * 2) / ( meanGCcorr{ii} + 1);
+    reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
+
+    corrCeiling = sqrt(reliabilityA*reliabilityB);
+    GCceilings = [GCceilings; corrCeiling];
+end
+
+% FC optic tract ceilings
+FCtractCeilings = [];
+meanGCcorr = {fcLeftRight,fcLeftRight,fcLeftRight, fcLeftRight};
+otherRegionCorr = {LGNLeftRight, fcRadiationLeftRight, V1LeftRight, fdLeftRight};
+for ii = 1:length(meanGCcorr)
+    reliabilityA = (meanGCcorr{ii} * 2) / ( meanGCcorr{ii} + 1);
+    reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
+
+    corrCeiling = sqrt(reliabilityA*reliabilityB);
+    FCtractCeilings = [FCtractCeilings; corrCeiling];
+end
+
+% FD optic tract ceilings
+FDtractCeilings = [];
+meanGCcorr = {fdLeftRight,fdLeftRight,fdLeftRight};
+otherRegionCorr = {LGNLeftRight, fdRadiationLeftRight, V1LeftRight};
+for ii = 1:length(meanGCcorr)
+    reliabilityA = (meanGCcorr{ii} * 2) / ( meanGCcorr{ii} + 1);
+    reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
+
+    corrCeiling = sqrt(reliabilityA*reliabilityB);
+    FDtractCeilings = [FDtractCeilings; corrCeiling];
+end
+
+% FDC optic tract ceilings
+FDCtractCeilings = [];
+meanGCcorr = {fdcLeftRight,fdcLeftRight,fdcLeftRight};
+otherRegionCorr = {LGNLeftRight, fdcRadiationLeftRight, V1LeftRight};
+for ii = 1:length(meanGCcorr)
+    reliabilityA = (meanGCcorr{ii} * 2) / ( meanGCcorr{ii} + 1);
+    reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
+
+    corrCeiling = sqrt(reliabilityA*reliabilityB);
+    FDCtractCeilings = [FDCtractCeilings; corrCeiling];
+end
+
+% LGN ceilings
+LGNtractCeilings = [];
+meanGCcorr = {LGNLeftRight,LGNLeftRight,LGNLeftRight,LGNLeftRight};
+otherRegionCorr = {fcRadiationLeftRight, V1LeftRight, fdRadiationLeftRight, fdcRadiationLeftRight};
+for ii = 1:length(meanGCcorr)
+    reliabilityA = (meanGCcorr{ii} * 2) / ( meanGCcorr{ii} + 1);
+    reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
+
+    corrCeiling = sqrt(reliabilityA*reliabilityB);
+    LGNtractCeilings = [LGNtractCeilings; corrCeiling];
+end
+
+% FC radiation ceilings
+fcRadtractCeilings = [];
+meanGCcorr = {fcRadiationLeftRight, fcRadiationLeftRight};
+otherRegionCorr = {V1LeftRight, fdRadiationLeftRight};
+for ii = 1:length(meanGCcorr)
+    reliabilityA = (meanGCcorr{ii} * 2) / ( meanGCcorr{ii} + 1);
+    reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
+
+    corrCeiling = sqrt(reliabilityA*reliabilityB);
+    fcRadtractCeilings = [fcRadtractCeilings; corrCeiling];
+end
+
+% FD radiation ceilings
+fdRadtractCeilings = [];
+meanGCcorr = {fdRadiationLeftRight};
+otherRegionCorr = {V1LeftRight};
+for ii = 1:length(meanGCcorr)
+    reliabilityA = (meanGCcorr{ii} * 2) / ( meanGCcorr{ii} + 1);
+    reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
+
+    corrCeiling = sqrt(reliabilityA*reliabilityB);
+    fdRadtractCeilings = [fdRadtractCeilings; corrCeiling];
+end
+
+% FDC radiation ceilings
+fdcRadtractCeilings = [];
+meanGCcorr = {fdcRadiationLeftRight};
+otherRegionCorr = {V1LeftRight};
+for ii = 1:length(meanGCcorr)
+    reliabilityA = (meanGCcorr{ii} * 2) / ( meanGCcorr{ii} + 1);
+    reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
+
+    corrCeiling = sqrt(reliabilityA*reliabilityB);
+    fdcRadtractCeilings = [fdcRadtractCeilings; corrCeiling];
+end
+
+% FAMD ceilings
+FAMDCeilings = [];
+meanGCcorr = {FALeftRight,FALeftRight,FALeftRight,FALeftRight,MDLeftRight,MDLeftRight,MDLeftRight,MDLeftRight};
+otherRegionCorr = {GCLeftRight,LGNLeftRight,ORFALeftRight,V1LeftRight,GCLeftRight,LGNLeftRight,ORMDLeftRight,V1LeftRight};
+for ii = 1:length(meanGCcorr)
+    reliabilityA = (meanGCcorr{ii} * 2) / ( meanGCcorr{ii} + 1);
+    reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
+
+    corrCeiling = sqrt(reliabilityA*reliabilityB);
+    FAMDCeilings = [FAMDCeilings; corrCeiling];
+end
+
+
+% ORFAMD ceilings
+ORFAMDCeilings = [];
+meanGCcorr = {ORFALeftRight,ORFALeftRight,ORFALeftRight,ORMDLeftRight,ORMDLeftRight,ORMDLeftRight};
+otherRegionCorr = {GCLeftRight,LGNLeftRight,V1LeftRight,GCLeftRight,LGNLeftRight,V1LeftRight};
+for ii = 1:length(meanGCcorr)
+    reliabilityA = (meanGCcorr{ii} * 2) / ( meanGCcorr{ii} + 1);
+    reliabilityB = (otherRegionCorr{ii} * 2) / ( otherRegionCorr{ii} + 1);
+
+    corrCeiling = sqrt(reliabilityA*reliabilityB);
+    ORFAMDCeilings = [ORFAMDCeilings; corrCeiling];
 end
 end
 %% LOCAL FUNCTIONS
