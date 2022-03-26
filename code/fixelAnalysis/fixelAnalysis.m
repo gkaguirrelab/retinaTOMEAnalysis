@@ -15,33 +15,33 @@ subjectLength = length(subjects);
 % Set rng seed
 rng('default')
 
-% % Download freesurfer zips in case we need them
-% freesurfer_subject_path = '/home/ozzy/freesurfer_subjects';
-% for sub = 1:subjectLength
-%     if strcmp(subjects{sub}.label(1:4), 'TOME') && ~strcmp(subjects{sub}.label(6:end), '3027')      
-%         % Get subject name and save the name for where aseg files will be saved
-%         subject = subjects{sub,1};
-%         subjectLabel = subject.label;
-%         % Do the next block if any of the stat files do not exist in the path
-%         sessions = subject.sessions();
-%         for ses = 1:length(sessions)
-%             session = sessions{ses,1};
-%             % Get analysis and loop through
-%             analyses = session.analyses();
-%             for a = 1:length(analyses)
-%                 % Get aseg from latest freesurfer runs     
-%                 if contains(analyses{a,1}.label, 'freesurfer')
-%                     freesurferAnalysisContainer = analyses{a,1};
-%                     analysisTag = freesurferAnalysisContainer.id;
-%                     zipFile = ['freesurfer-recon-all_' subjectLabel '_' analysisTag '.zip'];  
-%                     freesurferAnalysisContainer.downloadFile(zipFile, fullfile(freesurfer_subject_path, [subjectLabel '.zip']))
-%                     unzip(fullfile(freesurfer_subject_path, [subjectLabel '.zip']), freesurfer_subject_path)
-%                     delete(fullfile(freesurfer_subject_path, [subjectLabel '.zip']))
-%                 end
-%             end
-%         end
-%     end
-% end                            
+% Download freesurfer zips in case we need them
+freesurfer_subject_path = '/home/ozzy/freesurfer_subjects';
+for sub = 1:subjectLength
+    if strcmp(subjects{sub}.label(1:4), 'TOME') && ~strcmp(subjects{sub}.label(6:end), '3027')      
+        % Get subject name and save the name for where aseg files will be saved
+        subject = subjects{sub,1};
+        subjectLabel = subject.label;
+        % Do the next block if any of the stat files do not exist in the path
+        sessions = subject.sessions();
+        for ses = 1:length(sessions)
+            session = sessions{ses,1};
+            % Get analysis and loop through
+            analyses = session.analyses();
+            for a = 1:length(analyses)
+                % Get aseg from latest freesurfer runs     
+                if contains(analyses{a,1}.label, 'freesurfer')
+                    freesurferAnalysisContainer = analyses{a,1};
+                    analysisTag = freesurferAnalysisContainer.id;
+                    zipFile = ['freesurfer-recon-all_' subjectLabel '_' analysisTag '.zip'];  
+                    freesurferAnalysisContainer.downloadFile(zipFile, fullfile(freesurfer_subject_path, [subjectLabel '.zip']))
+                    unzip(fullfile(freesurfer_subject_path, [subjectLabel '.zip']), freesurfer_subject_path)
+                    delete(fullfile(freesurfer_subject_path, [subjectLabel '.zip']))
+                end
+            end
+        end
+    end
+end                            
     
 %% GCvolume corrections
 p = inputParser;
@@ -178,6 +178,38 @@ fixelTableRadiation.TOME_ID = strrep(fixelTableRadiation.TOME_ID,'fod_','');
 % Sort rows by subject ID, so that it will be easier to add other measures
 fixelTableRadiation = sortrows(fixelTableRadiation);
 fixelTable = join(fixelTable, fixelTableRadiation);
+
+%% Optic tract fixel correlations with multi shell
+% Right then left optic tract
+laterality = {'right','left'};
+analysisIDs = {'60a33c76b4a131197e7bfaa8','60a33c7617fcfbb03ffeacf6'};
+fileNames = {'fc_stats.csv','fd_stats.csv','fdc_stats.csv'};
+for ll = 1:length(laterality)
+    for ff = 1:length(fileNames)
+        saveName = fullfile(p.Results.fixelDataDir,[laterality{ll} '_multiShell_' fileNames{ff}]);
+        fw.downloadOutputFromAnalysis(analysisIDs{ll},fileNames{ff},saveName);
+        
+        % Now load the file
+        opts = detectImportOptions(saveName);
+        fixelData = readtable(saveName, opts);
+        if ll==1 && ff==1
+            fixelTableMultiShell = fixelData(:,1:2);
+            fixelTableMultiShell.Properties.VariableNames{2} = [laterality{ll} '_multiShell_' fileNames{ff}(1:3)];
+        else
+            subTable = fixelData(:,1:2);
+            subTable.Properties.VariableNames{2} = [laterality{ll} '_multiShell_' fileNames{ff}(1:3)];
+            fixelTableMultiShell=join(fixelTableMultiShell,subTable);
+        end
+    end
+end
+
+% Massage the fixelTable to match up with the comboTable
+fixelTableMultiShell.Properties.VariableNames{1} = 'TOME_ID';
+fixelTableMultiShell.TOME_ID = strrep(fixelTableMultiShell.TOME_ID,'fod_','');
+
+% Sort rows by subject ID, so that it will be easier to add other measures
+fixelTableMultiShell = sortrows(fixelTableMultiShell);
+fixelTable = join(fixelTable, fixelTableMultiShell);
 
 %% Download the DTI values for optic tract and radiations from Flywheel
 laterality = {'right','left','right','left'};
@@ -369,15 +401,15 @@ for sub = 1:subjectLength
         thicknessRight = thicknessRight(vertIdxRight);
         V1ThicknessRight = [V1ThicknessRight; mean(thicknessRight)];         
     
-%         % Total surface area
-%         [~, outlh] = system(['mris_anatomical_stats ' subjectLabel ' lh']);
-%         [~, outrh] = system(['mris_anatomical_stats ' subjectLabel ' rh']);
-%         outlh = extractBetween(outlh, 'total surface area                      = ', ' mm^2');
-%         outrh = extractBetween(outrh, 'total surface area                      = ', ' mm^2');
-%         outlh = str2num(outlh{1});
-%         outrh = str2num(outrh{1});
-%         totalhemisarea = outlh + outrh;
-%         totalSurfaceArea = [totalSurfaceArea; totalhemisarea];
+        % Total surface area
+        [~, outlh] = system(['mris_anatomical_stats ' subjectLabel ' lh']);
+        [~, outrh] = system(['mris_anatomical_stats ' subjectLabel ' rh']);
+        outlh = extractBetween(outlh, 'total surface area                      = ', ' mm^2');
+        outrh = extractBetween(outrh, 'total surface area                      = ', ' mm^2');
+        outlh = str2num(outlh{1});
+        outrh = str2num(outrh{1});
+        totalhemisarea = outlh + outrh;
+        totalSurfaceArea = [totalSurfaceArea; totalhemisarea];
        
         % Construct optic radiation volume from 
         radiationMask = MRIread(opticRadiationMaskSaveName);
@@ -435,7 +467,7 @@ TIVtable.Properties.VariableNames{1} = 'TOME_ID';
 fixelTable=join(fixelTable,TIVtable);
 
 %% Create variables for left-right mean and create fixel comparison table
-fixelSet = {'fc_','fd_','fdc', 'FA', 'MD', 'ORFA', 'ORMD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'LGN', 'V1surface', 'V1thickness'};
+fixelSet = {'fc_','fd_','fdc', 'multiShell_fc_','multiShell_fd_','multiShell_fdc', 'FA', 'MD', 'ORFA', 'ORMD', 'fc_opticRadiation', 'fd_opticRadiation', 'fdcopticRadiation', 'LGN', 'V1surface', 'V1thickness'};
 for ff = 1:length(fixelSet)
     fixelValR = fixelTable.(['right_' fixelSet{ff}]);
     fixelValL = fixelTable.(['left_' fixelSet{ff}]);
@@ -593,26 +625,34 @@ x = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.meanAdjustedGC
      fixelComparisonTable.fd_, fixelComparisonTable.fd_, fixelComparisonTable.fd_, ...
      fixelComparisonTable.fdc, fixelComparisonTable.fdc, fixelComparisonTable.fdc, ...
      fixelComparisonTable.LGN, fixelComparisonTable.LGN, fixelComparisonTable.LGN, fixelComparisonTable.LGN, ...
-     fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.fd_opticRadiation, fixelComparisonTable.fdcopticRadiation];
+     fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.fd_opticRadiation, fixelComparisonTable.fdcopticRadiation, ...
+     fixelComparisonTable.meanAdjustedGCVol, ...
+     fixelComparisonTable.fc_, fixelComparisonTable.fc_opticRadiation];
 y = [fixelComparisonTable.fc_, fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1surface, fixelComparisonTable.fd_, fixelComparisonTable.fd_opticRadiation, fixelComparisonTable.fdc, fixelComparisonTable.fdcopticRadiation, ...
      fixelComparisonTable.LGN, fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1surface, ...
      fixelComparisonTable.LGN, fixelComparisonTable.fd_opticRadiation, fixelComparisonTable.V1surface, ...
      fixelComparisonTable.LGN, fixelComparisonTable.fdcopticRadiation, fixelComparisonTable.V1surface, ...
      fixelComparisonTable.fc_opticRadiation, fixelComparisonTable.V1surface, fixelComparisonTable.fd_opticRadiation, fixelComparisonTable.fdcopticRadiation, ...
-     fixelComparisonTable.V1surface, fixelComparisonTable.V1surface, fixelComparisonTable.V1surface];
+     fixelComparisonTable.V1surface, fixelComparisonTable.V1surface, fixelComparisonTable.V1surface, ...
+     fixelComparisonTable.opticRadiationVolume, ...
+     fixelComparisonTable.fd_, fixelComparisonTable.fd_opticRadiation];
  
 xName = {'Mean Adjusted GC Volume', 'Mean Adjusted GC Volume', 'Mean Adjusted GC Volume', 'Mean Adjusted GC Volume', 'Mean Adjusted GC Volume', 'Mean Adjusted GC Volume', 'Mean Adjusted GC Volume', 'Mean Adjusted GC Volume', ...
          'Optic Tract FC', 'Optic Tract FC', 'Optic Tract FC', ...
          'Optic Tract FD', 'Optic Tract FD', 'Optic Tract FD', ...
          'Optic Tract FDC', 'Optic Tract FDC', 'Optic Tract FDC', ...
          'LGN Volume', 'LGN Volume', 'LGN Volume', 'LGN Volume', ...
-         'Optic Radiation FC', 'Optic Radiation FD', 'Optic Radiation FDC'};
+         'Optic Radiation FC', 'Optic Radiation FD', 'Optic Radiation FDC', ...
+         'Mean Adjusted GC Volume', ...
+         'Optic Tract FC', 'Optic Radiation FC'};
 yName = {'Optic Tract FC', 'LGN Volume', 'Optic Radiation FC', 'V1surface', 'Optic Tract FD', 'Optic Radiation FD', 'Optic Tract FDC', 'Optic Radiation FDC', ...
          'LGN Volume', 'Optic Radiation FC', 'V1surface', ...
          'LGN Volume', 'Optic Radiation FD', 'V1surface', ...
          'LGN Volume', 'Optic Radiation FDC', 'V1surface', ...
          'Optic Radiation FC', 'V1surface', 'Optic Radiation FD', 'Optic Radiation FDC', ...
-         'V1surface', 'V1surface', 'V1surface'};
+         'V1surface', 'V1surface', 'V1surface', ...
+         'Optic Radiation Volume', ...
+         'Optic Tract FD', 'Optic Radiation FD'};
 
 fig2 = figure;
 fig2.Renderer='Painters';    
@@ -781,7 +821,7 @@ h=gcf;
 set(h,'PaperPositionMode','auto');
 
 %% Correlation ceilings for fixel data
-fprintf('\n<strong>Correlation ceiling values\n</strong>')
+fprintf('\n<strong>Correlation ceiling values for fixel data\n</strong>')
 x = [GCLeftRight, GCLeftRight, GCLeftRight, GCLeftRight, GCLeftRight, GCLeftRight, GCLeftRight, GCLeftRight, ...
      fcLeftRight, fcLeftRight, fcLeftRight, ...
      fdLeftRight, fdLeftRight, fdLeftRight, ...
@@ -813,10 +853,87 @@ for ii = 1:length(x)
     reliabilityB = (y(ii) * 2) / ( y(ii) + 1);
 
     corrCeiling = sqrt(reliabilityA*reliabilityB);
-    fprintf(['Ceiling values for correlations ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(corrCeiling) '\n']);
-    
+    fprintf(['Ceiling values for correlations ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(corrCeiling) '\n']);  
 end
 
+%% Correlation ceilings for DTI
+fprintf('\n<strong>Correlation ceiling values for dti data\n</strong>')
+x = [FALeftRight, FALeftRight, FALeftRight, FALeftRight, ...
+     ORFALeftRight, ORFALeftRight, ORFALeftRight, ORFALeftRight, ...
+     MDLeftRight, MDLeftRight, MDLeftRight, MDLeftRight, ...
+     ORMDLeftRight, ORMDLeftRight, ORMDLeftRight, ORMDLeftRight];
+y = [GCLeftRight, LGNLeftRight, ORFALeftRight, V1LeftRight, ...
+     GCLeftRight, FALeftRight, LGNLeftRight, V1LeftRight, ...
+     GCLeftRight, LGNLeftRight, ORMDLeftRight, V1LeftRight, ...
+     GCLeftRight, MDLeftRight, LGNLeftRight, V1LeftRight];
+
+xName = {'Optic Tract FA', 'Optic Tract FA', 'Optic Tract FA', 'Optic Tract FA', ...
+         'Optic Radiation FA', 'Optic Radiation FA', 'Optic Radiation FA', 'Optic Radiation FA', ...
+         'Optic Tract MD', 'Optic Tract MD', 'Optic Tract MD', 'Optic Tract MD', ...
+         'Optic Radiation MD', 'Optic Radiation MD', 'Optic Radiation MD', 'Optic Radiation MD'}; 
+yName = {'Mean Adjusted GC Volume', 'LGN Volume', 'Optic Radiation FA', 'V1surface', ...
+         'Mean Adjusted GC Volume', 'Optic Tract FA', 'LGN Volume', 'V1surface', ...
+         'Mean Adjusted GC Volume', 'LGN Volume', 'Optic Radiation MD', 'V1surface', ...
+         'Mean Adjusted GC Volume', 'Optic Tract MD', 'LGN Volume', 'V1surface'};      
+     
+for ii = 1:length(x)
+    reliabilityA = (x(ii) * 2) / ( x(ii) + 1);
+    reliabilityB = (y(ii) * 2) / ( y(ii) + 1);
+
+    corrCeiling = sqrt(reliabilityA*reliabilityB);
+    fprintf(['Ceiling values for correlations ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(corrCeiling) '\n']);
+    
+end   
+
+%% Multishell correlations
+fprintf('\n<strong>Multi shell correlations\n</strong>')
+x = [fixelComparisonTable.meanAdjustedGCVol, fixelComparisonTable.meanAdjustedGCVol];
+y = [fixelComparisonTable.multiShell_fc_, fixelComparisonTable.multiShell_fd_];
+ 
+xName = {'Mean Adjusted GC Volume', 'Mean Adjusted GC Volume'};
+yName = {'Multi shell FC', 'Multi Shell FD'};
+
+for ii = 1:length(xName)
+    corrTablex = fitlm(PC1, x(1:end, ii));
+    residualsx = corrTablex.Residuals.Pearson;
+
+    corrTabley = fitlm(PC1, y(1:end, ii));
+    residualsy = corrTabley.Residuals.Pearson;
+
+    mdl = fitlm(residualsx, residualsy);
+    mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
+    niterations = 10000;
+    interval = bootci(niterations,{mycorr,residualsx,residualsy});
+    R = corr(residualsx, residualsy);
+    RL = interval(1);
+    RU = interval(2);
+    fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
+end
+
+%% V1 as a  proportion of surface area
+V1propSurf = fixelComparisonTable.V1surface./fixelComparisonTable.totalSurfaceArea;
+x = [fixelComparisonTable.meanAdjustedGCVol];
+y = [V1propSurf];
+
+xName = {'Mean Adjusted GC Volume'};
+yName = {'V1/TotalSurface'};
+
+for ii = 1:length(xName)
+    corrTablex = fitlm(PC1, x(1:end, ii));
+    residualsx = corrTablex.Residuals.Pearson;
+
+    corrTabley = fitlm(PC1, y(1:end, ii));
+    residualsy = corrTabley.Residuals.Pearson;
+
+    mdl = fitlm(residualsx, residualsy);
+    mycorr = @(residualsx,residualsy) corr(residualsx,residualsy);
+    niterations = 10000;
+    interval = bootci(niterations,{mycorr,residualsx,residualsy});
+    R = corr(residualsx, residualsy);
+    RL = interval(1);
+    RU = interval(2);
+    fprintf(['correlation of ' xName{ii} ' and ' yName{ii}  ' is: ' num2str(R) ' ' '95per CI= ' num2str(RL) ' ' num2str(RU) '\n']);
+end
 end
 
 %% LOCAL FUNCTIONS
