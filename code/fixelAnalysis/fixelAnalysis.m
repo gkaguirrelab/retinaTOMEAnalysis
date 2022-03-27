@@ -15,33 +15,33 @@ subjectLength = length(subjects);
 % Set rng seed
 rng('default')
 
-% Download freesurfer zips in case we need them
-freesurfer_subject_path = '/home/ozzy/freesurfer_subjects';
-for sub = 1:subjectLength
-    if strcmp(subjects{sub}.label(1:4), 'TOME') && ~strcmp(subjects{sub}.label(6:end), '3027')      
-        % Get subject name and save the name for where aseg files will be saved
-        subject = subjects{sub,1};
-        subjectLabel = subject.label;
-        % Do the next block if any of the stat files do not exist in the path
-        sessions = subject.sessions();
-        for ses = 1:length(sessions)
-            session = sessions{ses,1};
-            % Get analysis and loop through
-            analyses = session.analyses();
-            for a = 1:length(analyses)
-                % Get aseg from latest freesurfer runs     
-                if contains(analyses{a,1}.label, 'freesurfer')
-                    freesurferAnalysisContainer = analyses{a,1};
-                    analysisTag = freesurferAnalysisContainer.id;
-                    zipFile = ['freesurfer-recon-all_' subjectLabel '_' analysisTag '.zip'];  
-                    freesurferAnalysisContainer.downloadFile(zipFile, fullfile(freesurfer_subject_path, [subjectLabel '.zip']))
-                    unzip(fullfile(freesurfer_subject_path, [subjectLabel '.zip']), freesurfer_subject_path)
-                    delete(fullfile(freesurfer_subject_path, [subjectLabel '.zip']))
-                end
-            end
-        end
-    end
-end                            
+% % Download freesurfer zips in case we need them
+% freesurfer_subject_path = '/home/ozzy/freesurfer_subjects';
+% for sub = 1:subjectLength
+%     if strcmp(subjects{sub}.label(1:4), 'TOME') && ~strcmp(subjects{sub}.label(6:end), '3027')      
+%         % Get subject name and save the name for where aseg files will be saved
+%         subject = subjects{sub,1};
+%         subjectLabel = subject.label;
+%         % Do the next block if any of the stat files do not exist in the path
+%         sessions = subject.sessions();
+%         for ses = 1:length(sessions)
+%             session = sessions{ses,1};
+%             % Get analysis and loop through
+%             analyses = session.analyses();
+%             for a = 1:length(analyses)
+%                 % Get aseg from latest freesurfer runs     
+%                 if contains(analyses{a,1}.label, 'freesurfer')
+%                     freesurferAnalysisContainer = analyses{a,1};
+%                     analysisTag = freesurferAnalysisContainer.id;
+%                     zipFile = ['freesurfer-recon-all_' subjectLabel '_' analysisTag '.zip'];  
+%                     freesurferAnalysisContainer.downloadFile(zipFile, fullfile(freesurfer_subject_path, [subjectLabel '.zip']))
+%                     unzip(fullfile(freesurfer_subject_path, [subjectLabel '.zip']), freesurfer_subject_path)
+%                     delete(fullfile(freesurfer_subject_path, [subjectLabel '.zip']))
+%                 end
+%             end
+%         end
+%     end
+% end                            
     
 %% GCvolume corrections
 p = inputParser;
@@ -280,7 +280,7 @@ V1surfaceRight = [];
 V1ThicknessLeft = [];
 V1ThicknessRight = [];
 radiationTable = [];
-% totalSurfaceArea = [];
+totalSurfaceArea = [];
 
 % Loop through subjects
 for sub = 1:subjectLength
@@ -429,11 +429,11 @@ LGNTable.Properties.VariableNames{2} = 'left_LGN';
 LGNTable.Properties.VariableNames{3} = 'right_LGN';
 fixelTable=join(fixelTable,LGNTable);
 
-% % Add total surface to the fixel table
-% totalSurfaceArea = table(subjectNames, totalSurfaceArea);
-% totalSurfaceArea.Properties.VariableNames{1} = 'TOME_ID';
-% totalSurfaceArea.Properties.VariableNames{2} = 'totalSurfaceArea';
-% fixelTable=join(fixelTable,totalSurfaceArea);
+% Add total surface to the fixel table
+totalSurfaceArea = table(subjectNames, totalSurfaceArea);
+totalSurfaceArea.Properties.VariableNames{1} = 'TOME_ID';
+totalSurfaceArea.Properties.VariableNames{2} = 'totalSurfaceArea';
+fixelTable=join(fixelTable,totalSurfaceArea);
 
 % Add optic radiation volume to the table
 radiationVolumeTable = table(subjectNames, radiationTable);
