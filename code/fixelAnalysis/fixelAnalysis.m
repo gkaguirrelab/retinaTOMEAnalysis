@@ -8,7 +8,7 @@ fw = flywheel.Flywheel(getpref('flywheelMRSupport','flywheelAPIKey'));
 
 % Get tome subjects
 projects = fw.projects();
-tome = projects{2,1};
+tome = projects{1,1};
 subjects = tome.subjects();
 subjectLength = length(subjects);
 
@@ -64,7 +64,6 @@ gcVolumePerDegSq_vert = gcVolumePerDegSq;
 badIdx_vert = badIdx;
 XPos_Degs_vert = XPos_Degs;
 subList_vert = subList;
-
 load(p.Results.horizVolFile,'gcVolumePerDegSq','badIdx','XPos_Degs','comboTable','subList');
 gcVolumePerDegSq_horiz = gcVolumePerDegSq;
 badIdx_horiz = badIdx;
@@ -429,11 +428,11 @@ LGNTable.Properties.VariableNames{2} = 'left_LGN';
 LGNTable.Properties.VariableNames{3} = 'right_LGN';
 fixelTable=join(fixelTable,LGNTable);
 
-% Add total surface to the fixel table
-totalSurfaceArea = table(subjectNames, totalSurfaceArea);
-totalSurfaceArea.Properties.VariableNames{1} = 'TOME_ID';
-totalSurfaceArea.Properties.VariableNames{2} = 'totalSurfaceArea';
-fixelTable=join(fixelTable,totalSurfaceArea);
+% % Add total surface to the fixel table
+% totalSurfaceArea = table(subjectNames, totalSurfaceArea);
+% totalSurfaceArea.Properties.VariableNames{1} = 'TOME_ID';
+% totalSurfaceArea.Properties.VariableNames{2} = 'totalSurfaceArea';
+% fixelTable=join(fixelTable,totalSurfaceArea);
 
 % Add optic radiation volume to the table
 radiationVolumeTable = table(subjectNames, radiationTable);
@@ -481,8 +480,8 @@ fixelComparisonTable = join(comboTable(ismember(comboTable.TOME_ID,fixelTable.TO
 fprintf('\n<strong>Correlation of body size with RGC and optic tract fixel measurements\n</strong>')
 
 % Set matrix
-pcaMat = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.TIV];
-categoryNames = ["height"; "weight"; "ICV"];
+pcaMat = [fixelComparisonTable.Height_inches fixelComparisonTable.Weight_pounds fixelComparisonTable.TIV fixelComparisonTable.Age];
+categoryNames = ["height"; "weight"; "ICV"; "Age"];
 
 % Run PCA
 [wcoeff,score,latent,tsquared,explained] = pca(pcaMat,'VariableWeights','variance', 'Centered', true);
